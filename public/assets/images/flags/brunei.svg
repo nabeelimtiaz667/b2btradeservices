@@ -1,0 +1,17 @@
+<svg id="brunei" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="44" height="32" viewBox="0 0 44 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+    </clipPath>
+  </defs>
+  <g id="BN">
+    <rect id="Mask-2" data-name="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+    <g id="BN-2" data-name="BN" clip-path="url(#clip-path)">
+      <rect id="Mask_Copy" data-name="Mask Copy" width="44" height="32" transform="translate(0 0)" fill="#f7e250"/>
+      <g id="Rectangle_2_Copy_4_Rectangle_2_Copy_4" data-name="Rectangle 2 Copy 4 + Rectangle 2 Copy 4" transform="translate(-4.455 -0.591) rotate(20)">
+        <rect id="Rectangle_2_Copy_4" data-name="Rectangle 2 Copy 4" width="61.536" height="6.366" transform="translate(0 0)" fill="#fff"/>
+        <rect id="Rectangle_2_Copy_4-2" data-name="Rectangle 2 Copy 4" width="61.536" height="6.366" transform="translate(0 6.366)" fill="#262626"/>
+      </g>
+    </g>
+  </g>
+</svg>

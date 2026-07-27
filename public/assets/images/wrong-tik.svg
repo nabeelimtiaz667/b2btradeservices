@@ -1,0 +1,11 @@
+<svg id="wrong-tik" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="21.718" height="21.718" viewBox="0 0 21.718 21.718">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Rectangle_303" data-name="Rectangle 303" width="21.718" height="21.718" transform="translate(0 0)" fill="none"/>
+    </clipPath>
+  </defs>
+  <g id="Group_378" data-name="Group 378" clip-path="url(#clip-path)">
+    <path id="Path_1088" data-name="Path 1088" d="M10.858,0a10.859,10.859,0,1,0,10.86,10.859A10.859,10.859,0,0,0,10.858,0" fill="#fff"/>
+    <path id="Path_1089" data-name="Path 1089" d="M15.381,14.2,14.2,15.381,10.859,12.04,7.518,15.381,6.336,14.2,9.677,10.86,6.336,7.518,7.517,6.337l3.341,3.341L14.2,6.337,15.38,7.518l-3.341,3.341Z" fill="#be1e2d"/>
+  </g>
+</svg>

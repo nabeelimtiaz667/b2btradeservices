@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="44" height="32" viewBox="0 0 44 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+    </clipPath>
+  </defs>
+  <g id="myanmar" transform="translate(0 0)">
+    <g id="MM">
+      <rect id="Mask-2" data-name="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+      <g id="MM-2" data-name="MM" clip-path="url(#clip-path)">
+        <rect id="Rectangle_2" data-name="Rectangle 2" width="44.56" height="10.61" transform="translate(0 21.219)" fill="#f13d4f"/>
+        <rect id="Rectangle_2-2" data-name="Rectangle 2" width="44.56" height="10.61" transform="translate(0 10.61)" fill="#4ac94b"/>
+        <rect id="Rectangle_2-3" data-name="Rectangle 2" width="44.56" height="10.61" transform="translate(0 0)" fill="#ffd043"/>
+        <path id="Star_8" data-name="Star 8" d="M9.669,13.273l-5.613,4L6.127,10.7.587,6.6,7.48,6.536,9.669,0l2.189,6.536L18.75,6.6l-5.54,4.1,2.071,6.574Z" transform="translate(12.612 6.366)" fill="#fff"/>
+      </g>
+    </g>
+  </g>
+</svg>

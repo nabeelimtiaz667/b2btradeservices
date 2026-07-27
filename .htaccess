@@ -1,0 +1,11 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Leave the WordPress install, the front controller folder and cgi-bin
+    # alone. These patterns are directory-relative, so this works whether the
+    # app is served from a document root or from a subfolder.
+    RewriteRule ^(public|blog|cgi-bin)(/|$) - [L]
+
+    # Redirect everything else to public folder
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

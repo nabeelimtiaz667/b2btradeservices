@@ -1,0 +1,398 @@
+*{
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+*, ::after, ::before {
+    box-sizing: border-box;
+}
+:focus-visible {
+    outline:unset;
+}
+.mb-0{
+    margin-bottom: 0px;
+}
+body{
+    font-family: "Zalando Sans", sans-serif;
+    font-size: 14px;
+}
+   body{
+ display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+.inner-form-banner{
+    flex: 1;
+}
+.container{
+    max-width: 1200px !important;
+    width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+}
+div{
+    box-sizing: border-box;
+}
+.inner-form-banner-img{
+    height: 482px;
+}
+.inner-form-banner-img img{
+    height: 100%;
+    object-fit: cover;
+}
+.w-100{
+    width: 100%;
+}
+.b2b-logo{
+    max-width: 160px;
+    margin-right: auto;
+    margin-left: auto;
+}
+.form-sec {
+    box-shadow: 0px 0px 36px #8B8B8B20;
+    max-width: 496px;
+    margin-left: auto;
+    margin-right: auto;
+    background: #fff;
+    padding: 30px;
+    margin-top: -250px;
+    position: relative;
+    z-index: 9;
+    border-radius: 15px;
+    text-align: center;
+    width: 90%;
+}
+h2{
+    font-size: 24px;
+    color: #0A504F;
+    font-weight: 600;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.filter-group {
+  display: flex;
+  gap: 20px; 
+}
+
+.filter-group label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #000000;
+}
+.filter-group input[type="radio"] {
+  display: none;
+}
+
+.filter-group .radio {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #000000;
+  border-radius: 50%;
+  position: relative;
+   bottom: 1px;
+}
+
+.filter-group input[type="radio"]:checked + .radio::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background: #45BB7F;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+left: 0;
+right: 0;
+margin: auto;
+ 
+}
+.filter-group {
+    display: flex
+;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 30px;
+}
+.form-input input {
+    width: 100%;
+    height: 45px;
+    display: flex
+;
+    align-items: center;
+    padding-left: 20px;
+ 
+    font-size: 12px;
+    border-radius: 27px;
+    border: 1px solid #DBDBDB;
+}
+.dual-input {
+    display: flex
+;
+    align-items: center;
+    gap: 2%;
+}
+.dual-input .form-input {
+    width: 49%;
+}
+.password-input{
+    position: relative;
+}
+.password-input .eye{
+    position: absolute;
+    right: 20px;
+    top: 0;
+    bottom: 0;
+    margin-top: auto;
+    margin-bottom: auto;
+    height: 24px;
+    cursor: pointer;
+}
+.form-input{
+    margin-bottom: 10px;
+}
+.iti{
+    width: 100%;
+}
+.iti--separate-dial-code .iti__selected-flag{
+    background-color: transparent !important;
+    border: 1px solid #DBDBDB;
+       border-radius: 27px;
+       border-left: 0px !important;
+           width: 90px !important;
+}
+.iti__flag-container{
+    padding: 0px !important;
+}
+input.phone{
+    padding-left: 100px !important;
+}
+.whatsapp-checkbox {
+    display: flex
+;
+    justify-content: end;
+    gap: 5px;
+    align-items: center;
+    font-size: 12px;
+    color: #45BB7F;
+    margin-right: 10px;
+        margin-bottom: 10px;
+}
+.whatsapp-checkbox label{
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    position: relative;
+    padding-bottom: 2px;
+}
+.whatsapp-checkbox label::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    top: 100%;
+    left: 0;
+    pointer-events: none;
+}
+.whatsapp-checkbox label::before {
+    transform-origin: 50% 100%;
+    transition: clip-path 0.3s, transform 0.3s cubic-bezier(0.2, 1, 0.8, 1);
+    clip-path: polygon(0% 0%, 0% 100%, 0 100%, 0 0, 100% 0, 100% 100%, 0 100%, 0 100%, 100% 100%, 100% 0%);
+}
+.whatsapp-checkbox label:hover::before {
+    transform: translate3d(0, 2px, 0) scale3d(1.08, 2, 1);
+    clip-path: polygon(0% 0%, 0% 100%, 50% 100%, 50% 0, 50% 0, 50% 100%, 50% 100%, 0 100%, 100% 100%, 100% 0%);
+}
+.whatsapp-checkbox input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  border: 2px solid #DBDBDB;   /* UNCHECKED BORDER COLOR */
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+}
+
+/* checked state */
+.whatsapp-checkbox input[type="checkbox"]:checked {
+  background-color: #45BB7F;
+ 
+}
+.whatsapp-checkbox input[type="checkbox"]:checked::after {
+  content: "✓";
+  color: white;
+  font-size: 7px;
+  font-weight: bold;
+  position: absolute;
+  top: 0px;
+  left: 2px;
+}
+.form-input select {
+    width: 100%;
+       border: 1px solid #DBDBDB;
+    height: 45px;
+    display: flex
+;
+    align-items: center;
+    padding-left: 20px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    border-radius: 27px;
+    color: #00000071;
+        appearance: none;
+    background-image: url(../images/select-icon.svg);
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px;
+    padding-right: 30px;
+    cursor: pointer;
+}
+.select2-container .select2-selection--single{
+    text-align: left;
+        width: 100%;
+       border: 1px solid #DBDBDB;
+    height: 45px;
+    display: flex;
+    align-items: center;
+        border-radius: 27px;
+           font-size: 12px;
+               padding-left: 20px;
+}
+.select2-container {
+    width: 100% !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    top: 9px;
+    right: 14px;
+}
+.d-flex{
+    display: flex;
+}
+.gap-2{
+    gap: 2px;
+}
+.align-items-start{
+    align-items: baseline;
+}
+.radio-join {
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 30px;
+      margin-bottom: 30px;
+}
+.gradeint-cta {
+    background-image: linear-gradient(45deg, #15A2A0, #5FC86B);
+    width: 100%;
+    border-radius: 26px;
+    max-width: 100%;
+    color: #fff;
+    font-size: 14px;
+    height: 51px;
+    display: flex
+;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+.gradeint-cta:hover {
+    background-image: linear-gradient(270deg, #15A2A0, #5FC86B);
+    transition: .5s linear ease;
+    color: #fff;
+}
+.gradeint-cta::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    transition: 0.9s;
+}
+.gradeint-cta:hover::before {
+    left: 120%;
+}
+.mt-4{
+    margin-top: 20px;
+}
+.social-connect {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 25px;
+}
+.social-connect a:hover{
+    transform: translateY(-5px);
+    transition: .5s linear;
+}
+.reg-a{
+    color: #0F9EA5;
+    text-decoration: none;
+    position: relative;
+}
+.reg-a::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    top: 100%;
+    left: 0;
+    pointer-events: none;
+}
+.reg-a::before {
+    transform-origin: 50% 100%;
+    transition: clip-path 0.3s, transform 0.3s cubic-bezier(0.2, 1, 0.8, 1);
+    clip-path: polygon(0% 0%, 0% 100%, 0 100%, 0 0, 100% 0, 100% 100%, 0 100%, 0 100%, 100% 100%, 100% 0%);
+}
+.reg-a:hover::before {
+    transform: translate3d(0, 2px, 0) scale3d(1.08, 2, 1);
+    clip-path: polygon(0% 0%, 0% 100%, 50% 100%, 50% 0, 50% 0, 50% 100%, 50% 100%, 0 100%, 100% 100%, 100% 0%);
+}
+footer {
+    background: #0A504F;
+    padding: 20px 0px;
+    text-align: center;
+    color: #fff;
+    margin-top: 60px;
+}
+.forgor-pas{
+    margin-top: 30px;
+}
+.border-bottom-gradient{
+      background-image: linear-gradient(45deg, #15A2A0, #5FC86B);
+      height: 15px;
+}
+
+@media(max-width: 767.5px) {
+.inner-form-banner-img{
+    height: 350px;
+}
+}
+@media(max-width: 450.5px) {
+
+}
+.dual-input .form-input{
+    width: 100%;
+}
+.dual-input{
+    flex-direction: column;
+}
+
+  .select2-selection__placeholder::after{
+    content:" *";
+    
+}

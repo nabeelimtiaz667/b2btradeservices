@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="44" height="32" viewBox="0 0 44 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+    </clipPath>
+  </defs>
+  <g id="north-korea" transform="translate(0 0)">
+    <g id="KP">
+      <rect id="Mask-2" data-name="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+      <g id="KP-2" data-name="KP" clip-path="url(#clip-path)">
+        <rect id="Rectangle_2" data-name="Rectangle 2" width="44" height="6" transform="translate(0 0)" fill="#1461b6"/>
+        <rect id="Rectangle_2-2" data-name="Rectangle 2" width="44" height="7" transform="translate(0 25)" fill="#1461b6"/>
+        <rect id="Rectangle_2-3" data-name="Rectangle 2" width="44" height="19" transform="translate(0 6)" fill="#fff"/>
+        <rect id="Rectangle_2_Copy_4" data-name="Rectangle 2 Copy 4" width="44.56" height="14.853" transform="translate(0 8.488)" fill="#f53846"/>
+        <path id="Oval_12" data-name="Oval 12" d="M5.3,10.61A5.259,5.259,0,0,1,2.188,9.6L5.3,7.434,8.42,9.595A5.253,5.253,0,0,1,5.3,10.61ZM8.421,9.6h0L7.329,5.963l3.019-2.3L6.556,3.583,5.3,0h0a5.312,5.312,0,0,1,5.042,3.665h0A5.253,5.253,0,0,1,10.61,5.3a5.328,5.328,0,0,1-2.188,4.29Zm-6.234,0h0A5.3,5.3,0,0,1,.259,3.665h0A5.314,5.314,0,0,1,5.3,0L4.053,3.583.261,3.665l3.019,2.3L2.187,9.593Z" transform="translate(10.61 10.61)" fill="#fff"/>
+      </g>
+    </g>
+  </g>
+</svg>

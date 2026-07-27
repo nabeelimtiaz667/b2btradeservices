@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="44" height="32" viewBox="0 0 44 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff" stroke="#f5f5f5" stroke-miterlimit="10" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="tajikistan" transform="translate(0 0)">
+    <g id="TJ">
+      <g id="Mask-2" data-name="Mask" transform="translate(0 0)" fill="#fff" stroke="#f5f5f5" stroke-miterlimit="10" stroke-width="1">
+        <rect width="44" height="32" rx="4" stroke="none"/>
+        <rect x="0.5" y="0.5" width="43" height="31" rx="3.5" fill="none"/>
+      </g>
+      <g id="TJ-2" data-name="TJ" clip-path="url(#clip-path)">
+        <rect id="Rectangle_2" data-name="Rectangle 2" width="44.56" height="10.61" transform="translate(0 0)" fill="#d9101c"/>
+        <rect id="Rectangle_2-2" data-name="Rectangle 2" width="44.56" height="10.61" transform="translate(0 21.219)" fill="#0f7811"/>
+        <path id="Oval_36" data-name="Oval 36" d="M5.3,6.366a1.061,1.061,0,0,1,0-2.122h1.2a6.921,6.921,0,0,1-.14-1.06,1.061,1.061,0,1,1,2.122,0,6.922,6.922,0,0,1-.14,1.06h1.2a1.061,1.061,0,0,1,0,2.122Zm7.427-3.182a1.061,1.061,0,1,1,1.061,1.06A1.061,1.061,0,0,1,12.731,3.183ZM0,3.183a1.061,1.061,0,1,1,1.061,1.06A1.061,1.061,0,0,1,0,3.183ZM8.488,1.061A1.061,1.061,0,1,1,9.549,2.122,1.061,1.061,0,0,1,8.488,1.061Zm-4.244,0A1.061,1.061,0,1,1,5.3,2.122,1.061,1.061,0,0,1,4.244,1.061Z" transform="translate(14.853 12.732)" fill="#fad14e"/>
+      </g>
+    </g>
+  </g>
+</svg>

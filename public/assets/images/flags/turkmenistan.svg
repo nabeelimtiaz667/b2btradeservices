@@ -1,0 +1,61 @@
+<svg id="turkmenistan" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="44" height="32" viewBox="0 0 44 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+    </clipPath>
+    <clipPath id="clip-path-2">
+      <ellipse id="Mask-2" data-name="Mask" cx="3.183" cy="2.122" rx="3.183" ry="2.122" fill="#fff"/>
+    </clipPath>
+    <clipPath id="clip-path-4">
+      <ellipse id="Mask-4" data-name="Mask" cx="3.183" cy="2.122" rx="3.183" ry="2.122" fill="#28ae67"/>
+    </clipPath>
+    <clipPath id="clip-path-5">
+      <ellipse id="Mask-5" data-name="Mask" cx="3.183" cy="1.061" rx="3.183" ry="1.061" fill="#28ae67"/>
+    </clipPath>
+    <clipPath id="clip-path-6">
+      <ellipse id="Mask-6" data-name="Mask" cx="3.183" cy="2.122" rx="3.183" ry="2.122" fill="#fbaf29"/>
+    </clipPath>
+  </defs>
+  <g id="TM">
+    <rect id="Mask-7" data-name="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+    <g id="TM-2" data-name="TM" clip-path="url(#clip-path)">
+      <rect id="Rectangle_2" data-name="Rectangle 2" width="44" height="32" transform="translate(0 0)" fill="#30c375"/>
+      <rect id="Rectangle_1092" data-name="Rectangle 1092" width="7" height="32" transform="translate(6 0)" fill="#de414f"/>
+      <g id="Oval_161" data-name="Oval 161" transform="translate(6.366 2.122)">
+        <ellipse id="Mask-8" data-name="Mask" cx="3.183" cy="2.122" rx="3.183" ry="2.122" transform="translate(0 0)" fill="#fff"/>
+        <g id="Oval_161-2" data-name="Oval 161" transform="translate(0 0)" clip-path="url(#clip-path-2)">
+          <circle id="Oval_166" data-name="Oval 166" cx="1.061" cy="1.061" r="1.061" transform="translate(2.122 1.061)" fill="#dd404f"/>
+          <rect id="Rectangle_1093" data-name="Rectangle 1093" width="3.183" height="2.122" transform="translate(0 0)" fill="#fbaf29"/>
+          <rect id="Rectangle_1093_Copy" data-name="Rectangle 1093 Copy" width="3.183" height="2.122" transform="translate(3.183 2.122)" fill="#fbaf29"/>
+        </g>
+      </g>
+      <g id="Oval_161_Copy_2" data-name="Oval 161 Copy 2" transform="translate(6.366 25.463)">
+        <ellipse id="Mask-9" data-name="Mask" cx="3.183" cy="2.122" rx="3.183" ry="2.122" transform="translate(0 0)" fill="#fff"/>
+        <g id="Oval_161_Copy_2-2" data-name="Oval 161 Copy 2" transform="translate(0 0)" clip-path="url(#clip-path-2)">
+          <circle id="Oval_166-2" data-name="Oval 166" cx="1.061" cy="1.061" r="1.061" transform="translate(2.122 1.061)" fill="#dd404f"/>
+          <rect id="Rectangle_1093-2" data-name="Rectangle 1093" width="3.183" height="2.122" transform="translate(0 0)" fill="#fbaf29"/>
+          <rect id="Rectangle_1093_Copy-2" data-name="Rectangle 1093 Copy" width="3.183" height="2.122" transform="translate(3.183 2.122)" fill="#fbaf29"/>
+        </g>
+      </g>
+      <g id="Oval_161_Copy_3" data-name="Oval 161 Copy 3" transform="translate(6.366 14.853)">
+        <ellipse id="Mask-10" data-name="Mask" cx="3.183" cy="2.122" rx="3.183" ry="2.122" transform="translate(0 0)" fill="#28ae67"/>
+        <g id="Oval_161_Copy_3-2" data-name="Oval 161 Copy 3" transform="translate(0 0)" clip-path="url(#clip-path-4)">
+          <ellipse id="Oval_166-3" data-name="Oval 166" cx="2.122" cy="1.061" rx="2.122" ry="1.061" transform="translate(1.061 1.061)" fill="#dd404f"/>
+        </g>
+      </g>
+      <g id="Oval_161_Copy_4" data-name="Oval 161 Copy 4" transform="translate(6.366 21.219)">
+        <ellipse id="Mask-11" data-name="Mask" cx="3.183" cy="1.061" rx="3.183" ry="1.061" transform="translate(0 0)" fill="#28ae67"/>
+      </g>
+      <g id="Oval_161_Copy" data-name="Oval 161 Copy" transform="translate(6.366 8.488)">
+        <ellipse id="Mask-12" data-name="Mask" cx="3.183" cy="2.122" rx="3.183" ry="2.122" transform="translate(0 0)" fill="#fbaf29"/>
+        <g id="Oval_161_Copy-2" data-name="Oval 161 Copy" transform="translate(0 0)" clip-path="url(#clip-path-6)">
+          <circle id="Oval_166-4" data-name="Oval 166" cx="1.061" cy="1.061" r="1.061" transform="translate(2.122 1.061)" fill="#dd404f"/>
+          <rect id="Rectangle_1093-3" data-name="Rectangle 1093" width="2.122" height="4.244" transform="translate(0 0)" fill="#28ae67"/>
+          <rect id="Rectangle_1093_Copy_2" data-name="Rectangle 1093 Copy 2" width="2.122" height="4.244" transform="translate(4.244 0)" fill="#28ae67"/>
+        </g>
+      </g>
+      <path id="Oval_68" data-name="Oval 68" d="M3.182,8.488a1.061,1.061,0,1,1,.683-1.873,1.061,1.061,0,0,1-.683,1.873ZM1.06,6.366a1.061,1.061,0,1,1,.683-1.873A1.061,1.061,0,0,1,1.06,6.366ZM4.243,5.3a1.06,1.06,0,1,1,.814-.379A1.06,1.06,0,0,1,4.243,5.3ZM7.427,4.244a1.061,1.061,0,1,1,.813-.379A1.063,1.063,0,0,1,7.427,4.244ZM5.3,2.122a1.061,1.061,0,1,1,.813-.379A1.063,1.063,0,0,1,5.3,2.122Z" transform="translate(16.975 4.244)" fill="#fff"/>
+      <path id="Star_8" data-name="Star 8" d="M9.816,9.816A6.477,6.477,0,0,1,0,9.04,6.473,6.473,0,0,0,9.04,0a6.477,6.477,0,0,1,.776,9.816Z" transform="translate(17.997 5.224)" fill="#fff"/>
+    </g>
+  </g>
+</svg>

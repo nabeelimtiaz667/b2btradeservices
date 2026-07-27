@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="44" height="32" viewBox="0 0 44 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff" stroke="#f5f5f5" stroke-miterlimit="10" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="pakistan" transform="translate(0 0)">
+    <g id="PK">
+      <g id="Mask-2" data-name="Mask" transform="translate(0 0)" fill="#fff" stroke="#f5f5f5" stroke-miterlimit="10" stroke-width="1">
+        <rect width="44" height="32" rx="4" stroke="none"/>
+        <rect x="0.5" y="0.5" width="43" height="31" rx="3.5" fill="none"/>
+      </g>
+      <g id="PK-2" data-name="PK" clip-path="url(#clip-path)">
+        <path id="Combined_Shape" data-name="Combined Shape" d="M32,32H0V0H32V32Z" transform="translate(13 0)" fill="#0a632f"/>
+        <g id="Star_8_Oval_3" data-name="Star 8 + Oval 3" transform="translate(15.142 15.479) rotate(-45)">
+          <path id="Star_8" data-name="Star 8" d="M9.152,19.1a8.9,8.9,0,0,1-6.472-2.8A9.7,9.7,0,0,1,0,9.548,9.7,9.7,0,0,1,2.681,2.8a8.873,8.873,0,0,1,12.1-.782,8.858,8.858,0,0,0-2.213-.279,8.087,8.087,0,0,0-8.32,7.812,8.087,8.087,0,0,0,8.32,7.812,8.826,8.826,0,0,0,2.213-.279A8.823,8.823,0,0,1,9.152,19.1Zm3.2-6.114v0l.921-2.921L10.817,8.237,13.88,8.21,14.854,5.3l.973,2.905,3.064.027L16.428,10.06l.92,2.92L14.854,11.2l-2.494,1.779Z" transform="translate(0 0)" fill="#fff"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

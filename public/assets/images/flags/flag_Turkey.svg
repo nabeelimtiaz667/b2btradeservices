@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="44" height="32" viewBox="0 0 44 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+    </clipPath>
+  </defs>
+  <g id="turkey" transform="translate(0 0)">
+    <g id="TR">
+      <rect id="Mask-2" data-name="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+      <g id="TR-2" data-name="TR" clip-path="url(#clip-path)">
+        <rect id="Mask_Copy" data-name="Mask Copy" width="44" height="32" transform="translate(0 0)" fill="#e92434"/>
+        <path id="Star_8" data-name="Star 8" d="M4.666,5.7,2.717,8.061,2.85,5,0,3.877l2.952-.819L3.14,0,4.831,2.554,7.8,1.788l-1.906,2.4L7.536,6.77,4.666,5.7Z" transform="translate(25.604 11.439)" fill="#fff"/>
+        <path id="Oval_41" data-name="Oval 41" d="M9.548,19.1A9.549,9.549,0,0,1,2.8,2.8a9.549,9.549,0,0,1,14.289.889A8.246,8.246,0,0,0,12.2,2.122,7.714,7.714,0,0,0,4.244,9.548,7.715,7.715,0,0,0,12.2,16.976a8.246,8.246,0,0,0,4.885-1.564A9.5,9.5,0,0,1,9.548,19.1Z" transform="translate(10.61 6.366)" fill="#fff"/>
+      </g>
+    </g>
+  </g>
+</svg>

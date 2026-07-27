@@ -1,0 +1,16 @@
+<svg id="cambodia" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="44" height="32" viewBox="0 0 44 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+    </clipPath>
+  </defs>
+  <g id="KH">
+    <rect id="Mask-2" data-name="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+    <g id="KH-2" data-name="KH" clip-path="url(#clip-path)">
+      <rect id="Rectangle_2" data-name="Rectangle 2" width="44.56" height="8.488" transform="translate(0 0)" fill="#0f3eb6"/>
+      <rect id="Rectangle_2-2" data-name="Rectangle 2" width="44.56" height="8.488" transform="translate(0 23.341)" fill="#0f3eb6"/>
+      <rect id="Rectangle_2-3" data-name="Rectangle 2" width="44.56" height="14.853" transform="translate(0 8.488)" fill="#ed1a3c"/>
+      <path id="Rectangle_621" data-name="Rectangle 621" d="M12.731,9.549V5.3h2.122l2.122,4.244Zm-7.427,0V5.3H11.67V9.549Zm-5.3,0L2.122,5.3H4.244V9.549ZM12.731,4.244V2.122a1.061,1.061,0,0,1,2.122,0V4.244Zm-7.427,0V2.219H7.427V1.061a1.061,1.061,0,1,1,2.122,0V2.219H11.67V4.244Zm-3.182,0V2.122a1.061,1.061,0,1,1,2.121,0V4.244Z" transform="translate(13.792 11.671)" fill="#fff"/>
+    </g>
+  </g>
+</svg>

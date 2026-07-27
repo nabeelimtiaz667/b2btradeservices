@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="44" height="32" viewBox="0 0 44 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff" stroke="#f5f5f5" stroke-miterlimit="10" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="syria" transform="translate(0 0)">
+    <g id="SY">
+      <g id="Mask-2" data-name="Mask" transform="translate(0 0)" fill="#fff" stroke="#f5f5f5" stroke-miterlimit="10" stroke-width="1">
+        <rect width="44" height="32" rx="4" stroke="none"/>
+        <rect x="0.5" y="0.5" width="43" height="31" rx="3.5" fill="none"/>
+      </g>
+      <g id="SY-2" data-name="SY" clip-path="url(#clip-path)">
+        <rect id="Rectangle_2" data-name="Rectangle 2" width="44.56" height="10.61" transform="translate(0 21.219)" fill="#262626"/>
+        <rect id="Rectangle_2-2" data-name="Rectangle 2" width="44.56" height="10.61" transform="translate(0 0)" fill="#e32139"/>
+        <path id="Star_33" data-name="Star 33" d="M4.3,5.984,1.8,7.677l.84-2.9L.261,2.932l3.013-.1L4.3,0,5.32,2.836l3.013.1L5.952,4.782l.84,2.9Z" transform="translate(10.556 11.671)" fill="#128a49"/>
+        <path id="Star_33-2" data-name="Star 33" d="M4.3,5.984,1.8,7.677l.84-2.9L.261,2.932l3.013-.1L4.3,0,5.32,2.836l3.013.1L5.952,4.782l.84,2.9Z" transform="translate(25.41 11.671)" fill="#128a49"/>
+      </g>
+    </g>
+  </g>
+</svg>

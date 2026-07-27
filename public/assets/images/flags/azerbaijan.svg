@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="44" height="32" viewBox="0 0 44 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+    </clipPath>
+    <filter id="Oval_68" x="19" y="13" width="6" height="8" filterUnits="userSpaceOnUse">
+      <feOffset dy="2" input="SourceAlpha"/>
+      <feGaussianBlur result="blur"/>
+      <feFlood flood-opacity="0.059"/>
+      <feComposite operator="in" in2="blur"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="azerbaijan" transform="translate(0 0)">
+    <g id="AZ">
+      <rect id="Mask-2" data-name="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+      <g id="AZ-2" data-name="AZ" clip-path="url(#clip-path)">
+        <rect id="Rectangle_2" data-name="Rectangle 2" width="44.56" height="10.61" transform="translate(0 0)" fill="#24aad5"/>
+        <rect id="Rectangle_2-2" data-name="Rectangle 2" width="44.56" height="10.61" transform="translate(0 21.219)" fill="#21bf75"/>
+        <rect id="Rectangle_2-3" data-name="Rectangle 2" width="44.56" height="10.61" transform="translate(0 10.61)" fill="#ed1845"/>
+        <g transform="matrix(1, 0, 0, 1, 0, 0)" filter="url(#Oval_68)">
+          <path id="Oval_68-2" data-name="Oval 68" d="M0,3A3,3,0,0,1,4.667.506C4.616.5,4.562.5,4.5.5a2.5,2.5,0,1,0,0,5c.055,0,.111,0,.167-.005A3,3,0,0,1,0,3ZM4,3A1,1,0,1,1,5,4,1,1,0,0,1,4,3Z" transform="translate(19 13)" fill="#fff"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

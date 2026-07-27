@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="44" height="32" viewBox="0 0 44 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+    </clipPath>
+  </defs>
+  <g id="china" transform="translate(0 0)">
+    <g id="CN">
+      <rect id="Mask-2" data-name="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+      <g id="CN-2" data-name="CN" clip-path="url(#clip-path)">
+        <rect id="Mask-3" data-name="Mask" width="44" height="32" transform="translate(0 0)" fill="#f1361d"/>
+        <path id="Star_2" data-name="Star 2" d="M.992,16.109.132,14.8,1.7,14.784,3,13.925l.018,1.563L3.88,16.8l-1.563.019-1.306.859ZM5.005,12.6l-1.554.172.693-1.4L3.972,9.817l1.4.693,1.554-.173-.693,1.4.172,1.554ZM4.164,6.525,3.352,5.189l1.563.036L6.25,4.412,6.214,5.976l.813,1.336L5.463,7.275l-1.336.813ZM1.541,2.96,0,2.7,1.053,1.541,1.316,0,2.471,1.053l1.541.263L2.96,2.471,2.7,4.013Z" transform="translate(16.03 2.237)" fill="#ffdc42"/>
+        <path id="Star_8" data-name="Star 8" d="M6.054,8.848,2.312,11.516,3.693,7.133,0,4.4l4.595-.041L6.054,0,7.513,4.357l4.595.041L8.415,7.133,9.8,11.516Z" transform="translate(4.555 4.244)" fill="#ffdc42"/>
+      </g>
+    </g>
+  </g>
+</svg>

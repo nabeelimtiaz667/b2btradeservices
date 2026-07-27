@@ -1,0 +1,3 @@
+name,email,phone,whatsapp,country,company_name,company_introduction,website,city,selling_products,membership_level
+"John Smith","john@example.com","+1234567890","+1234567890","United States","Smith Trading Co","We are a leading supplier of industrial equipment.","https://smithtrading.com","New York","Industrial Equipment, Machinery",free
+"Maria Garcia","maria@example.com","+4412345678","+4412345678","United Kingdom","Garcia Exports Ltd","Premium textile and fabric supplier since 2010.","https://garciaexports.com","London","Textiles, Fabrics, Cotton",starter

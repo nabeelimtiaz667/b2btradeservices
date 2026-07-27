@@ -1,0 +1,14 @@
+<svg id="flag-slider-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="97.754" height="68.392" viewBox="0 0 97.754 68.392">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Rectangle_151" data-name="Rectangle 151" width="97.754" height="68.392" fill="none"/>
+    </clipPath>
+  </defs>
+  <g id="Group_139" data-name="Group 139" transform="translate(0 0)" clip-path="url(#clip-path)">
+    <path id="Rectangle_148" data-name="Rectangle 148" d="M5.99,0H91.765a5.989,5.989,0,0,1,5.989,5.989V62.4a5.992,5.992,0,0,1-5.992,5.992H5.99A5.99,5.99,0,0,1,0,62.4V5.99A5.99,5.99,0,0,1,5.99,0Z" transform="translate(0 0)" fill="#da2128"/>
+    <rect id="Rectangle_149" data-name="Rectangle 149" width="97.754" height="8.941" transform="translate(0 8.941)" fill="#e6e6e6"/>
+    <rect id="Rectangle_150" data-name="Rectangle 150" width="97.754" height="8.941" transform="translate(0 50.509)" fill="#e6e6e6"/>
+    <path id="Path_933" data-name="Path 933" d="M97.754,82.668v-4.39H0v4.39a4.55,4.55,0,0,0,4.549,4.551H93.2a4.55,4.55,0,0,0,4.549-4.551" transform="translate(0 -18.827)" fill="#034ea1"/>
+    <path id="Path_934" data-name="Path 934" d="M0,4.55V8.94H97.754V4.55A4.549,4.549,0,0,0,93.2,0H4.549A4.549,4.549,0,0,0,0,4.55" transform="translate(0 0)" fill="#034ea1"/>
+  </g>
+</svg>

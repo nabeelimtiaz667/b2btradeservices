@@ -1,0 +1,202 @@
+Country,Code,Phone Code,Region
+Afghanistan,AF,+93,South Asia
+Albania,AL,+355,Europe
+Algeria,DZ,+213,Africa
+Andorra,AD,+376,Europe
+Angola,AO,+244,Africa
+Antigua and Barbuda,AG,+1-268,North America
+Argentina,AR,+54,North America
+Armenia,AM,+374,Middle East
+Australia,AU,+61,Southeast Asia
+Austria,AT,+43,Europe
+Azerbaijan,AZ,+994,Middle East
+Bahamas,BS,+1-242,North America
+Bahrain,BH,+973,Middle East
+Bangladesh,BD,+880,South Asia
+Barbados,BB,+1-246,North America
+Belarus,BY,+375,Europe
+Belgium,BE,+32,Europe
+Belize,BZ,+501,North America
+Benin,BJ,+229,Africa
+Bermuda,BM,+1-441,North America
+Bhutan,BT,+975,South Asia
+Bolivia,BO,+591,North America
+Bosnia and Herzegovina,BA,+387,Europe
+Botswana,BW,+267,Africa
+Brazil,BR,+55,North America
+Brunei Darussalam,BN,+673,Southeast Asia
+Bulgaria,BG,+359,Europe
+Burkina Faso,BF,+226,Africa
+Burundi,BI,+257,Africa
+Cambodia,KH,+855,Southeast Asia
+Cameroon,CM,+237,Africa
+Canada,CA,+1,North America
+Cape Verde,CV,+238,Africa
+Central African Republic,CF,+236,Africa
+Chad,TD,+235,Africa
+Chile,CL,+56,North America
+China,CN,+86,East Asia
+Colombia,CO,+57,North America
+Comoros,KM,+269,Africa
+Congo,CG,+242,Africa
+Democratic Republic of the Congo,CD,+243,Africa
+Costa Rica,CR,+506,North America
+Cote D'Ivoire (Ivory Coast),CI,+225,Africa
+Croatia,HR,+385,Europe
+Cuba,CU,+53,North America
+Curacao,CW,+599,North America
+Cyprus,CY,+357,Europe
+Czech Republic,CZ,+420,Europe
+Denmark,DK,+45,Europe
+Djibouti,DJ,+253,Africa
+Dominica,DM,+1-767,North America
+Dominican Republic,DO,+1-809,North America
+East Timor,TL,+670,Southeast Asia
+Ecuador,EC,+593,North America
+Egypt,EG,+20,Africa
+El Salvador,SV,+503,North America
+Equatorial Guinea,GQ,+240,Africa
+Eritrea,ER,+291,Africa
+Estonia,EE,+372,Europe
+Ethiopia,ET,+251,Africa
+Fiji,FJ,+679,Southeast Asia
+Finland,FI,+358,Europe
+France,FR,+33,Europe
+Gabon,GA,+241,Africa
+Gambia,GM,+220,Africa
+Georgia,GE,+995,Middle East
+Germany,DE,+49,Europe
+Ghana,GH,+233,Africa
+Greece,GR,+30,Europe
+Grenada,GD,+1-473,North America
+Guatemala,GT,+502,North America
+Guinea,GN,+224,Africa
+Guinea-Bissau,GW,+245,Africa
+Guyana,GY,+592,North America
+Haiti,HT,+509,North America
+Honduras,HN,+504,North America
+Hong Kong,HK,+852,East Asia
+Hungary,HU,+36,Europe
+Iceland,IS,+354,Europe
+India,IN,+91,South Asia
+Indonesia,ID,+62,Southeast Asia
+Iran,IR,+98,Middle East
+Iraq,IQ,+964,Middle East
+Ireland,IE,+353,Europe
+Israel,IL,+972,Middle East
+Italy,IT,+39,Europe
+Jamaica,JM,+1-876,North America
+Japan,JP,+81,East Asia
+Jordan,JO,+962,Middle East
+Kazakhstan,KZ,+7,South Asia
+Kenya,KE,+254,Africa
+Kiribati,KI,+686,Southeast Asia
+Korea (North),KP,+850,East Asia
+South Korea,KR,+82,East Asia
+Kosovo,XK,+383,Europe
+Kuwait,KW,+965,Middle East
+Kyrgyzstan,KG,+996,South Asia
+Laos,LA,+856,Southeast Asia
+Latvia,LV,+371,Europe
+Lebanon,LB,+961,Middle East
+Lesotho,LS,+266,Africa
+Liberia,LR,+231,Africa
+Libya,LY,+218,Africa
+Liechtenstein,LI,+423,Europe
+Lithuania,LT,+370,Europe
+Luxembourg,LU,+352,Europe
+Macao,MO,+853,East Asia
+Macedonia,MK,+389,Europe
+Madagascar,MG,+261,Africa
+Malawi,MW,+265,Africa
+Malaysia,MY,+60,Southeast Asia
+Maldives,MV,+960,South Asia
+Mali,ML,+223,Africa
+Malta,MT,+356,Europe
+Marshall Islands,MH,+692,Southeast Asia
+Mauritania,MR,+222,Africa
+Mauritius,MU,+230,Africa
+Mexico,MX,+52,North America
+Micronesia,FM,+691,Southeast Asia
+Moldova,MD,+373,Europe
+Monaco,MC,+377,Europe
+Mongolia,MN,+976,East Asia
+Montenegro,ME,+382,Europe
+Morocco,MA,+212,Africa
+Mozambique,MZ,+258,Africa
+Myanmar,MM,+95,Southeast Asia
+Namibia,NA,+264,Africa
+Nauru,NR,+674,Southeast Asia
+Nepal,NP,+977,South Asia
+Netherlands,NL,+31,Europe
+New Zealand,NZ,+64,Southeast Asia
+Nicaragua,NI,+505,North America
+Niger,NE,+227,Africa
+Nigeria,NG,+234,Africa
+Norway,NO,+47,Europe
+Oman,OM,+968,Middle East
+Pakistan,PK,+92,South Asia
+Palau,PW,+680,Southeast Asia
+Palestinian Territory,PS,+970,Middle East
+Panama,PA,+507,North America
+Papua New Guinea,PG,+675,Southeast Asia
+Paraguay,PY,+595,North America
+Peru,PE,+51,North America
+Philippines,PH,+63,Southeast Asia
+Poland,PL,+48,Europe
+Portugal,PT,+351,Europe
+Qatar,QA,+974,Middle East
+Romania,RO,+40,Europe
+Russia,RU,+7,Europe
+Rwanda,RW,+250,Africa
+Saint Kitts and Nevis,KN,+1-869,North America
+Saint Lucia,LC,+1-758,North America
+Saint Vincent and the Grenadines,VC,+1-784,North America
+Samoa,WS,+685,Southeast Asia
+San Marino,SM,+378,Europe
+Sao Tome and Principe,ST,+239,Africa
+Saudi Arabia,SA,+966,Middle East
+Senegal,SN,+221,Africa
+Serbia,RS,+381,Europe
+Seychelles,SC,+248,Africa
+Sierra Leone,SL,+232,Africa
+Singapore,SG,+65,Southeast Asia
+Slovakia,SK,+421,Europe
+Slovenia,SI,+386,Europe
+Solomon Islands,SB,+677,Southeast Asia
+Somalia,SO,+252,Africa
+South Africa,ZA,+27,Africa
+South Sudan,SS,+211,Africa
+Spain,ES,+34,Europe
+Sri Lanka,LK,+94,South Asia
+Sudan,SD,+249,Africa
+Suriname,SR,+597,North America
+Swaziland,SZ,+268,Africa
+Sweden,SE,+46,Europe
+Switzerland,CH,+41,Europe
+Syria,SY,+963,Middle East
+Taiwan,TW,+886,East Asia
+Tajikistan,TJ,+992,South Asia
+Tanzania,TZ,+255,Africa
+Thailand,TH,+66,Southeast Asia
+Togo,TG,+228,Africa
+Tonga,TO,+676,Southeast Asia
+Trinidad and Tobago,TT,+1-868,North America
+Tunisia,TN,+216,Africa
+Turkey,TR,+90,Middle East
+Turkmenistan,TM,+993,South Asia
+Tuvalu,TV,+688,Southeast Asia
+Uganda,UG,+256,Africa
+Ukraine,UA,+380,Europe
+United Arab Emirates,AE,+971,Middle East
+United Kingdom,GB,+44,Europe
+United States,US,+1,North America
+Uruguay,UY,+598,North America
+Uzbekistan,UZ,+998,South Asia
+Vanuatu,VU,+678,Southeast Asia
+Vatican,VA,+379,Europe
+Venezuela,VE,+58,North America
+Vietnam,VN,+84,Southeast Asia
+Yemen,YE,+967,Middle East
+Zambia,ZM,+260,Africa
+Zimbabwe,ZW,+263,Africa

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="44" height="32" viewBox="0 0 44 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff" stroke="#f5f5f5" stroke-miterlimit="10" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="georgia" transform="translate(0 0)">
+    <g id="GE">
+      <g id="Mask-2" data-name="Mask" transform="translate(0 0)" fill="#fff" stroke="#f5f5f5" stroke-miterlimit="10" stroke-width="1">
+        <rect width="44" height="32" rx="4" stroke="none"/>
+        <rect x="0.5" y="0.5" width="43" height="31" rx="3.5" fill="none"/>
+      </g>
+      <g id="GE-2" data-name="GE" clip-path="url(#clip-path)">
+        <path id="Rectangle_2" data-name="Rectangle 2" d="M21.219,36.072V21.219H0V14.854H21.219V0h6.366V14.854H48.8v6.366H27.585V36.072Z" transform="translate(-2.122 -2.122)" fill="#ff2b37"/>
+        <path id="Rectangle_742" data-name="Rectangle 742" d="M2,6l.4-2.4L0,4V2l2.4.4L2,0H4L3.6,2.4,6,2V4L3.6,3.6,4,6Z" transform="translate(32 3)" fill="#fd0d1b"/>
+        <path id="Rectangle_742-2" data-name="Rectangle 742" d="M2,6l.4-2.4L0,4V2l2.4.4L2,0H4L3.6,2.4,6,2V4L3.6,3.6,4,6Z" transform="translate(6 3)" fill="#fd0d1b"/>
+        <path id="Rectangle_742-3" data-name="Rectangle 742" d="M2,6l.4-2.4L0,4V2l2.4.4L2,0H4L3.6,2.4,6,2V4L3.6,3.6,4,6Z" transform="translate(6 22)" fill="#fd0d1b"/>
+        <path id="Rectangle_742-4" data-name="Rectangle 742" d="M2,6l.4-2.4L0,4V2l2.4.4L2,0H4L3.6,2.4,6,2V4L3.6,3.6,4,6Z" transform="translate(32 22)" fill="#fd0d1b"/>
+      </g>
+    </g>
+  </g>
+</svg>

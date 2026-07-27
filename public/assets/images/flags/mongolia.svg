@@ -1,0 +1,20 @@
+<svg id="mongolia" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="44" height="32" viewBox="0 0 44 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+    </clipPath>
+    <linearGradient id="linear-gradient" x1="0.5" x2="0.5" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#f8d246"/>
+      <stop offset="1" stop-color="#f9ce2f"/>
+    </linearGradient>
+  </defs>
+  <g id="MN">
+    <rect id="Mask-2" data-name="Mask" width="44" height="32" rx="4" transform="translate(0 0)" fill="#fff"/>
+    <g id="MN-2" data-name="MN" clip-path="url(#clip-path)">
+      <rect id="Rectangle_2_Copy" data-name="Rectangle 2 Copy" width="14.853" height="31.829" transform="translate(14.853 0)" fill="#146bbc"/>
+      <rect id="Rectangle_2" data-name="Rectangle 2" width="14.853" height="31.829" transform="translate(0 0)" fill="#e43642"/>
+      <rect id="Rectangle_2-2" data-name="Rectangle 2" width="14.853" height="31.829" transform="translate(29.707 0)" fill="#e43642"/>
+      <path id="Rectangle_1611" data-name="Rectangle 1611" d="M4.244,9.548V7.426L3.183,9.548,2.122,7.426H3.183A1.061,1.061,0,1,1,4.244,6.366V3.183L3.183,5.3,2.122,3.183H3.183A1.061,1.061,0,1,1,4.244,2.122,1.061,1.061,0,0,1,3.183,3.183H6.366V9.548Zm0-2.122V6.366A1.061,1.061,0,0,1,3.183,7.426ZM0,9.548V3.183H2.122V9.548ZM2.122,1.061,3.183,0,4.244,1.061Z" transform="translate(4.244 15.914)" fill="url(#linear-gradient)"/>
+    </g>
+  </g>
+</svg>

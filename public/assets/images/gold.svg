@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 200">
+  <!-- Generator: Adobe Illustrator 30.2.1, SVG Export Plug-In . SVG Version: 2.1.1 Build 1)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: url(#radial-gradient3);
+      }
+
+      .st0, .st1, .st2, .st3, .st4, .st5, .st6 {
+        isolation: isolate;
+      }
+
+      .st0, .st1, .st4 {
+        mix-blend-mode: multiply;
+      }
+
+      .st1 {
+        fill: url(#radial-gradient2);
+        opacity: .18;
+      }
+
+      .st7 {
+        fill: url(#linear-gradient1);
+      }
+
+      .st2 {
+        font-family: Raleway-SemiBold, Raleway;
+        font-size: 16.2px;
+        font-weight: 600;
+      }
+
+      .st2, .st8 {
+        fill: #2b2d2e;
+      }
+
+      .st4 {
+        fill: url(#radial-gradient);
+      }
+
+      .st9 {
+        fill: none;
+        stroke: url(#radial-gradient1);
+        stroke-miterlimit: 10;
+      }
+
+      .st5, .st6 {
+        font-family: BebasNeue, 'Bebas Neue';
+        font-size: 49.76px;
+      }
+
+      .st10 {
+        fill: #292c2b;
+      }
+
+      .st11 {
+        fill: url(#linear-gradient);
+      }
+
+      .st6 {
+        fill: #282a2c;
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="7.76" y1="102.01" x2="192.26" y2="102.01" gradientTransform="translate(0 202) scale(1 -1)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff5a8"/>
+      <stop offset=".31" stop-color="#bd8100"/>
+      <stop offset=".76" stop-color="#e0be58"/>
+      <stop offset="1" stop-color="#f1dc83"/>
+    </linearGradient>
+    <radialGradient id="radial-gradient" cx="161.73" cy="183.54" fx="161.73" fy="183.54" r="85.49" gradientTransform="translate(-102.2 237.69) rotate(14.36) scale(1 -1)" gradientUnits="userSpaceOnUse">
+      <stop offset=".91" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#571600"/>
+    </radialGradient>
+    <radialGradient id="radial-gradient1" cx="100" cy="102" fx="100" fy="102" r="86" gradientTransform="translate(0 202) scale(1 -1)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff5a8"/>
+      <stop offset=".72" stop-color="#fff5a8"/>
+    </radialGradient>
+    <radialGradient id="radial-gradient2" cx="100" cy="101.99" fx="100" fy="101.99" r="75" gradientTransform="translate(0 202) scale(1 -1)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#571600"/>
+    </radialGradient>
+    <linearGradient id="linear-gradient1" x1="186.56" y1="154.88" x2="9.59" y2="46.78" gradientTransform="translate(0 202) scale(1 -1)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbc01b"/>
+      <stop offset=".25" stop-color="#fff5a8"/>
+      <stop offset=".32" stop-color="#f8e996"/>
+      <stop offset=".44" stop-color="#e6ca69"/>
+      <stop offset=".61" stop-color="#ca9822"/>
+      <stop offset=".69" stop-color="#bd8100"/>
+      <stop offset="1" stop-color="#fff5a8"/>
+    </linearGradient>
+    <radialGradient id="radial-gradient3" cx="100" cy="102" fx="100" fy="102" r="70.76" gradientTransform="translate(0 202) scale(1 -1)" gradientUnits="userSpaceOnUse">
+      <stop offset=".89" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".9" stop-color="#f7f6f3" stop-opacity=".05"/>
+      <stop offset=".92" stop-color="#c9bfa9" stop-opacity=".39"/>
+      <stop offset=".94" stop-color="#a4936f" stop-opacity=".66"/>
+      <stop offset=".96" stop-color="#8a7446" stop-opacity=".85"/>
+      <stop offset=".98" stop-color="#7a612d" stop-opacity=".96"/>
+      <stop offset="1" stop-color="#755b25"/>
+    </radialGradient>
+  </defs>
+  <g class="st3">
+    <g id="Layer_1">
+      <g>
+        <circle class="st11" cx="100.01" cy="99.99" r="92.25"/>
+        <path class="st10" d="M185.33,99.69c0,3.5-.18,6.97-.58,10.36-.45,3.82-1.15,7.57-2.1,11.22-.4,1.57-.84,3.12-1.33,4.65h0c-.9,2.85-1.95,5.64-3.14,8.34-2.58,5.88-5.81,11.41-9.58,16.51-3.21,4.33-6.82,8.34-10.77,11.97-15.13,13.95-35.32,22.5-57.51,22.58-22.22.08-42.49-8.34-57.72-22.21-3.92-3.56-7.49-7.48-10.69-11.71-5.97-7.9-10.6-16.85-13.54-26.55-1.38-4.53-2.39-9.21-3.01-14.02-.44-3.45-.67-6.97-.68-10.54-.17-47.13,37.9-85.47,85.04-85.63,47.12-.17,85.46,37.89,85.63,85.02h-.02Z"/>
+        <path class="st4" d="M183.27,119.33c-10.99,47.25-58.94,75.88-105.75,63.15-44.11-12-71.15-57.28-60.8-101.81C27.72,33.43,75.67,4.79,122.48,17.52c44.11,12,71.15,57.28,60.8,101.81h0Z"/>
+        <path class="st9" d="M183.27,119.33c-10.99,47.25-58.94,75.88-105.75,63.15-44.11-12-71.15-57.28-60.8-101.81C27.72,33.43,75.67,4.79,122.48,17.52c44.11,12,71.15,57.28,60.8,101.81h0Z"/>
+      </g>
+      <g>
+        <circle class="st1" cx="100" cy="100.01" r="74.98"/>
+        <circle class="st7" cx="100" cy="100.01" r="70.05"/>
+        <circle class="st0" cx="100" cy="100.01" r="70.05"/>
+        <polygon class="st8" points="102.08 152.42 97.5 155.3 98.82 150.05 94.66 146.58 100.06 146.22 102.08 141.19 104.09 146.22 109.49 146.58 105.34 150.05 106.66 155.3 102.08 152.42"/>
+        <polygon class="st8" points="81.07 149.36 77.11 151.84 78.25 147.32 74.67 144.32 79.32 144.01 81.07 139.67 82.81 144.01 87.46 144.32 83.88 147.32 85.02 151.84 81.07 149.36"/>
+        <polygon class="st8" points="123.09 149.36 119.15 151.84 120.28 147.32 116.7 144.32 121.35 144.01 123.09 139.67 124.83 144.01 129.49 144.32 125.9 147.32 127.05 151.84 123.09 149.36"/>
+        <polygon class="st8" points="102.08 52.03 97.5 54.9 98.82 49.65 94.66 46.19 100.06 45.82 102.08 40.81 104.09 45.82 109.49 46.19 105.34 49.65 106.66 54.9 102.08 52.03"/>
+        <polygon class="st8" points="81.07 54.32 77.11 56.8 78.25 52.28 74.67 49.28 79.32 48.97 81.07 44.64 82.81 48.97 87.46 49.28 83.88 52.28 85.02 56.8 81.07 54.32"/>
+        <polygon class="st8" points="123.09 54.32 119.15 56.8 120.28 52.28 116.7 49.28 121.35 48.97 123.09 44.64 124.83 48.97 129.49 49.28 125.9 52.28 127.05 56.8 123.09 54.32"/>
+        <text class="st5" transform="translate(61.86 111.69)"><tspan x="0" y="0">Gold</tspan></text>
+        <text class="st6" transform="translate(61.86 111.69)"><tspan x="0" y="0">Gold</tspan></text>
+        <text class="st2" transform="translate(66.5 127.29)"><tspan x="0" y="0">Package</tspan></text>
+      </g>
+    </g>
+  </g>
+</svg>

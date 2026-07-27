@@ -1,0 +1,18 @@
+<svg id="flag_Canada_CA" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20" height="14" viewBox="0 0 20 14">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Mask" width="20" height="14" rx="4" fill="#fff" stroke="#f5f5f5" stroke-miterlimit="10" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="CA">
+    <g id="Mask-2" data-name="Mask" fill="#fff" stroke="#f5f5f5" stroke-miterlimit="10" stroke-width="1">
+      <rect width="20" height="14" rx="4" stroke="none"/>
+      <rect x="0.5" y="0.5" width="19" height="13" rx="3.5" fill="none"/>
+    </g>
+    <g id="CA-2" data-name="CA" clip-path="url(#clip-path)">
+      <rect id="Mask-3" data-name="Mask" width="6" height="14" transform="translate(14)" fill="#ff3131"/>
+      <rect id="Rectangle_2" data-name="Rectangle 2" width="6" height="14" fill="#ff3131"/>
+      <path id="Rectangle_66" data-name="Rectangle 66" d="M4.762,2.842a.2.2,0,0,1-.344-.183L4.762.947l-.952.474L3.333,0,2.857,1.421,1.9.947l.344,1.712a.2.2,0,0,1-.344.183L1.6,2.536a.239.239,0,0,0-.337,0l-.308.306L0,2.368l.476.947-.308.306a.236.236,0,0,0,0,.335l1.26,1.254H2.857L3.1,6.632h.476L3.81,5.211H5.238L6.5,3.957a.236.236,0,0,0,0-.335L6.19,3.316l.476-.947-.952.474-.308-.306a.239.239,0,0,0-.337,0Z" transform="translate(6.667 3.684)" fill="#ff3131"/>
+    </g>
+  </g>
+</svg>

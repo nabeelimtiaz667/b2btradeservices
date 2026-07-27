@@ -1,0 +1,11 @@
+<svg id="verified-badge" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16.028" height="19" viewBox="0 0 16.028 19">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Rectangle_206" data-name="Rectangle 206" width="16.028" height="19" fill="#15a2a0"/>
+    </clipPath>
+  </defs>
+  <g id="Group_258" data-name="Group 258" clip-path="url(#clip-path)">
+    <path id="Path_956" data-name="Path 956" d="M16.027,3.607V8.166c-.027-.078-.058.463-.07.579A12.481,12.481,0,0,1,8.194,19H7.837A12.1,12.1,0,0,1,.026,8.1L0,3.79a.761.761,0,0,1,.477-.717L7.727.062a.715.715,0,0,1,.578,0l7.2,2.988a.88.88,0,0,1,.524.558m-1.484,3.76V4.259L8.018,1.548,1.487,4.261l0,3.3A10.947,10.947,0,0,0,8.016,17.45,10.949,10.949,0,0,0,14.543,7.368" transform="translate(0 0)" fill="#15a2a0"/>
+    <path id="Path_957" data-name="Path 957" d="M118.056,178.543a.741.741,0,1,1,1.038-1.058l1.551,1.548,3.183-3.184a.742.742,0,1,1,1.048,1.05l-3.7,3.7a.742.742,0,0,1-1.072-.012Z" transform="translate(-113.448 -169.098)" fill="#15a2a0"/>
+  </g>
+</svg>
