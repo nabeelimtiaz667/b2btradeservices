@@ -683,7 +683,11 @@ class Dashboard extends BaseController
             $settingModel = new SiteSettingModel();
             $autoApprove = $settingModel->getSetting('auto_approve_listings', '1');
             if ($autoApprove !== '1') {
-                $data['status'] = 'inactive';
+                // 'pending' is the awaiting-approval state and is the value the
+                // product path uses for this same condition (see supplierAddProduct).
+                // 'inactive' means "an admin deliberately hid this" and is set from
+                // the admin listings screen instead.
+                $data['status'] = 'pending';
             }
 
             $attachment = $this->request->getFile('attachment');

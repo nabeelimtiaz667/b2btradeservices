@@ -103,7 +103,7 @@
                             <div class="buyer-main-list move-on-hover">
                                 <div class="d-flex justify-content-between">
                                     <div class="buyer-main-list-content">
-                                        <h2 class="f-16 light-green-h2-color"><a href="<?= base_url('buyer-inquiry/' . url_title(strtolower($inquiry['title']), '-', true) . '/' . $inquiry['id']) ?>" class="text-decoration-none light-green-h2-color"><?= esc($inquiry['title']) ?></a></h2>
+                                        <h2 class="f-16 light-green-h2-color"><a href="<?= inquiry_url($inquiry) ?>" class="text-decoration-none light-green-h2-color"><?= esc($inquiry['title']) ?></a></h2>
                                         <div class="d-flex justify-content-between mt-3 gap-15">
                                             <div>
                                                 <p><b>Quantity Required:</b> <br />
@@ -125,7 +125,7 @@
                                         <?php if (isset($inquiry['country']) && $inquiry['country']): ?>
                                             <img src="<?= base_url('assets/images/flags/flag_' . str_replace(' ', '_', $inquiry['country']['name']) . '.svg') ?>" width="24" onerror="this.style.display='none'" alt="<?= esc($inquiry['country']['name']) ?>">
                                         <?php endif; ?>
-                                        <a class="solid-btn mt-3" href="<?= base_url('buyer-inquiry/' . url_title(strtolower($inquiry['title']), '-', true) . '/' . $inquiry['id']) ?>">Contact Buyer</a>
+                                        <a class="solid-btn mt-3" href="<?= inquiry_url($inquiry) ?>">Contact Buyer</a>
                                     </div>
                                 </div>
                             </div>

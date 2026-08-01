@@ -14,6 +14,88 @@ Entry format:
 
 ---
 
+## 2026-07-31 — Slug work deployed to production
+
+**Files:** the 20-file set below, deployed to the cPanel host
+**Why:** ship the fix for BLOCKERS #14.
+
+- Owner confirmed production was 3 migrations behind, matching the state inferred
+  from the imported `migrations` table — so the Step 0 guard on
+  `2026-03-14-222249_AddFieldsToContactSubmissions` was a genuine prerequisite, not
+  local housekeeping. Without it the batch would have aborted on
+  `Duplicate column name 'country_id'` and the slug migrations would never have run.
+- Six migrations applied on production (3 pre-existing no-ops + the 3 new ones)
+- **Backfill verified on production:** `COUNT(*) = COUNT(DISTINCT slug)`, nulls = 0.
+  This is the check that matters — the failure mode is silent, and `spark migrate`
+  reports success either way (see the `resetDataCache()` note in the entry below)
+- Slug URLs confirmed serving correctly; numeric inquiry ids confirmed 301ing to
+  their canonical slug
+
+`app/Config/Database.php` was deliberately excluded from the upload — it is committed
+with dev values and would take production offline. See CONTEXT.md.
+
+**Still open after this deploy:** BLOCKERS #17 — do not run `php spark migrate:rollback`
+on production; all six migrations landed in one batch and three of them have an
+unconditional `down()` that drops five real columns.
+
+---
+
+## 2026-07-30 — Inquiry URLs migrated to real slugs (BLOCKERS #14 closed)
+
+**Files:** 20 — `app/Config/{Autoload,Routes}.php`, `app/Controllers/{Buyer,Dashboard,AdminSettings}.php`,
+`app/Models/BuyerInquiryModel.php`, `app/Helpers/inquiry_helper.php` (new),
+3 new migrations, `app/Database/Migrations/2026-03-14-222249_*` (fix),
+`app/Database/Seeds/DataSeeder.php`, 6 views, 2 layouts
+**Why:** `Routes.php:58` captured the slug then discarded it, so any slug served
+any inquiry. SEO duplicate content at unlimited URLs per record.
+
+**Schema** — `buyer_inquiries.slug` VARCHAR(255) NULL + `buyer_inquiries_slug`
+UNIQUE; `status` ENUM widened to include `inactive`.
+
+**Canonical URL is now `/buyer-inquiry/{slug}`.** Every historic shape 301s to it:
+`/buyer-inquiry/{anything}/{id}`, `/buyer-detail/{id}`, `/buyer/detail/{id}`,
+and bare `/buyer-inquiry/{id}`.
+
+**Verified**
+- 470/470 slugs, all distinct, zero nulls, zero bad characters, max length 125
+- **Zero URL churn** — every backfilled slug byte-identical to what the old
+  render-time expression produced; 0 unexpected diffs across all 470 rows
+- Collisions resolved as predicted: ids 433/434 got `-2` suffixes
+- Original bug gone: `/buyer-inquiry/bulk-rice-import-requirement/{1,2,3,4}` now
+  301 to four *different* correct slugs instead of serving four different pages
+  under one slug
+- Single-hop redirects, no chains; 404s on unknown slug and unknown id
+- Canonical tags present and distinct per page; zero legacy two-segment links left
+- Runtime dedupe through the live RFQ form: 3 identical titles →
+  `zztest-dedupe-widget`, `-2`, `-3`; empty title → `buyer-inquiry`
+- Freeze confirmed: a full title rewrite left the slug untouched
+- Test rows removed; every table back to baseline (users 641, inquiries 470,
+  submissions 61, activities 542, notes 109)
+
+**Also fixed** — `Dashboard.php:686` `'inactive'` → `'pending'` (matches the product
+path at `:352`); status whitelists on both `AdminSettings` update actions;
+`getInquiriesByCategory()` gained `$excludeId` so related lists show 5 not 4;
+`insert()` retry-once on slug collision; moderation help text reworded.
+
+### Two defects found during implementation, not in the plan
+
+**1. The backfill silently did nothing on its first run.** `getFieldNames()` caches
+per connection and `Forge::addColumn()` never invalidates it, so the backfill's own
+column guard read a stale list, concluded `slug` did not exist and returned early —
+while reporting success. Fixed with `resetDataCache()` in both migrations.
+**This would have reproduced on production**, leaving 470 null slugs behind an
+apparently-clean `spark migrate`.
+
+**2. Pre-existing 500 on public inquiry pages.** `Buyer::detail` called
+`find($inquiry['country_id'])` unguarded; CI4's `find(null)` returns *all* rows, so
+a null country handed the view a 122-element list and `['name']` fataled. Reachable
+because the RFQ form's Country `<select>` is labelled required (red asterisk) but
+carries no `required` attribute. All 470 imported rows have a country, which is why
+it never surfaced. Controller now guards null ids. The missing `required` attribute
+is **not** fixed — see BLOCKERS #15.
+
+---
+
 ## 2026-07-29 — Investigated: inquiry URL slug is decorative
 
 **Files:** none changed (investigation only)

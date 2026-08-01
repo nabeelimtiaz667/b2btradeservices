@@ -37,7 +37,7 @@
                     <input class="form-check-input" type="checkbox" name="auto_approve_listings" value="1" <?= ($settings['auto_approve_listings'] ?? '1') === '1' ? 'checked' : '' ?>>
                     <label class="form-check-label">Auto-Approve Listings</label>
                 </div>
-                <small class="text-muted">When enabled, new products and inquiries are immediately visible. When disabled, they stay inactive until admin approves them.</small>
+                <small class="text-muted">When enabled, new products and inquiries are immediately visible. When disabled, they stay pending until admin approves them.</small>
             </div>
             <div class="mb-3">
                 <div class="form-check form-switch">

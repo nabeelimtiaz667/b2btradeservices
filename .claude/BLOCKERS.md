@@ -6,7 +6,137 @@ only when it is genuinely fixed — record the fix in [CHANGELOG.md](CHANGELOG.m
 Severity: `CRITICAL` · `HIGH` · `MEDIUM` · `LOW`
 
 Resolved and removed: #1 (Aiven credential — rotated), #2 (`_database.php` —
-deleted), #3 (`app.zip` — deleted), #5 (app unverified — swept 2026-07-29).
+deleted), #3 (`app.zip` — deleted), #5 (app unverified — swept 2026-07-29),
+#14 (inquiry slugs — shipped to dev 2026-07-30, pending production deploy T-15).
+
+**Still open despite the slug work:** #10 and #13, the "01 Jan, 1970" rendering
+bugs. They share the same `buyer_inquiries` table but are a separate defect —
+nothing in the slug change touched `inquiry_date`. Tasks T-5, T-6, T-12.
+
+---
+
+## #15 — RFQ form's Country field is labelled required but is not
+**Severity:** MEDIUM · **Raised:** 2026-07-30 · **Open**
+
+`app/Views/pages/post-rfq.php:89-90` renders
+`Country <span class="text-danger">*</span>` above a `<select name="country">` that
+has **no `required` attribute**. The Category select right above it does have one.
+`Contact::submit` does not validate it either (`Contact.php:133` →
+`getPost('country') ?: null`).
+
+So a buyer can submit an RFQ with no country and get an inquiry with
+`country_id = NULL`.
+
+**This used to produce a 500 on the inquiry's public page.** `Buyer::detail` called
+`$this->countryModel->find(null)`, and CI4's `find(null)` returns *every* row — so
+the view received a 122-element list and `$inquiry['country']['name']` fataled with
+`Undefined array key "name"`. All 470 imported rows have a country, which is why it
+had never been seen.
+
+**Already fixed:** the controller now guards null ids, so such pages render with the
+country omitted rather than crashing. Verified.
+
+**Still open:** the form itself. Either add `required` to the select to match its own
+asterisk, or drop the asterisk and accept country-less inquiries. Left alone because
+it changes submission behaviour on a live public form — owner's call.
+
+Worth auditing the other nullable FKs on the same form (`category_id`) and the same
+`find($id)` pattern elsewhere in the codebase.
+
+---
+
+## #17 — `migrate:rollback` will drop five real production columns
+**Severity:** HIGH · **Raised:** 2026-07-30 · **Open**
+
+**Do not run `php spark migrate:rollback` on this codebase without reading this.**
+
+Three migrations have a **guarded `up()` but an unconditional `down()`**:
+
+| Migration | `up()` | `down()` |
+|---|---|---|
+| `2024-03-14-000001_AddIsFeaturedToUsers` | `if (! in_array('is_featured', ...))` | `dropColumn('users', 'is_featured')` |
+| `2026-03-14-222249_AddFieldsToContactSubmissions` | guarded (fixed 2026-07-30) | `dropColumn('contact_submissions', ['country_id','partnership','whatsapp'])` |
+| `2026-03-14-222841_AddFormDataToContactSubmissions` | `if (! in_array('form_data', ...))` | `dropColumn('contact_submissions', 'form_data')` |
+
+All three columns sets already existed when the migrations were written — they were
+added to the database by hand, and the migrations were back-filled afterwards. So
+each `up()` correctly does nothing. But each `down()` happily drops columns its own
+`up()` never created, along with their data.
+
+### Why this is now reachable
+
+CI4's `migrate:rollback` defaults to `$batch = $runner->getLastBatch() - 1`
+(`system/Commands/Database/MigrateRollback.php`), i.e. it regresses the **whole last
+batch**, not a single migration.
+
+On production all six pending migrations will run in **one** `spark migrate`
+invocation, so they land in one batch. A single `migrate:rollback` — the obvious
+thing to reach for if the slug work misbehaves — therefore undoes all six and drops:
+
+- `users.is_featured`
+- `contact_submissions.country_id`
+- `contact_submissions.partnership`
+- `contact_submissions.whatsapp`
+- `contact_submissions.form_data`
+
+Measured on the local copy of production data: **25 users have `is_featured = 1`**.
+The `contact_submissions` columns are currently empty locally, but production may
+differ — and `is_featured` alone is real, user-visible state.
+
+The original 10 migrations (batches 1–4) are **not** touched by a single rollback.
+`migrate:rollback -b 0` would take everything, including the `CREATE TABLE`s.
+
+### What to do instead
+
+Use the database dump for rollback. For a surgical undo of just the slug work:
+
+```sql
+ALTER TABLE buyer_inquiries DROP INDEX buyer_inquiries_slug;
+ALTER TABLE buyer_inquiries DROP COLUMN slug;
+DELETE FROM migrations WHERE version IN
+  ('2026-07-30-000001','2026-07-30-000002','2026-07-30-000003');
+```
+
+### Fixing it properly is not just "add a guard"
+
+An existence check in `down()` does not help — the columns **do** exist, so the guard
+passes and the drop still happens. The information that matters (did *this* migration
+create the column?) is not available at rollback time.
+
+Realistic options:
+
+1. Make `down()` a no-op on all three with a comment explaining the columns predate
+   the migration. Honest, and makes rollback safe.
+2. Have `up()` record whether it actually added anything (a marker row in
+   `site_settings`, say) and have `down()` respect it. More correct, more machinery.
+3. Leave as-is and treat `migrate:rollback` as forbidden on this project.
+
+Option 1 is probably right. Not done here because it changes rollback semantics for
+migrations unrelated to the slug work, and should be a deliberate separate change.
+
+Related: the schema drift that caused this is the same drift behind `buyer_whatsapp`,
+`inquiry_date` and `users.slug` existing with no migration at all (PROJECT.md).
+
+---
+
+## #16 — HEAD requests return 404 on every route
+**Severity:** LOW · **Raised:** 2026-07-30 · **Open**
+
+Verified site-wide, including untouched routes:
+
+| Route | HEAD | GET |
+|---|---|---|
+| `/` | 404 | 200 |
+| `/about-us` | 404 | 200 |
+| `/login` | 404 | 200 |
+| `/buyers` | 404 | 200 |
+
+`Routes.php` registers everything with `$routes->get(...)`, which does not answer
+HEAD. Pre-existing and unrelated to the slug work — it was found because a
+`curl -I` redirect-chain check returned a misleading `hops=0`.
+
+Affects link checkers, uptime monitors, some crawlers and CDN prefetch. Low impact
+today; worth knowing before trusting any HEAD-based tooling against this site.
 
 ---
 
@@ -159,103 +289,6 @@ PHP 9, see #4. This is production data, so production shows the same thing.
 A migration backfilling `inquiry_date` from `created_at` where null would fix the
 root data issue across all three sites. `Contact.php:139` already sets the field on
 new inserts; the 6 nulls are legacy rows.
-
----
-
-## #14 — Inquiry URL slug is decorative; any slug serves any inquiry
-**Severity:** MEDIUM · **Raised:** 2026-07-29 · **Open** · **Task:** T-13
-
-### Root cause — one line
-
-`app/Config/Routes.php:58`:
-
-```php
-$routes->get('buyer-inquiry/(:any)/(:num)', 'Buyer::detail/$2');
-```
-
-The route captures two groups but forwards only **`$2`** (the numeric id). `$1` —
-the slug — is **discarded**. It is never passed to the controller, so it is never
-compared against the record.
-
-`Buyer::detail($id = null)` (`app/Controllers/Buyer.php:86`) accordingly takes a
-single `$id` and does `find($id)`. It has no slug parameter and could not validate
-one even if the route sent it.
-
-### Reproduction
-
-Same slug, four different inquiries — the slug is ignored entirely:
-
-| URL | Renders |
-|---|---|
-| `buyer-inquiry/bulk-rice-import-requirement/1` | Looking for Steel Plate Suppliers |
-| `buyer-inquiry/bulk-rice-import-requirement/2` | Cotton Fabric for Garment Factory |
-| `buyer-inquiry/bulk-rice-import-requirement/3` | Bulk Rice Import Requirement ← the only correct one |
-| `buyer-inquiry/bulk-rice-import-requirement/4` | LED Lighting Products Needed |
-
-### It is worse than arbitrary — `(:any)` matches slashes
-
-`(:any)` compiles to `(.*)`, which crosses `/`. So the slug can be any number of
-segments of any content:
-
-| URL | Renders |
-|---|---|
-| `buyer-inquiry/literally-anything/3` | Bulk Rice Import Requirement |
-| `buyer-inquiry/a/b/c/3` | Bulk Rice Import Requirement |
-| `buyer-inquiry/x/3` | Bulk Rice Import Requirement |
-
-### Impact
-
-**SEO — the main cost.** Every inquiry is reachable at unlimited distinct URLs, and
-there is **no `<link rel="canonical">`** anywhere in `app/Views/` (verified). Search
-engines see unbounded duplicate content for the same record, splitting ranking
-signals. Anyone can mint a URL that renders your content under any slug they choose
-— e.g. a competitor's or an offensive phrase — and have it indexed.
-
-Not a data-leak: `Buyer::detail` still enforces `status === 'active'`, so no
-unpublished inquiry is exposed. This is a correctness and SEO defect, not an
-access-control one.
-
-### Why the obvious fix does not work
-
-There is **no `slug` column** on `buyer_inquiries` (verified — 25 columns, none is
-a slug). Slugs are derived from `title` at link-generation time by
-`Buyer::inquirySlug()` (`app/Controllers/Buyer.php:68`):
-
-```php
-return url_title(strtolower($title), '-', true);
-```
-
-…and re-derived inline in six views (`buyer-main.php:106,128`, `index.php:131`,
-`buyer-detail.php:111`, `search-results.php:74`,
-`dashboard/admin/inquiries.php:93`). So "look the record up by slug" has nothing to
-look up against.
-
-### Two fix options
-
-**A — validate and 301 to the canonical slug** (smaller change, keeps ids in URLs).
-Pass both groups, then redirect if the slug does not match:
-
-```php
-// Routes.php
-$routes->get('buyer-inquiry/([^/]+)/(:num)', 'Buyer::detail/$1/$2');
-
-// Buyer::detail($slug = null, $id = null), after loading $inquiry:
-$canonical = $this->inquirySlug($inquiry['title']);
-if ($slug !== $canonical) {
-    return redirect()->to(base_url("buyer-inquiry/{$canonical}/{$id}"), 301);
-}
-```
-
-Note `([^/]+)` rather than `(:any)` — that alone kills the multi-segment variants.
-`legacyRedirect` (`Buyer.php:73`) already builds exactly this canonical URL, so the
-pattern is established.
-
-**B — add a real `slug` column**, unique-indexed, backfilled from `title`, and look
-up by slug alone. Cleaner URLs and a genuine lookup key, but a migration plus
-updates to all six view call sites, and needs a plan for title edits and collisions.
-
-Either way, add a `<link rel="canonical">` to the layout — that is worth doing
-independently, since no view emits one today.
 
 ---
 

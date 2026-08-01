@@ -65,47 +65,91 @@ class Buyer extends BaseController
         return view('pages/buyer-main', $data);
     }
 
-    protected function inquirySlug(string $title): string
-    {
-        return url_title(strtolower($title), '-', true);
-    }
-
+    /**
+     * Single funnel for every historic inquiry URL shape, all of which are
+     * id-based and all of which 301 onto the canonical slug URL:
+     *
+     *   /buyer/detail/{id}
+     *   /buyer-detail/{id}
+     *   /buyer-inquiry/{anything}/{id}   <- the old unvalidated-slug form
+     */
     public function legacyRedirect($id = null)
     {
-        if (!$id) {
-            return redirect()->to('/buyers');
+        if (!$id || !ctype_digit((string) $id)) {
+            return redirect()->to(base_url('buyers'), 301);
         }
-        $inquiry = $this->inquiryModel->find($id);
-        if (!$inquiry) {
-            return redirect()->to('/buyers');
+
+        $inquiry = $this->inquiryModel->find((int) $id);
+
+        if (!$inquiry || $inquiry['status'] !== 'active') {
+            // A hard 404 rather than a soft one (a 301 to the listing), so search
+            // engines drop the dead URL instead of treating /buyers as a duplicate
+            // of every removed inquiry.
+            throw new \CodeIgniter\Exceptions\PageNotFoundException('Inquiry not found');
         }
-        $slug = $this->inquirySlug($inquiry['title']);
-        return redirect()->to(base_url('buyer-inquiry/' . $slug . '/' . $id), 301);
+
+        if (empty($inquiry['slug'])) {
+            // Backfill has not run yet. Render rather than redirect to a URL that
+            // cannot resolve. This is what makes deploy order safe in either
+            // direction, and it cannot loop: detail() in this state falls through
+            // to render instead of redirecting back.
+            return $this->detail((string) $id);
+        }
+
+        return redirect()->to(base_url('buyer-inquiry/' . $inquiry['slug']), 301);
     }
 
-    public function detail($id = null)
+    public function detail($slugOrId = null)
     {
-        if (!$id) {
-            return redirect()->to('/buyer');
+        if ($slugOrId === null || $slugOrId === '') {
+            return redirect()->to(base_url('buyers'), 301);
         }
 
-        $inquiry = $this->inquiryModel->find($id);
+        $slugOrId = (string) $slugOrId;
+
+        // Slug lookup first, numeric fallback second. This is deliberately the
+        // reverse of Supplier::profile(), which tests is_numeric() first: a title
+        // like "2024 Steel Tender" slugifies to an all-numeric slug, and that row
+        // must win over a same-numbered id.
+        $inquiry = $this->inquiryModel->getInquiryBySlug($slugOrId);
+
+        if ($inquiry === null && ctype_digit($slugOrId)) {
+            $inquiry = $this->inquiryModel->find((int) $slugOrId);
+
+            if ($inquiry !== null && $inquiry['status'] === 'active' && !empty($inquiry['slug'])) {
+                return redirect()->to(base_url('buyer-inquiry/' . $inquiry['slug']), 301);
+            }
+        }
 
         if (!$inquiry || $inquiry['status'] !== 'active') {
             throw new \CodeIgniter\Exceptions\PageNotFoundException('Inquiry not found');
         }
 
-        $inquiry['category'] = $this->categoryModel->find($inquiry['category_id']);
-        $inquiry['country'] = $this->countryModel->find($inquiry['country_id']);
+        // find(null) returns every row rather than null, so an inquiry with no
+        // category or country would hand the view a 122-element list and the
+        // view's ['name'] lookup would fatal. The public RFQ form can submit
+        // without a country, so this is reachable.
+        $inquiry['category'] = !empty($inquiry['category_id'])
+            ? $this->categoryModel->find($inquiry['category_id'])
+            : null;
+        $inquiry['country'] = !empty($inquiry['country_id'])
+            ? $this->countryModel->find($inquiry['country_id'])
+            : null;
 
-        $relatedInquiries = $this->inquiryModel->getInquiriesByCategory($inquiry['category_id'], 5);
+        $relatedInquiries = !empty($inquiry['category_id'])
+            ? $this->inquiryModel->getInquiriesByCategory($inquiry['category_id'], 5, $inquiry['id'])
+            : [];
 
         foreach ($relatedInquiries as &$related) {
-            $related['country'] = $this->countryModel->find($related['country_id']);
+            $related['country'] = !empty($related['country_id'])
+                ? $this->countryModel->find($related['country_id'])
+                : null;
         }
+        unset($related);
 
         $data = [
             'title' => $inquiry['title'],
+            'canonical' => inquiry_url($inquiry),
             'inquiry' => $inquiry,
             'relatedInquiries' => $relatedInquiries,
             'categories' => $this->categoryModel->getActiveCategories(),

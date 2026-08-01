@@ -90,7 +90,7 @@
                         data-status="<?= esc($i['status']) ?>"
                         data-country="<?= esc($countryName) ?>"
                         data-date="<?= !empty($i['created_at']) ? date('Y-m-d', strtotime($i['created_at'])) : '' ?>">
-                        <td><a href="<?= base_url('buyer-inquiry/' . url_title(strtolower($i['title']), '-', true) . '/' . $i['id']) ?>" target="_blank" style="color: #0d6efd; text-decoration: underline;"><?= esc(mb_substr($i['title'], 0, 40)) ?><?= mb_strlen($i['title']) > 40 ? '...' : '' ?></a></td>
+                        <td><a href="<?= inquiry_url($i) ?>" target="_blank" style="color: #0d6efd; text-decoration: underline;"><?= esc(mb_substr($i['title'], 0, 40)) ?><?= mb_strlen($i['title']) > 40 ? '...' : '' ?></a></td>
                         <td><?= esc($i['product_name'] ?? 'N/A') ?></td>
                         <td><?= esc($i['buyer_name']) ?></td>
                         <td><?= esc($i['buyer_email'] ?? '-') ?></td>

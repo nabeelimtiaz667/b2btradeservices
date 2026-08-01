@@ -26,8 +26,10 @@ _Nothing in progress._
 | T-10 | Add server-side validation to `contact/submit` | TODO | Accepted a submission with empty email and message. Audit the other 40 POST routes. See BLOCKERS #11. |
 | T-11 | Test the 41 POST routes | TODO — **unblocked** | Was blocked on data safety; the local DB is now a writable scratch copy (DECISIONS #12). Snapshot to `C:\xampp\db_backups\` first, restore from `sql/`. Two caveats: CSRF is off so tokens are not needed yet (T-7 changes that), and do not enable SMTP — `Auth.php` registration and password-reset mail real addresses. |
 | T-12 | Backfill null `inquiry_date` from `created_at` | TODO | 6 rows (ids 2–7). Fixes the root data issue behind T-5/T-6 across all three render sites. Now doable — the local DB is writable. Write it as a migration so it can be applied to production too. |
-| T-13 | Fix decorative slug on `buyer-inquiry` URLs | TODO | `Routes.php:58` captures the slug then discards it — any slug serves any id, and `(:any)` even allows multi-segment slugs. SEO duplicate-content defect; no canonical tag exists anywhere. Isolated to this one route. See BLOCKERS #14. |
-| T-14 | Add `<link rel="canonical">` to the layout | TODO | No view emits one (verified). Worth doing independently of T-13 — it limits duplicate-content damage across the whole site, not just inquiries. |
+| T-18 | Submit new inquiry URLs to Google Search Console | TODO | No sitemap exists, so recrawl is link-driven and slow. The 301s from the old two-segment URLs carry the load for weeks — **do not remove that legacy route** (`Routes.php`, `buyer-inquiry/(:any)/(:num)`). |
+| T-19 | Consider a sitemap.xml | TODO | Would make T-18 unnecessary next time and speed recrawl. `public/robots.txt` has no `Sitemap:` directive either. |
+| T-16 | Decide on the RFQ Country field | TODO | Labelled required, isn't. See BLOCKERS #15. The 500 it caused is already fixed; the form itself is the open question. |
+| T-17 | Make `down()` safe on the three back-filled migrations | TODO | Guarded `up()`, unconditional `down()` — a single `migrate:rollback` drops 5 real columns incl. `users.is_featured` (25 rows set locally). Adding an existence guard does **not** fix it; likely answer is a no-op `down()`. See BLOCKERS #17. |
 
 ---
 
@@ -62,3 +64,6 @@ Unscheduled, no commitment yet.
 | T-2 | Delete `app/Config/_database.php` | 2026-07-29 | Done by owner. Verified gone. BLOCKERS #2 closed |
 | T-3 | Delete `app.zip` (166 MB) | 2026-07-29 | Done by owner. Verified gone. BLOCKERS #3 closed |
 | T-4 | Verify the application under `app/` | 2026-07-29 | Full sweep — 168 files linted, 136 handlers resolved, 97 GET routes exercised. CHANGELOG 2026-07-29 |
+| T-13 | Fix decorative slug on `buyer-inquiry` URLs | 2026-07-30 | Shipped to dev. 470/470 slugs, zero URL churn, original bug confirmed fixed. CHANGELOG 2026-07-30 |
+| T-14 | Add `<link rel="canonical">` to the layout | 2026-07-30 | Added to both `main.php` and `inner.php`, opt-in via `$canonical` |
+| T-15 | Deploy the slug work to production | 2026-07-31 | 20 files + 6 migrations. Backfill verified on production (distinct = total, nulls = 0); slug URLs and id→slug 301s confirmed. CHANGELOG 2026-07-31 |

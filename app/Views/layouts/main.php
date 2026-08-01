@@ -22,6 +22,9 @@
     <?php $metaKw = $siteSettings['meta_keywords'] ?? ''; if ($metaKw): ?>
     <meta name="keywords" content="<?= esc($metaKw) ?>">
     <?php endif; ?>
+    <?php if (!empty($canonical)): ?>
+    <link rel="canonical" href="<?= esc($canonical) ?>">
+    <?php endif; ?>
     <?= $this->renderSection('styles') ?>
     <!--Start of Tawk.to Script-->
 <script type="text/javascript">

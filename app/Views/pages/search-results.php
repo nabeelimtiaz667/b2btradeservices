@@ -71,7 +71,7 @@
                             <h5 class="card-title"><?= esc($inquiry['title'] ?? $inquiry['product_name'] ?? 'Buy Offer') ?></h5>
                             <p class="text-muted mb-1"><?= isset($inquiry['category']) && $inquiry['category'] ? esc($inquiry['category']['name']) : '' ?></p>
                             <p class="mb-2"><small><?= date('M d, Y', strtotime($inquiry['created_at'])) ?></small></p>
-                            <a href="<?= base_url('buyer-inquiry/' . url_title(strtolower($inquiry['title']), '-', true) . '/' . $inquiry['id']) ?>" class="outline-btn contact-btn btn btn-sm">View Details</a>
+                            <a href="<?= inquiry_url($inquiry) ?>" class="outline-btn contact-btn btn btn-sm">View Details</a>
                         </div>
                     </div>
                 </div>

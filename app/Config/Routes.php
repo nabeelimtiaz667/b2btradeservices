@@ -55,7 +55,17 @@ $routes->get('buyer-category', static function() { return redirect()->to(base_ur
 $routes->get('buyer/detail/(:num)', 'Buyer::legacyRedirect/$1');
 $routes->get('buyer-detail', 'Buyer::index');
 $routes->get('buyer-detail/(:num)', 'Buyer::legacyRedirect/$1');
-$routes->get('buyer-inquiry/(:any)/(:num)', 'Buyer::detail/$2');
+// Legacy "fake slug" URLs: /buyer-inquiry/{anything}/{id}. The slug segment was
+// never validated against the row, so any slug served any inquiry. The id is
+// authoritative, so these 301 to the canonical slug URL rather than rendering.
+// Keep (:any) — it compiles to (.*), which is what still catches the
+// /buyer-inquiry/a/b/c/{id} shapes that used to resolve and may be indexed.
+$routes->get('buyer-inquiry/(:any)/(:num)', 'Buyer::legacyRedirect/$2');
+
+// Canonical. (:segment) is ([^/]+) so it can never match the two-segment form
+// above, and the two routes cannot shadow each other.
+$routes->get('buyer-inquiry/(:segment)', 'Buyer::detail/$1');
+$routes->get('buyer-inquiry', static function () { return redirect()->to(base_url('buyers'), 301); });
 
 $routes->get('login', 'Auth::login');
 $routes->post('login', 'Auth::login');

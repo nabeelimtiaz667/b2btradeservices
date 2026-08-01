@@ -203,11 +203,22 @@ class AdminSettings extends BaseController
             if ($action === 'update_product_status') {
                 $id = $this->request->getPost('id');
                 $status = $this->request->getPost('status');
+                // Whitelisted against the column ENUM. sql_mode here has no STRICT
+                // flag, so an unrecognised value would be silently coerced to ''
+                // and the row would vanish from every listing.
+                if (!in_array($status, ['active', 'inactive', 'pending'], true)) {
+                    $this->session->setFlashdata('error', 'Invalid product status.');
+                    return redirect()->back();
+                }
                 $this->productModel->update($id, ['status' => $status]);
                 $this->session->setFlashdata('success', 'Product status updated.');
             } elseif ($action === 'update_inquiry_status') {
                 $id = $this->request->getPost('id');
                 $status = $this->request->getPost('status');
+                if (!in_array($status, ['active', 'inactive', 'closed', 'pending', 'expired'], true)) {
+                    $this->session->setFlashdata('error', 'Invalid inquiry status.');
+                    return redirect()->back();
+                }
                 $this->inquiryModel->update($id, ['status' => $status]);
                 $this->session->setFlashdata('success', 'Inquiry status updated.');
             } elseif ($action === 'delete_product') {

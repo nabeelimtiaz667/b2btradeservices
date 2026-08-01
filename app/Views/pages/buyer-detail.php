@@ -108,7 +108,7 @@
                                     </div>
                                 </div>
                                 <div class="buyers-related-offer-box-cta">
-                                    <a href="<?= base_url('buyer-inquiry/' . url_title(strtolower($related['title']), '-', true) . '/' . $related['id']) ?>" class="solid-btn">View Details</a>
+                                    <a href="<?= inquiry_url($related) ?>" class="solid-btn">View Details</a>
                                 </div>
                             </div>
                         </div>

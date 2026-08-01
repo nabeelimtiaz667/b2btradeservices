@@ -191,6 +191,62 @@ credentials.
 
 ---
 
+## #13 — Inquiry slugs are frozen at creation, never regenerated
+**Date:** 2026-07-30 · **Status:** Active · **Decided by:** Nabeel
+
+`BuyerInquiryModel` generates `slug` on `$beforeInsert` only. There is deliberately
+**no `$beforeUpdate` entry**, so editing a title never moves the slug.
+
+**Why:** the canonical URL no longer carries an id, so regenerating a slug would
+break every indexed URL and inbound link for that row with nothing to fall back on
+— an admin fixing a typo would silently 404 a ranking page. Matches `UserModel`,
+which does the same for the same reason.
+
+**Alternatives:** regenerate on title change (rejected — that is precisely the SEO
+damage this work exists to prevent); regenerate plus a slug-history table with 301s
+(rejected as disproportionate at 470 rows on a site with no sitemap, no RSS and no
+structured data).
+
+**Consequence:** a slug can drift from its title. Cosmetic — Google reads `<h1>` and
+`<title>`, not the slug. `-2` suffixes can also outlive the collision that caused
+them; **do not renumber them later**, that would break URLs for no gain.
+
+Note this is strictly better than the old behaviour, not a compromise: slugs used to
+be recomputed at render time, so editing a title already changed every internal link
+silently, with nothing redirecting the old URL.
+
+**Escape hatch if drift ever matters:** add a "Regenerate slug" button to the admin
+edit form calling `uniqueSlug($base, $id)`, and introduce the history table *then* —
+deliberate, admin-triggered, rare. Do not quietly add `generateSlug` to
+`$beforeUpdate`.
+
+---
+
+## #14 — Widen the inquiry status ENUM rather than remap `'inactive'`
+**Date:** 2026-07-30 · **Status:** Active
+
+`buyer_inquiries.status` gained `inactive`, giving
+`enum('active','inactive','closed','pending','expired')`. Separately,
+`Dashboard.php:686` changed from `'inactive'` to `'pending'`.
+
+**Why:** two code paths wrote `'inactive'` to an ENUM that lacked it, and with
+non-STRICT `sql_mode` MariaDB silently coerced them to `''` — which fails every
+`status === 'active'` check, so the row vanished from all listings and 404'd. But
+the two paths *mean different things*, so they needed different fixes:
+
+- Admin listings dropdown = "an admin deliberately hid this" → genuinely `inactive`,
+  so widen the ENUM. `products.status` already had `inactive`, so this aligns them.
+- `Dashboard::buyerAddInquiry` = "awaiting approval" → that is `pending`, which was
+  already valid. The product path at `Dashboard.php:352` had been writing `'pending'`
+  for the identical condition all along, so this was an inconsistency, not a choice.
+
+**Consequence:** `pending` and `inactive` now mean distinct things and both are
+storable. Verified safe: no `switch`/`match` on inquiry status exists, all 22 read
+sites are equality tests, and the one two-branch display has a generic `else` that
+renders `ucfirst($status)`.
+
+---
+
 ## #12 — Treat the local database as a writable scratch copy
 **Date:** 2026-07-29 · **Status:** Active · **Decided by:** Nabeel
 

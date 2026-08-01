@@ -51,7 +51,11 @@ Keep these files current — that is the whole point of them.
      password-reset mail to whatever address is in the row. Mail currently fails
      because nothing listens on port 25 — that is the only thing preventing
      delivery to real users. If you need mail, point it at a local catcher.
-6. **Verify before claiming.** Check the actual file or HTTP response rather than
+6. **Never run `php spark migrate:rollback` here.** Three migrations have a guarded
+   `up()` but an unconditional `down()`, and CI4 rolls back a whole batch — so one
+   rollback drops five real columns including `users.is_featured`. Roll back by
+   restoring a dump, or with targeted SQL. See BLOCKERS #17.
+7. **Verify before claiming.** Check the actual file or HTTP response rather than
    relying on what an earlier session said it did.
 
 ## Quick facts

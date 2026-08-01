@@ -576,9 +576,17 @@ class DataSeeder extends Seeder
             ],
         ];
 
+        // These rows go in through the query builder rather than the model, so
+        // BuyerInquiryModel's beforeInsert callback never fires and the slug has
+        // to be set explicitly. uniqueSlug() is reused so seeded rows get the
+        // same numeric-suffix treatment as any other insert.
+        helper('inquiry');
+        $inquiryModel = new \App\Models\BuyerInquiryModel();
+
         foreach ($inquiries as $inquiry) {
             $inquiry['created_at'] = date('Y-m-d H:i:s');
             $inquiry['updated_at'] = date('Y-m-d H:i:s');
+            $inquiry['slug']       = $inquiryModel->uniqueSlug(inquiry_slugify($inquiry['title']));
             $this->db->table('buyer_inquiries')->insert($inquiry);
         }
     }

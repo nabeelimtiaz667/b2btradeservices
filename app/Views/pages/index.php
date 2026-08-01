@@ -128,7 +128,7 @@
                 </div>
                 <?php if (isset($latestInquiries) && !empty($latestInquiries)): ?>
                     <?php foreach (array_slice($latestInquiries, 0, 8) as $inq): ?>
-                        <a href="<?= base_url('buyer-inquiry/' . url_title(strtolower($inq['title']), '-', true) . '/' . $inq['id']) ?>" class="text-decoration-none text-dark buy-offer-link">
+                        <a href="<?= inquiry_url($inq) ?>" class="text-decoration-none text-dark buy-offer-link">
                             <div class="latest-buy-offer-row mt-4">
                                 <div class="d-flex gap-3 align-items-center">
                                     <?php if (!empty($inq['country_flag'])): ?>
