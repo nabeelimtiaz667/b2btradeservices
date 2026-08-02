@@ -150,6 +150,7 @@ class Buyer extends BaseController
         $data = [
             'title' => $inquiry['title'],
             'canonical' => inquiry_url($inquiry),
+            'metaDescription' => inquiry_meta_description($inquiry),
             'inquiry' => $inquiry,
             'relatedInquiries' => $relatedInquiries,
             'categories' => $this->categoryModel->getActiveCategories(),

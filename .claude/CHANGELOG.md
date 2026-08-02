@@ -14,6 +14,74 @@ Entry format:
 
 ---
 
+## 2026-07-31 — Manual SEO/branding changes (owner, outside this session)
+
+Made directly by Nabeel; logged here after the fact per project convention, verified
+against the live files rather than taken on faith.
+
+**Files:** `app/Views/pages/buyer-detail.php`, `app/Views/partials/footer.php`, all 6
+`app/Views/layouts/*.php`
+**Why:** SEO heading hierarchy + site branding/analytics completeness.
+
+- **Heading hierarchy on the inquiry detail page.** The inquiry title
+  (`buyer-detail.php:20`) is now the page's `<h1>`; the banner heading that used
+  to be `<h1>Find B2B Buying Leads</h1>` is now `<h2>` (`buyer-detail.php:9-10`).
+  Correct per-page — a page should have one `<h1>` describing its actual content,
+  not a shared banner slogan. Verified: exactly one `<h1>` on the page now.
+- **Google Analytics gtag snippet added to `partials/footer.php:294-305`,**
+  hardcoded to `G-L52TR0D4JK`. Rendered on every page that includes this
+  partial: `inner.php`, `main.php`, `inner-pkg.php`, `supplier-profile.php`
+  (i.e. all public pages except `dashboard.php`/`auth.php`, which don't include
+  the footer partial, and `blog/`, which is a separate WordPress install).
+- **Full favicon/apple-touch-icon/manifest block added to all 6 layout
+  `<head>`s** (`auth.php`, `dashboard.php`, `inner-pkg.php`, `inner.php`,
+  `main.php`, `supplier-profile.php`) — apple-touch-icons at 8 sizes, PNG
+  favicons at 3 sizes, `manifest.json`, `msapplication-TileColor`/
+  `-TileImage`, `theme-color`. Site-wide, including dashboard/auth, unlike the
+  GA snippet above.
+
+**Flagging, not fixing:** `inner.php`, `main.php`, `inner-pkg.php` and
+`supplier-profile.php` already had a *conditional*, admin-configurable GA block
+(`$siteSettings['google_analytics_id']`, gated on the setting being non-empty).
+That setting currently holds a placeholder-looking value (`hgkh-sfkjh`), which is
+presumably why it doesn't fire today — but if an admin ever sets a real
+measurement ID there, **both the DB-driven snippet and this new hardcoded one
+would load simultaneously**, double-counting every pageview. Worth deciding
+which one is authoritative before that setting is ever populated for real.
+
+---
+
+## 2026-07-31 — Dynamic per-inquiry meta descriptions
+
+**Files:** `app/Helpers/inquiry_helper.php`, `app/Controllers/Buyer.php`,
+`app/Views/layouts/{inner,main}.php`
+**Why:** every page shared one `<meta name="description">` pulled from
+`site_settings.meta_description`, so all 470 inquiry pages had an identical,
+generic description — duplicate-content territory for search engines, same class
+of problem the slug work fixed for URLs.
+
+- New `inquiry_meta_description($inquiry, $maxLength = 160)` in
+  `inquiry_helper.php`. Prefers the buyer's own description text (467/470 rows
+  have one); normalizes embedded newlines/tabs (98 rows have them) into a single
+  line, and truncates at a word boundary near 160 chars with `...` — never
+  mid-word. Verified against a synthetic long string: 158 chars, clean cut.
+- Falls back to a templated sentence built from title/quantity/unit/product_name
+  for the 3 rows with no description at all (ids 22, 27, 29), so the tag is
+  never empty.
+- `Buyer::detail()` now passes `'metaDescription' => inquiry_meta_description($inquiry)`
+  to the view.
+- Both layouts changed from `$siteSettings['meta_description'] ?? ''` to
+  `$metaDescription ?? $siteSettings['meta_description'] ?? ''` — a page-level
+  override that falls back to the site default, the same opt-in pattern already
+  used for `$canonical`. Any other controller can adopt it the same way: pass
+  `metaDescription` in `$data`, no further layout change needed.
+
+**Verified:** a description-bearing inquiry renders its own text; the
+empty-description fallback path renders the templated sentence; unrelated pages
+(homepage, `/buyers`) still show the unchanged site-wide default.
+
+---
+
 ## 2026-07-31 — Slug work deployed to production
 
 **Files:** the 20-file set below, deployed to the cPanel host

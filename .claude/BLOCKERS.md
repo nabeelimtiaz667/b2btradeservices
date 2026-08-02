@@ -15,6 +15,32 @@ nothing in the slug change touched `inquiry_date`. Tasks T-5, T-6, T-12.
 
 ---
 
+## #18 — Two Google Analytics snippets would fire simultaneously if the admin GA setting is ever used
+**Severity:** LOW · **Raised:** 2026-07-31 (owner change, logged after the fact) · **Open**
+
+`app/Views/partials/footer.php:294-305` now has a hardcoded `gtag.js` snippet for
+`G-L52TR0D4JK`, rendered on every page that includes the footer partial (`inner.php`,
+`main.php`, `inner-pkg.php`, `supplier-profile.php` — i.e. all public pages).
+
+Those same four layouts **already had** a separate, conditional GA block driven by
+`$siteSettings['google_analytics_id']` — it only renders if that setting is non-empty.
+Today it's harmless: the DB value is `hgkh-sfkjh`, which doesn't look like a real
+measurement ID and presumably has never fired.
+
+**But if an admin ever sets a real value in Admin → Settings → General → Google
+Analytics ID, both snippets load on the same page** — two `dataLayer` pushes, two
+`gtag('config', ...)` calls, double-counted pageviews. Neither snippet is aware of
+the other.
+
+**Fix, when someone gets to it:** pick one mechanism. Either delete the hardcoded
+footer snippet and put `G-L52TR0D4JK` into `site_settings.google_analytics_id`
+(makes it admin-editable, consistent with the existing feature), or remove the
+conditional block from the four layouts and treat the footer snippet as
+authoritative (simpler, but re-hardcodes something the admin panel was built to
+configure). Not urgent — only bites if that setting is ever populated.
+
+---
+
 ## #15 — RFQ form's Country field is labelled required but is not
 **Severity:** MEDIUM · **Raised:** 2026-07-30 · **Open**
 

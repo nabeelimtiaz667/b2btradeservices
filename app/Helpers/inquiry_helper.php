@@ -42,6 +42,59 @@ if (! function_exists('inquiry_slugify')) {
     }
 }
 
+if (! function_exists('inquiry_meta_description')) {
+    /**
+     * SEO meta description for an inquiry detail page.
+     *
+     * Prefers the buyer's own description text: it's free-form and reads
+     * naturally, unlike a templated sentence built from fields. Descriptions run
+     * up to ~4500 chars and 98 of 470 rows contain embedded newlines, so this
+     * normalizes whitespace and truncates at a word boundary rather than
+     * dumping the raw column into the tag.
+     *
+     * Falls back to a templated sentence from title/quantity/unit/product_name
+     * for the 3 rows with no description at all, so the tag is never empty.
+     */
+    function inquiry_meta_description(array $inquiry, int $maxLength = 160): string
+    {
+        $text = trim((string) ($inquiry['description'] ?? ''));
+
+        if ($text === '') {
+            $parts = [$inquiry['title'] ?? 'Buyer inquiry'];
+
+            $qty = trim(($inquiry['quantity'] ?? '') . ' ' . ($inquiry['unit'] ?? ''));
+            if ($qty !== '') {
+                $parts[] = 'Quantity: ' . $qty . '.';
+            }
+
+            if (! empty($inquiry['product_name'])) {
+                $parts[] = 'Product: ' . $inquiry['product_name'] . '.';
+            }
+
+            $parts[] = 'View this buyer inquiry on B2B Trade Services.';
+            $text    = implode(' ', $parts);
+        }
+
+        // Collapse newlines/tabs/repeated spaces from free-form text into one
+        // line, since a meta tag attribute can't carry the original formatting.
+        $text = preg_replace('/\s+/', ' ', $text);
+        $text = trim($text);
+
+        if (strlen($text) <= $maxLength) {
+            return $text;
+        }
+
+        $truncated = substr($text, 0, $maxLength);
+        $cut       = strrpos($truncated, ' ');
+
+        if ($cut !== false && $cut > (int) ($maxLength * 0.5)) {
+            $truncated = substr($truncated, 0, $cut); // avoid ending mid-word
+        }
+
+        return rtrim($truncated, " .,;:-") . '...';
+    }
+}
+
 if (! function_exists('inquiry_url')) {
     /**
      * Canonical public URL for an inquiry row.
