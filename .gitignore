@@ -8,8 +8,9 @@
 # Leftover config holding live production DB credentials (Aiven).
 # CodeIgniter never loads it; safest is to delete the file entirely.
 app/Config/_database.php
+app/Config/Database.php
 
-# WordPress DB credentials + auth salts
+# WordPress DB credentials + auth s`alts
 blog/wp-config.php
 
 # I'm removing whole WP section from repo. Remove this line if you don't want to do this.
@@ -64,6 +65,7 @@ php_errors.log
 # Remove this block if you want the images committed to the repo.
 #---------------------------------------------------------------------
 /public/uploads/
+/public/assets/images/
 /uploads/
 /blog/wp-content/uploads/
 
