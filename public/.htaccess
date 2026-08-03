@@ -12,6 +12,19 @@ RewriteRule ^index\.php/(.*)$ /$1 [R=301,L]
 	Options +FollowSymlinks
 	RewriteEngine On
 
+	# Redirect direct hits on /public/... to the canonical URL without it.
+	# The root .htaccess internally forwards EVERY request into public/, so
+	# REQUEST_URI always contains "/public/" here regardless of what the
+	# client actually typed -- it can't distinguish a normal visit from
+	# someone reaching the front controller directly. THE_REQUEST is immune
+	# to that internal rewrite (same trick already used above for the
+	# index.php/ redirect), so it's the only reliable signal.
+	# Verified: no route in Routes.php contains "public" as a path segment,
+	# so this can't misfire on real content.
+	RewriteCond %{THE_REQUEST} \s/+(\S*/)?public(/\S*)?\s [NC]
+	RewriteCond %{REQUEST_URI} ^(.*)/public/?(.*)$
+	RewriteRule ^ %1/%2 [R=301,L]
+
 	# If you installed CodeIgniter in a subfolder, you will need to
 	# change the following line to match the subfolder you need.
 	# http://httpd.apache.org/docs/current/mod/mod_rewrite.html#rewritebase

@@ -14,6 +14,39 @@ Entry format:
 
 ---
 
+## 2026-07-31 — Close the duplicate `/public/*` URL surface
+
+**Files:** `public/.htaccess`
+**Why:** every route on the site was reachable a second way, under `/public/*`
+(e.g. `/public/buyers` returned 200 identically to `/buyers`) — a site-wide
+duplicate-content surface for search engines, and `robots.txt` doesn't block it
+(`Disallow:` is empty).
+
+Root cause: root `.htaccess` internally forwards every request into `public/`
+before CodeIgniter handles it, so by the time `public/.htaccess` runs,
+`REQUEST_URI` contains `/public/` **regardless of what the client actually
+typed** — it can't distinguish a normal visit from someone hitting the front
+controller directly. Fixed by testing `%{THE_REQUEST}` instead, which reflects
+the client's raw request line and is untouched by the internal rewrite — the
+same trick this file already used for its `index.php/` redirect, two lines
+above the new rule.
+
+- Added a rule at the top of the `<IfModule mod_rewrite.c>` block: if
+  `THE_REQUEST` shows `/public` as a path segment, 301 to the same URL with
+  `/public` stripped.
+- Verified no route in `Routes.php` contains "public" as a path segment, so
+  the check can't misfire on real content.
+- **Verified:** `/public` → 301 → `/public/` (Apache's own trailing-slash
+  behaviour, unchanged) → 301 → canonical root. `/public/buyers`,
+  `/public/buyer-inquiry/{slug}` and `/public/assets/css/style.css` all now
+  single-hop 301 straight to their clean equivalent and 200. Normal routes
+  (`/`, `/buyers`, `/login`, asset requests) unaffected — no false positives.
+- Portable across environments: the rule captures whatever prefix sits before
+  `/public` (empty on a production domain root, `/b2btradeservices` here) and
+  reconstructs the target from it, rather than hardcoding either form.
+
+---
+
 ## 2026-07-31 — Manual SEO/branding changes (owner, outside this session)
 
 Made directly by Nabeel; logged here after the fact per project convention, verified
