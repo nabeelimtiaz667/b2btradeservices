@@ -21,7 +21,7 @@
                 <div class="product-quick-details-list mt-4">
                     <div class="d-flex">
                         <p><b>Purchaser:</b></p>
-                        <?php if (session()->get('user_type') === 'admin'): ?>
+                        <?php if (!empty($canViewPremiumDetails)): ?>
                         <p><?= esc($inquiry['buyer_name'] ?? 'N/A') ?></p>
                         <?php else: ?>
                         <p><span style="color:#999; font-style:italic;"><i class="fas fa-lock"></i> Premium Members
@@ -39,7 +39,7 @@
                     </div>
                     <div class="d-flex">
                         <p><b>Contact Number:</b></p>
-                        <?php if (session()->get('user_type') === 'admin'): ?>
+                        <?php if (!empty($canViewPremiumDetails)): ?>
                         <p><a
                                 href="tel:<?= esc($inquiry['buyer_phone'] ?? '') ?>"><?= esc($inquiry['buyer_phone'] ?? 'N/A') ?></a>
                         </p>
@@ -50,7 +50,7 @@
                     </div>
                     <div class="d-flex">
                         <p><b>Company Name:</b></p>
-                        <?php if (session()->get('user_type') === 'admin'): ?>
+                        <?php if (!empty($canViewPremiumDetails)): ?>
                         <p><?= esc($inquiry['buyer_company'] ?? 'N/A') ?></p>
                         <?php else: ?>
                         <p><span style="color:#999; font-style:italic;"><i class="fas fa-lock"></i> Premium Members

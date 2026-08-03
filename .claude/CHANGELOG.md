@@ -14,6 +14,44 @@ Entry format:
 
 ---
 
+## 2026-07-31 — Premium membership now actually gates buyer contact details
+
+**Files:** `app/Controllers/Buyer.php`, `app/Views/pages/buyer-detail.php`
+**Why:** the "Premium Members only" mask on Purchaser/Contact Number/Company Name
+(`buyer-detail.php`) was gated on `session()->get('user_type') === 'admin'` — no
+membership tier of any kind unlocked it. Found and verified while investigating
+whether Starter/Gold/Platinum/VIP applied to buyers, suppliers, or both (they're
+a single `users.membership_level` enum shared by both roles, but nothing on
+either side previously read a *logged-in* user's own tier for anything —
+`membership_level` isn't even written into session at login).
+
+- New `Buyer::canViewPremiumDetails()`: true for `user_type === 'admin'`, or for
+  a logged-in user whose `membership_level` (queried live from the DB, not
+  session — session never carried it and can't reflect a tier change without
+  forcing a re-login) is one of `starter`, `gold`, `platinum`, `vip`.
+- All three `session()->get('user_type') === 'admin'` checks in
+  `buyer-detail.php` replaced with `!empty($canViewPremiumDetails)`.
+- Deliberately still admin-inclusive: task was "add premium-member access", not
+  "remove admin access" — an admin with a `free`-tier account (the default on
+  every account, including admins) still needs to see this.
+
+**Verified end-to-end**, not just read: registered a throwaway supplier account,
+confirmed anonymous view and free-tier-logged-in view both still masked (0/3
+fields leak), then flipped the *same session* to each of the four paid tiers in
+turn — all four unlocked immediately with no re-login required, confirming the
+live-DB-read design works as intended. Also confirmed a `buyer`-type account
+with a paid tier gets access too (the fix isn't role-specific, matching that
+`membership_level` was never role-specific in the schema). Admin bypass
+re-verified with a fresh login (a stale session retains its login-time
+`user_type`, so this needed re-login to test correctly — a design constraint of
+the *existing* session mechanism, not something this change altered).
+
+Throwaway test account **kept, not deleted**, for the owner's own testing:
+`goldtiertest@example.invalid` / `GoldTest123!`, id 664, `gold` tier, supplier
+role, approved. Delete after testing — it is not real data.
+
+---
+
 ## 2026-07-31 — Close the duplicate `/public/*` URL surface
 
 **Files:** `public/.htaccess`

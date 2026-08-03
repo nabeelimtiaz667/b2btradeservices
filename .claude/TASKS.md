@@ -67,3 +67,5 @@ Unscheduled, no commitment yet.
 | T-13 | Fix decorative slug on `buyer-inquiry` URLs | 2026-07-30 | Shipped to dev. 470/470 slugs, zero URL churn, original bug confirmed fixed. CHANGELOG 2026-07-30 |
 | T-14 | Add `<link rel="canonical">` to the layout | 2026-07-30 | Added to both `main.php` and `inner.php`, opt-in via `$canonical` |
 | T-15 | Deploy the slug work to production | 2026-07-31 | 20 files + 6 migrations. Backfill verified on production (distinct = total, nulls = 0); slug URLs and id→slug 301s confirmed. CHANGELOG 2026-07-31 |
+| T-21 | Wire membership tiers into the "Premium Members only" gate | 2026-07-31 | Was hardcoded to admin-only, no tier ever worked. Now checks live `membership_level` for starter/gold/platinum/vip. Verified all 4 tiers + free-tier negative control + admin regression, dev only. CHANGELOG 2026-07-31 |
+| T-20 | Delete the throwaway premium-tier test account | 2026-07-31 | Owner tested and confirmed T-21 works. Deleted user id 664 + 6 dependent `lead_activities` rows. `users` back to baseline 641. |

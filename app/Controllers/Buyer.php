@@ -151,6 +151,7 @@ class Buyer extends BaseController
             'title' => $inquiry['title'],
             'canonical' => inquiry_url($inquiry),
             'metaDescription' => inquiry_meta_description($inquiry),
+            'canViewPremiumDetails' => $this->canViewPremiumDetails(),
             'inquiry' => $inquiry,
             'relatedInquiries' => $relatedInquiries,
             'categories' => $this->categoryModel->getActiveCategories(),
@@ -158,6 +159,34 @@ class Buyer extends BaseController
         ];
 
         return view('pages/buyer-detail', $data);
+    }
+
+    /**
+     * Whether the current visitor may see an inquiry's buyer contact details
+     * (name, phone, company) instead of the "Premium Members only" mask.
+     *
+     * Admins always can. Otherwise this requires a paid membership tier on
+     * the *logged-in* user's own account, checked live against the database
+     * rather than trusted from session data — membership_level is never
+     * written into the session (Auth.php only stores user_id/name/email/
+     * user_type/status), and re-querying means an admin changing someone's
+     * tier takes effect on their very next page load, not after a re-login.
+     */
+    private function canViewPremiumDetails(): bool
+    {
+        if (session()->get('user_type') === 'admin') {
+            return true;
+        }
+
+        $userId = session()->get('user_id');
+        if (!$userId) {
+            return false;
+        }
+
+        $user = $this->userModel->find($userId);
+        $premiumTiers = ['starter', 'gold', 'platinum', 'vip'];
+
+        return $user && in_array($user['membership_level'] ?? 'free', $premiumTiers, true);
     }
 
     public function postRfq()
