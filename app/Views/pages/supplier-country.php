@@ -11,7 +11,7 @@
 
 <section class="supplier-page-sec mt-5">
     <div class="container">
-        <h2 class="text-center">Find Suppliers <br>By Country/Region</h2>
+        <h1 class="text-center h2">Find Suppliers <br>By Country/Region</h1>
         <div class="searchbar-box mb-5">
             <form action="<?= base_url('supplier/search') ?>" method="get">
                 <div class="searchbar-input">

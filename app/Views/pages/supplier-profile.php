@@ -34,11 +34,21 @@
                 ];
             }
         ?>
-        <?php foreach ($banners as $bannerUrl): ?>
+        <?php $supplierDisplayName = esc($supplier['company_name'] ?? $supplier['name'] ?? 'Company Name'); ?>
+        <?php foreach ($banners as $i => $bannerUrl): ?>
         <div>
             <div class="supplier-profile-slider">
                 <img src="<?= $bannerUrl ?>" alt="Banner">
-                <h1><?= esc($supplier['company_name'] ?? $supplier['name'] ?? 'Company Name') ?></h1>
+                <?php if ($i === 0): ?>
+                <h1 class="slide-heading"><?= $supplierDisplayName ?></h1>
+                <?php else: ?>
+                <!-- Only the first slide gets a real h1 tag -- a page must
+                     have exactly one. The remaining slides repeat the same
+                     text purely for visual consistency across the carousel,
+                     so they use a non-heading element styled identically via
+                     the shared .slide-heading class (see style.css). -->
+                <p class="slide-heading"><?= $supplierDisplayName ?></p>
+                <?php endif; ?>
             </div>
         </div>
         <?php endforeach; ?>

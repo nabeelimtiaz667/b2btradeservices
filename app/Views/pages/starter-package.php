@@ -15,8 +15,8 @@
                             </div>
                         </div>
                 </div>
-                <h2>STARTER</h2>
-                <h4><b>$499<span>/Year</span></b></h4>
+                <h1 class="h2">STARTER</h1>
+                <h2 class="h4"><b>$499<span>/Year</span></b></h2>
                 <p><b>Perfect for: Startups, New Exporters and Small Trading Companies looking for International Buyers and structured support.</b> </p>
                 <p>The Starter plan gives you access to essential B2B tools, Access to worldwide Database of Registered Importers and Exporters, and advisory support to streamline operations and improve performance without heavy investments.</p>
              <div class="row double-icon-pkg">

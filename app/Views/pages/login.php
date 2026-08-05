@@ -9,7 +9,7 @@
         <div class="b2b-logo">
             <img src="<?= base_url('assets/images/logo.svg') ?>" class="w-100">
         </div>
-        <h2>Welcome Back to B2B Trade Services</h2>
+        <h1 class="h2">Welcome Back to B2B Trade Services</h1>
         <?php if (session()->getFlashdata('success')): ?>
             <div class="alert alert-success" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 15px; font-size: 16px; font-weight: 600; border: 1px solid #c3e6cb; text-align: center;"><?= session()->getFlashdata('success') ?></div>
         <?php endif; ?>

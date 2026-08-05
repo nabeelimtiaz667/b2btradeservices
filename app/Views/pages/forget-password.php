@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forgot Password - B2B Trade Services</title>
+    <title><?= esc(($title ?? 'Forgot Password') . ' - B2B Trade Services') ?></title>
+    <?php if (!empty($metaDescription)): ?>
+    <meta name="description" content="<?= esc($metaDescription) ?>">
+    <?php endif; ?>
+    <?php if (!empty($canonical)): ?>
+    <link rel="canonical" href="<?= esc($canonical) ?>">
+    <?php endif; ?>
         <link href="./assets/images/b2b-icon.svg" rel="icon">
     <link href="./assets/images/b2b-icon.svg" rel="apple-touch-icon">
     <!-- Bootstrap 5 CSS -->

@@ -49,8 +49,8 @@
                             </div>
                         </div>
                 </div>
-                <h2>Platinum Package</h2>
-                <h4><b>$3,999<span>/Year</span></b></h4>
+                <h1 class="h2">Platinum Package</h1>
+                <h2 class="h4"><b>$3,999<span>/Year</span></b></h2>
                 <p>Strategic Partnership Level</p>
                 <p><b>Perfect for: Established businesses seeking strategic alignment and operational excellence.</b></p>
                 <p>Platinum Membership is built for serious exporters and growth-focused businesses ready to expand aggressively in global markets. It offers priority access to verified bulk buyers, advanced market intelligence, and dedicated strategic support that ensures faster conversions, higher-value deals, and stronger international positioning.</p>
@@ -534,8 +534,8 @@ In this PLATINUM MEMBERSHIP PACKAGE, we will assign a Team of 02 special BCM to 
                 <div class="profile-contact-info-bottom profile-contact-info-bottom-view-pkg mt-md-4">
                     <h2 class="f-18">24/7 Available Customer Service <br class="br_hide"> with B2BTradeServices</h2>
                     <ul class="checkbox-ul-new premeium-ul mt-3">
-                        <li><h5 class="f-16 mb-1"><b>Ready to Help:</b></h5>We are always available for our premium clients. We ensure that all of their inquiries are responded effectively</li>
-                        <li><h5 class="f-16 mb-1"><b>Trade Advice and Consultancy:</b></h5>Our experienced staff is always there for you. If you need any trade-related advice, we have got your back.</li>
+                        <li><h3 class="f-16 mb-1 h5"><b>Ready to Help:</b></h3>We are always available for our premium clients. We ensure that all of their inquiries are responded effectively</li>
+                        <li><h3 class="f-16 mb-1 h5"><b>Trade Advice and Consultancy:</b></h3>Our experienced staff is always there for you. If you need any trade-related advice, we have got your back.</li>
                     </ul>
                 </div>
             </div>

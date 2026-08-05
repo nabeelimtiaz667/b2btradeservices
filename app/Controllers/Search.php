@@ -85,7 +85,12 @@ class Search extends BaseController
         }
 
         $data = [
-            'title' => 'Search Results for "' . esc($keyword) . '"',
+            // Not esc()'d here: the layout already escapes 'title' exactly
+            // once. Pre-escaping it here would double-encode any keyword
+            // containing '&', '<', etc. (e.g. rendering "&amp;amp;").
+            'title' => 'Search Results for "' . $keyword . '"',
+            'metaDescription' => 'Suppliers, products, and buyer inquiries matching "' . $keyword . '" on B2B Trade Services.',
+            'canonical' => canonical_self_url(),
             'keyword' => $keyword,
             'suppliers' => $suppliers,
             'products' => $products,

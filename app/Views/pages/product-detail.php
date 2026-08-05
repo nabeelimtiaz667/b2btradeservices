@@ -42,7 +42,7 @@
                         </div>
                     </div>
                     <div class="product_details_single">
-                        <h2><?= esc($product['name'] ?? '') ?></h2>
+                        <h1 class="h2"><?= esc($product['name'] ?? '') ?></h1>
                         <?php if (!empty($product['min_order_quantity'])): ?>
                         <div class="d-flex mt-3">
                             <p>MOQ</p>

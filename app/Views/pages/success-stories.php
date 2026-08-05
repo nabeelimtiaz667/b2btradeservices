@@ -16,7 +16,7 @@
    <!-- Privacy Policy Section -->
 <section class="supplier-page-sec mt-5">
     <div class="container">
-        <h2 class="text-center">Success Stories</h2>
+        <h1 class="text-center h2">Success Stories</h1>
       
 
         <div class="row mt-4 sucess-box">
@@ -28,7 +28,7 @@
                                                                     <p>“B2B Trade Services helped us connect with relevant buyers efficiently. My Business Consultant Manager (BCM) they provided makes it easy to find and filter genuine business leads.
 <br><br>Their additional services such as website development, catalog design, and LLC formation are extremely valuable. I would recommend suppliers to try their services, as the platform offers a refreshing approach compared to traditional B2B marketplaces.”
 </p>
- <h4>Mr. Johnson – CEO & Founder</h4>
+ <h2 class="h4">Mr. Johnson – CEO &amp; Founder</h2>
                                                                    
                             </div>
                         </div>
@@ -42,7 +42,7 @@
                                                                     <p>“B2B Trade Services has been a valuable platform for expanding our international business network. We started receiving inquiries from buyers in different regions shortly after listing our products.
 <br><br>The platform’s tools for connecting with potential buyers and managing inquiries are very useful. It has helped us explore new markets and build meaningful business relationships with companies worldwide.”
 </p>
-<h4>Michael Carter – Export Manager</h4>
+<h2 class="h4">Michael Carter – Export Manager</h2>
                                                                    
                             </div>
                         </div>
@@ -55,7 +55,7 @@
                                                                     <p class="supplier-list-info"><b>BrightStar Steel Solutions</b></p>
                                                                     <p>“Joining B2B Trade Services has helped increase our product visibility among international buyers. The platform makes it easier to present our products and communicate with companies looking for reliable suppliers.
 <br><br>We appreciate the professional environment and the opportunities it creates for businesses to connect and grow globally.”</p>
-<h4>Emily Rodriguez – Sales Director</h4>
+<h2 class="h4">Emily Rodriguez – Sales Director</h2>
                                                                    
                             </div>
                         </div>

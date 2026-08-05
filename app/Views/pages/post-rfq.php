@@ -63,7 +63,7 @@
                             </div>
 
                             <hr class="my-4">
-                            <h5 style="color: #0d6968;">Your Contact Information</h5>
+                            <h4 class="h5" style="color: #0d6968;">Your Contact Information</h4>
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">

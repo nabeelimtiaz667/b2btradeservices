@@ -63,7 +63,7 @@ div{
     text-align: center;
     width: 90%;
 }
-h2{
+h2, .h2{
     font-size: 24px;
     color: #0A504F;
     font-weight: 600;

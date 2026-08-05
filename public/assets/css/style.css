@@ -49,7 +49,7 @@ body{
 div{
     box-sizing: border-box;
 }
-h2{
+h2, .h2{
     color: #0A504F;
     font-size: 24px;
     font-weight: 600;
@@ -58,13 +58,13 @@ h2{
     padding-top: 30px;
     padding-bottom: 40px;
 }
-.static-content h1 {
+.static-content h1, .static-content .h1{
     color: #0A504F;
     font-size: 30px;
     font-weight: 600;
     margin-bottom: 20px;
 }
-.static-content h2 {
+.static-content h2, .static-content .h2{
     color: #004d40;
     margin-top: 0;
     border-bottom: 2px solid #12a4a4;
@@ -74,12 +74,12 @@ h2{
     font-size: 22px;
     font-weight: 600;
 }
-.static-content h3 {
+.static-content h3, .static-content .h3{
     font-size: 20px;
     font-weight: 600;
     color: #0F9EA5;
 }
-.static-content h4 {
+.static-content h4, .static-content .h4{
     font-size: 20px;
     font-weight: 500;
     color: #0F9EA5;
@@ -120,7 +120,7 @@ h2{
     border-radius: 12px;
     margin: 40px 0;
 }
-.cta-section h2 {
+.cta-section h2, .cta-section .h2{
     color: #fff;
     border-bottom: none;
     font-size: 28px;
@@ -562,7 +562,7 @@ margin: auto;
 .Categories-list ul li:last-child a{
     color: #0F9EA5;
 }
-.Categories-list h5 {
+.Categories-list h5, .Categories-list .h5{
     color: #0A504F;
     font-size: 15px;
     font-weight: 600;
@@ -627,7 +627,7 @@ margin: auto;
     border-radius: 15px;
     padding: 30px 20px;
 }
-.b2b-top-form h3{
+.b2b-top-form h3, .b2b-top-form .h3{
     font-size: 16pX;
     color: #0F9EA5;
     text-align: center;
@@ -925,13 +925,13 @@ a.view-all-link:hover{
     background-color: #0F9EA5;
     transition: .5s linear;
 }
-.top-products-box:hover h3, .top-products-box:hover p, .top-products-box:hover a{
+.top-products-box:hover h3, .top-products-box:hover p, .top-products-box:hover a, .top-products-box:hover .h3{
     color: #fff;
 }
 .top-products-box:hover a img{
     filter: brightness(28.5);
 }
-.top-products-content h3 {
+.top-products-content h3, .top-products-content .h3{
     font-size: 14px;
     margin-bottom: 3px;
     color: #0F9EA5;
@@ -995,7 +995,7 @@ a.view-all-link:hover{
     height: 90px;
     object-fit: cover;
 }
-.top-supplier-content  h3{
+.top-supplier-content  h3, .top-supplier-content  .h3{
   font-size: 14px;
     margin-bottom: 15px;
     color: #0F9EA5;
@@ -1019,7 +1019,7 @@ a.view-all-link:hover{
     align-items: center;
     border-radius: 15px;
 }
-.cta-sec-content h2{
+.cta-sec-content h2, .cta-sec-content .h2{
     font-size: 36px;
 }
 .product-bg-img{
@@ -1076,7 +1076,7 @@ a.view-all-link:hover{
     margin-left: auto;
     margin-right: auto;
 }
-.icon-box-img h2{
+.icon-box-img h2, .icon-box-img .h2{
     color: #000;
 }
 .right-supplier-sec{
@@ -1105,7 +1105,7 @@ a.view-all-link:hover{
 .supplier-contact-form   .gradeint-cta{
     max-width: 100%;
 }
-.supplier-contact-form .multiple-quote-form  h2{
+.supplier-contact-form .multiple-quote-form  h2, .supplier-contact-form .multiple-quote-form  .h2{
 color: #0F9EA5;
 }
 .check-icon-ul{
@@ -1126,7 +1126,7 @@ color: #0F9EA5;
 .supplier-content-sec{
     padding-left: 50px;
 }
-.supplier-content-sec h2{
+.supplier-content-sec h2, .supplier-content-sec .h2{
     max-width: 450px;
 }
 .category-icon-box {
@@ -1635,12 +1635,12 @@ border: 1px solid #DBDBDB;
     justify-content: center;
     left: 35px;
 }
-.inner-banner-sec-content h1{
+.inner-banner-sec-content h1, .inner-banner-sec-content .h1{
     font-size: 36px;
     font-weight: 700;
     color: #0A504F;
 }
-.inner-banner-sec-content h2{
+.inner-banner-sec-content h2, .inner-banner-sec-content .h2{
       font-weight: 700;
     color: #0A504F;
 }
@@ -1681,7 +1681,7 @@ border: 1px solid #DBDBDB;
 
  
 }
-.supplier-page-sec  .multiple-quote-form  h3{
+.supplier-page-sec  .multiple-quote-form  h3, .supplier-page-sec  .multiple-quote-form  .h3{
     font-size: 18px;
     font-weight: 600;
 }
@@ -1754,7 +1754,7 @@ border: 1px solid #DBDBDB;
     font-size:  12px;
     margin-bottom: 5px;
 }
-.supplier-product-list-box h4{
+.supplier-product-list-box h4, .supplier-product-list-box .h4{
     color: #0F9EA5;
     font-size: 14px;
     font-weight: 600;
@@ -2006,7 +2006,7 @@ button#toggleBtn .rotate {
     z-index: 1;
 }
 
-.supplier-profile-slider h1{
+.supplier-profile-slider h1, .supplier-profile-slider .slide-heading, .supplier-profile-slider .h1{
     color: #fff;
     position: absolute;
     z-index: 99;
@@ -2161,7 +2161,7 @@ section.profile-bar {
     width: 39%;
     margin-left: 1%;
 }
-.profile-info h2{
+.profile-info h2, .profile-info .h2{
     font-size: 28px;
 }
 .column-count-2{
@@ -2187,7 +2187,7 @@ section.profile-bar {
 .profile-product-category .nav-tabs {
     border-bottom: 0px;
 }
-.profile-product-category h2{
+.profile-product-category h2, .profile-product-category .h2{
     font-size: 18px;
     padding-left: 10px;
 }
@@ -2737,7 +2737,7 @@ ul.checkbox-ul-new  li{
     background-color: #0F9EA5;
     color: #fff;
 }
-.approach-box:nth-child(even) h2{
+.approach-box:nth-child(even) h2, .approach-box:nth-child(even) .h2{
     color: #fff !important;
 }
 .approach-box-row{
@@ -2907,7 +2907,7 @@ ul.checkbox-ul-new  li{
 .show-more-btn:hover{
     color: #000;
 }
-.price-box h3 span {
+.price-box h3 span, .price-box .h3 span{
     font-size: 22px;
 }
 .premeium-ul li{
@@ -2971,7 +2971,7 @@ ul.checkbox-ul-new  li{
     padding: 30px 30px;
         padding-top: 40px;
 }
-.single-view-pkg-form h2 {
+.single-view-pkg-form h2, .single-view-pkg-form .h2{
     max-width: 369px;
     font-size: 28px;
 }
@@ -3203,16 +3203,16 @@ z-index:9;
     background-color: #f5f5f5 !important;
  
 }
-.silver-bg .latest-buy-offer h2 {
+.silver-bg .latest-buy-offer h2, .silver-bg .latest-buy-offer .h2{
     font-size: 54px;
     color: #0F1626;
     font-style: italic;
 }
-.silver-bg .latest-buy-offer h4 {
+.silver-bg .latest-buy-offer h4, .silver-bg .latest-buy-offer .h4{
     font-size: 84px;
     color: #0F9EA5;
 }
-.silver-bg .latest-buy-offer h4  span{
+.silver-bg .latest-buy-offer h4  span, .silver-bg .latest-buy-offer .h4  span{
     color: #AFAFAF;
         font-size: 24px;
 }
@@ -3830,7 +3830,7 @@ section.about-full-sec  ul.checkbox-ul-new li{
     }
 }
 @media(max-width: 767.5px) {
-    .cta-sec-content h2 {
+    .cta-sec-content h2, .cta-sec-content .h2{
         font-size: 24px;
     }
     .buyer-main-list-content>.d-flex {
@@ -3842,7 +3842,7 @@ section.about-full-sec  ul.checkbox-ul-new li{
   .inner-pkg  .premeium-ul li{
        background-position: top center !important;
     }
-    h2 br{
+    h2 br, .h2 br{
         display: none;
     }
 .logo {
@@ -3880,7 +3880,7 @@ section.about-full-sec  ul.checkbox-ul-new li{
         background-position: top center;
         margin-bottom: 20px;
     }
-    .supplier-content-sec h2 {
+    .supplier-content-sec h2, .supplier-content-sec .h2{
     max-width: 450px;
     margin-left: auto;
     margin-right: auto;
@@ -3945,7 +3945,7 @@ section.about-full-sec  ul.checkbox-ul-new li{
 .common-slider .row{
     justify-content: center;
 }
-.supplier-profile-slider h1{
+.supplier-profile-slider h1, .supplier-profile-slider .slide-heading, .supplier-profile-slider .h1{
     font-size: 50px;
 }
     .proflie-img {
@@ -4207,10 +4207,10 @@ ul.checkbox-ul-new li{
     .supplier-profile-slider {
     height: 250px;
     }
-    .supplier-profile-slider h1 {
+    .supplier-profile-slider h1, .supplier-profile-slider .slide-heading, .supplier-profile-slider .h1{
         font-size: 36px;
     }
-    .profile-info h2 {
+    .profile-info h2, .profile-info .h2{
     font-size: 20px;
 }
 .sp-membership-icon img {    width: 75px!important;}
@@ -4229,15 +4229,15 @@ ul.checkbox-ul-new li{
     font-size: 12px;
     max-width: 280px;
 }
-    .silver-bg .latest-buy-offer h4 {
+    .silver-bg .latest-buy-offer h4, .silver-bg .latest-buy-offer .h4{
     font-size: 55px;
     
 }
-.silver-bg .latest-buy-offer h2 {
+.silver-bg .latest-buy-offer h2, .silver-bg .latest-buy-offer .h2{
     font-size: 48px;
      
 }
-.single-view-pkg-form h2 {
+.single-view-pkg-form h2, .single-view-pkg-form .h2{
     max-width: 260px;
     font-size: 19px;
     margin-top: 19px;
@@ -4347,7 +4347,7 @@ ul.checkbox-ul-new li{
     flex-direction: column;
     align-items: flex-start !important;
 }
-.inner-banner-sec-content h1{
+.inner-banner-sec-content h1, .inner-banner-sec-content .h1{
     font-size: 28px;
 }
     .buyers-category-col {

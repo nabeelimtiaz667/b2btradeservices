@@ -1,3 +1,25 @@
+<?php
+// Organization structured data, site-wide (this partial is included in every
+// public layout's footer). "sameAs" is the standard schema.org mechanism for
+// telling search engines that these social profiles belong to this business
+// -- it's what feeds Google's Knowledge Panel social links, distinct from
+// just adding a footer icon a human can click.
+$orgJsonLd = [
+    '@context' => 'https://schema.org',
+    '@type' => 'Organization',
+    'name' => trim($siteSettings['site_name'] ?? 'B2B Trade Services'),
+    'url' => base_url(),
+    'logo' => base_url('assets/images/logo.svg'),
+    'sameAs' => [
+        'https://www.facebook.com/people/B2B-Trade-Services/61592672702945/',
+        'https://www.instagram.com/b2btradeservicesllc',
+    ],
+];
+?>
+<script type="application/ld+json"><?= json_encode(
+    $orgJsonLd,
+    JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+) ?></script>
 <footer>
     <div class="border-top-footer"></div>
 
@@ -65,9 +87,9 @@
                     <a href="mailto:info@b2btradeservices.com">info@b2btradeservices.com</a>
                     <a href="mailto:support@b2btradeservices.com">support@b2btradeservices.com</a>
                     <?php endif; ?>
-                    <div class="social-icons mt-2 d-flex gap-2 align-items-center d-none">
-                        <a href="#"><img src="<?= base_url('assets/images/fb-icon.svg') ?>"></a>
-                        <a href="#"><img src="<?= base_url('assets/images/insta-icon.svg') ?>"></a>
+                    <div class="social-icons mt-2 d-flex gap-2 align-items-center">
+                        <a href="https://www.facebook.com/people/B2B-Trade-Services/61592672702945/" target="_blank" rel="noopener noreferrer" aria-label="B2B Trade Services on Facebook"><img src="<?= base_url('assets/images/fb-icon.svg') ?>" alt="Facebook" width="24" height="24"></a>
+                        <a href="https://www.instagram.com/b2btradeservicesllc" target="_blank" rel="noopener noreferrer" aria-label="B2B Trade Services on Instagram"><img src="<?= base_url('assets/images/insta-icon.svg') ?>" alt="Instagram" width="24" height="24"></a>
                     </div>
                 </div>
                 <div class="footer-bottom-col-2">

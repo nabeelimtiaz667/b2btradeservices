@@ -37,7 +37,7 @@
     <meta name="msapplication-TileImage" content="<?= base_url('assets/site-identity/ms-icon-144x144.png') ?>">
     <meta name="theme-color" content="#ffffff">
 
-    <title><?= ($title ?? 'Home') . ' | ' . ($siteSettings['site_name'] ?? 'B2B Trade Services') ?></title>
+    <title><?= esc(($title ?? 'Home') . ' | ' . ($siteSettings['site_name'] ?? 'B2B Trade Services')) ?></title>
     <?php $metaDesc = $metaDescription ?? $siteSettings['meta_description'] ?? '';
     if ($metaDesc): ?>
     <meta name="description" content="<?= esc($metaDesc) ?>">

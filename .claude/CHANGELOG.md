@@ -14,7 +14,359 @@ Entry format:
 
 ---
 
-## 2026-07-31 — Premium membership now actually gates buyer contact details
+## 2026-08-06 — Social links: site-wide Organization schema + footer icons
+
+**Files:** `app/Views/partials/footer.php`
+**Why:** owner asked to add Facebook and Instagram "as SEO" and to the footer,
+icons only, no text.
+
+- **Footer icons activated, not built from scratch.** A `.social-icons` block
+  already existed (Facebook/Instagram icon markup, correct assets
+  `fb-icon.svg`/`insta-icon.svg` already present) but was `d-none` with
+  placeholder `href="#"` — clearly scaffolded in advance and never wired up.
+  Filled in the two real URLs, removed `d-none`, added `target="_blank"
+  rel="noopener noreferrer"` and `aria-label`s since the icons carry no
+  visible text.
+- **SEO — added what "as SEO" actually means here:** a site-wide
+  `Organization` JSON-LD block with `sameAs` pointing at both profiles. This
+  is the schema.org mechanism search engines use to associate social accounts
+  with a business (feeds Google's Knowledge Panel); a footer link alone is
+  just a link, not a machine-readable SEO signal. Built from
+  `site_settings.site_name` (trimmed — the DB value has a trailing space),
+  `base_url()` and the existing logo asset. No prior Organization/WebSite
+  schema existed anywhere on the site.
+- Placed in `partials/footer.php`, which is shared by all 4 public layouts
+  (`main`, `inner`, `inner-pkg`, `supplier-profile`), so both the icons and
+  the schema are site-wide with one change, not duplicated per layout.
+- Escaped via `json_encode` with the same `JSON_HEX_*` pattern used for the
+  earlier inquiry JSON-LD, for consistency (this data isn't user-controlled,
+  but costs nothing).
+
+**Verified:** valid JSON (parsed and inspected field-by-field), present on all
+4 layout types (home, static page, package page, supplier profile), footer
+icons render with real hrefs and no visible text, 6 representative pages still
+return 200.
+
+---
+
+## 2026-08-06 — Heading hierarchy audit: one H1 per page, no skipped levels
+
+**Files:** 17 page views, `public/assets/css/style.css`,
+`public/assets/css/login-style.css`
+**Why:** owner asked for a second heading pass across `app/Views/pages` — does
+every page have an H1, and are levels well-ordered (h1→h2→h3, never h5→h2→h3)?
+
+**Method:** analysed **rendered** output, not source. The previous H1 miscount
+(see the supplier-profile entry below) happened because a source grep can't see
+a heading repeated by a loop. Script fetched all 33 page/variant URLs, stripped
+HTML comments, extracted the heading sequence, and flagged NO-H1, MULTI-H1,
+H1-NOT-FIRST and level skips.
+
+**Found:** 15 of 33 pages had problems — 1 missing H1, 2 with H1 not first, and
+14 with skipped levels (h1→h3, h1→h4, h2→h5).
+
+**Result: 32 of 33 pages now clean.** Only the homepage remains (BLOCKERS #19,
+needs owner-written copy). Its internal ordering was still fixed: it opened
+`h5 → h3 → h2`, the exact anti-pattern the owner described, now consistent.
+
+### The important discovery: the class-preservation technique didn't work here
+
+The owner's instruction was to change a heading's tag and add its old level as
+a class (`<h3>` → `<h2 class="h3">`), on the basis that `.h1`–`.h6` classes
+were already defined. **They were not.** Verified: no local stylesheet defines
+`.h1`–`.h6`; those come only from the Bootstrap 5.0.2 CDN, and Bootstrap's
+versions carry font-size/weight/margin but **none of this site's custom colours
+or sizes**.
+
+This site styles headings with **element selectors**, 38 of them, e.g.:
+
+```css
+.silver-bg .latest-buy-offer h4 { font-size: 84px; color: #0F9EA5; }
+```
+
+So a package price changed from `<h4>` to `<h2 class="h4">` would have silently
+dropped from **84px teal to 24px** — and the same class of breakage applied to
+every promotion made in the earlier audit that day (package titles, banner
+headings, login/register headings).
+
+**Fix:** swept both stylesheets so every heading-element rule also matches the
+matching class — `.silver-bg .latest-buy-offer h4` became
+`.silver-bg .latest-buy-offer h4, .silver-bg .latest-buy-offer .h4`. 38
+selectors in `style.css`, 1 in `login-style.css`. This makes the owner's
+technique behave as intended from here on.
+
+The sweep was scripted with brace-depth tracking so only selector text was
+touched, never declarations, and it handles `@media`-nested rules. Verified:
+brace counts unchanged (848/848), only 38 lines differ, `.light-green-h2-color`
+correctly untouched, and the `.slide-heading` selector added earlier that day
+preserved. Backups of both files in `C:\xampp\db_backups\`.
+
+### Per-page changes
+
+- **contact** — H1 was third in the document (`h2 Office Location`, `h3
+  Address`, then `h1 Contact Us`). Promoted the first heading instead:
+  "Office Location" → `h1.h2`, "Address" → `h2.h3`, "Contact Us" → `h2.h3`.
+  *Trade-off worth flagging:* "Office Location" is a weaker page-topic match
+  than "Contact Us", but it is the page's actual first heading and moving DOM
+  elements would change the layout. Easy to swap if the owner prefers.
+- **buyer-detail** — the banner slogan ("Find B2B Buying Leads" / "For Your
+  Business") sat *before* the inquiry-title H1. That slogan is identical on
+  every inquiry page, so it is decoration, not structure: converted to `<p>`
+  with the original `h1`/`h2` classes, so it looks the same and the inquiry
+  title is now the first heading. This preserves the owner's earlier intent
+  (inquiry title = H1) more strongly than the previous `h2` markup did.
+  Modal title `h5` → `h3.h5` (kept `modal-title`).
+- **success-stories** — testimonial names `h4` → `h2.h4` (was h1→h4).
+- **premium-services** — prices `h3` → `h2.h3`; Connect/Discover/Promote/Trade
+  `h5` → `h3.h5`.
+- **starter/gold/platinum/vip-package** — price `h4` → `h2.h4`; the two
+  `<li><h5>` label headings → `h3.h5` (gold/platinum/vip only).
+- **post-rfq** — "Your Contact Information" `h5` → `h4.h5`.
+- **product** — product-name cards `h4` → `h2.h4`; category tiles `h5` → `h3.h5`.
+- **supplier / supplier-category** — section headers `h3` → `h2.h3`; supplier
+  cards `h4` → `h3.h4`.
+- **search-results** — section headers `h3` → `h2.h3`; result cards `h5` → `h3.h5`.
+- **index (homepage)** — "Categories" `h5` → `h2.h5`; "Register Quick Now"
+  `h3` → `h2.h3`. Still no H1 by design.
+
+**Verified:** re-ran the rendered audit (32/33 OK), scanned every page view for
+mismatched heading open/close tags (found and fixed 8 introduced by partial
+string replacements — `<h2 …>…</h3>`), PHP-linted all 17 edited views, and
+confirmed 12 representative URLs plus both stylesheets still return 200.
+
+---
+
+## 2026-08-05 — Fixed: supplier profile pages could render 3 H1 tags
+
+**Files:** `app/Views/pages/supplier-profile.php`, `public/assets/css/style.css`
+**Why:** owner reported multiple H1s on `/supplier/profile/middle-fork-capital`.
+Confirmed: 3 identical `<h1>Middle Fork Capital</h1>` tags on that page.
+
+**Root cause, and why the earlier audit (same day, see below) missed it:** the
+supplier profile banner is a slider built from `$supplier['banner_image']`,
+`banner_image_2`, `banner_image_3` — up to 3 images. The heading was *inside*
+that `foreach` loop, so it rendered once per banner image. The earlier audit
+checked H1 count by grepping the `.php` **source** file, which only sees the
+heading once (it's one line of template); it can't see that a loop repeats it
+at runtime. The specific supplier checked during that audit
+(`2k-building-renovation-gmbh`) happens to have exactly one banner image, so
+its page rendered fine and the bug stayed hidden.
+
+**Blast radius:** 3 suppliers currently have 2+ banner images
+(`middle-fork-capital`, `torch-industrial-co-ltd`, and one un-slugged row, id
+438, reachable via `/supplier/profile/438`) — all confirmed broken, all fixed.
+Structural, not just a data issue: any supplier who uploads a second banner
+image triggers this.
+
+**Fix:** only the first slide renders a real `<h1>`; the rest use the same
+visual text in a `<p class="slide-heading">`, so the carousel still shows the
+company name overlaid on every slide (unchanged visually) while the page has
+exactly one H1. CSS selectors in `style.css` (3 locations: base rule, a later
+override, and a `max-width: 575.5px` responsive rule) broadened from
+`.supplier-profile-slider h1` to also match `.supplier-profile-slider
+.slide-heading`, so the demoted slides keep identical styling.
+
+**Also checked, whole site:** grepped every page view for a heading tag
+appearing inside a `foreach`/`while` loop (the pattern that caused this) —
+only `h2`–`h5` matches elsewhere, which is fine to repeat; `supplier-profile.php`
+was the only page with a *heading-level-1* tag inside a loop. Then live-rendered
+all 30 previously-audited pages plus every affected supplier profile and
+confirmed exactly one `<h1>` on each. `buyer-detail.php` (excluded from the
+original audit) checked too this time — already clean, unaffected.
+
+---
+
+## 2026-08-05 — Site-wide SEO audit: unique titles, descriptions, canonicals, H1s
+
+**Files:** `app/Controllers/{Pages,Buyer,Product,Supplier,Search,Auth}.php`,
+`app/Helpers/seo_helper.php` (new), `app/Config/Autoload.php`,
+`app/Views/layouts/{auth,inner-pkg,supplier-profile}.php`,
+17 page views for H1 promotion, `app/Views/pages/{forget,reset}-password.php`
+**Why:** owner-requested audit of every public page except `buyer-detail.php`
+(handled separately) for unique meta title, unique meta description, canonical
+tag, and exactly one correctly-leveled H1.
+
+### Scope
+
+`app/Views/pages/*.php` (30 files). Excluded `dashboard/`/`admin/` (gated
+internal tools, not crawled) and two dead view files with no route anywhere in
+the app — `thankyou.php` and `rfq.php` — fixing SEO tags on unreachable pages
+would be wasted effort. Worth a cleanup pass separately.
+
+### Root cause: one shared controller, 16 pages, zero differentiation
+
+`Pages::index($page)` serves about-us, contact, privacy-policy,
+terms-and-conditions, refund-policy, user-guide,
+banned-keywords-and-illegal-products-policy, become-our-agent-partner,
+tradeshow-marketing-services, success-stories, premium-services, all 4 package
+pages, and the homepage. Before this: title was
+`ucfirst(str_replace('-', ' ', $page))`, which only capitalizes the *first
+letter of the whole string* (`"banned-keywords-and-illegal-products-policy"` ->
+`"Banned keywords and illegal products policy"`), no description was ever set
+(every one of these 16 pages fell through to the single site-wide
+`site_settings.meta_description`, so they were all identical in search
+results), and no canonical existed at all.
+
+Fixed with a `getPageMeta()` config array in `Pages.php` mapping each slug to a
+real title and description, checked against each page's actual content rather
+than guessed — package page descriptions cross-checked against their actual
+feature lists (10/20/30/50 showcase products, buyer database access, LLC/LTD
+registration, etc.) to avoid overclaiming. The homepage deliberately keeps using
+`$siteSettings['meta_title']`/`meta_description` — those settings exist
+precisely to be the site's identity, and the homepage is the one page where
+reusing them is correct rather than a fallback firing where it shouldn't.
+
+### Dynamic controllers (Buyer, Product, Supplier, Search, Auth)
+
+Each listing/detail/search action got a description and canonical. Notable
+decisions:
+
+- **New `canonical_self_url()` helper** (`seo_helper.php`) for search/filter
+  pages: `current_url()` alone strips the query string, which is correct for
+  static pages but wrong here — canonicalizing `/buyer/search?q=rice` to bare
+  `/buyer/search` would point at a different, near-empty page. Used across
+  Buyer/Product/Supplier search and the global search.
+- **Product-by-supplier duplicate URLs consolidated.** `/product?supplier={id}`
+  and `/product/supplier/{id}` render identical content; only the latter is
+  ever linked from the app (`supplier-profile.php`). The query-param form now
+  canonicalizes to the path form instead of self-referencing a URL nothing
+  points to.
+- **`/supplier-profile` (no id) found to be a dead-route duplicate of
+  `/supplier`** — `Routes.php:41` maps it to `Supplier::index`, not to a
+  profile page, and it's never linked internally. Canonicalized to `/supplier`
+  regardless of which URL was used to reach it, while still preserving the
+  pagination query string.
+- **New `truncate_for_meta()` helper**, factored out of the truncation logic
+  `inquiry_meta_description()` already used, reused for product and supplier
+  descriptions (both free-form fields with no length limit, up to 4778 chars
+  for supplier `company_introduction`).
+- Supplier profile description chain: `company_introduction` (73/160 suppliers
+  have one) -> a sentence built from `selling_products` (18/160 missing) ->
+  a generic fallback — never empty regardless of data completeness.
+
+### A double-escape bug found and fixed, caused by an earlier change
+
+Two controllers pre-escaped a value with `esc()` before putting it into
+`title` — `Buyer.php:276` (`$categoryName = esc($category['name'])`) and
+`Search.php:88` (`'title' => 'Search Results for "' . esc($keyword) . '"'`).
+This was harmless *before* today, because the `<title>` tag wasn't escaped at
+all (see the 2026-08-05 XSS entry above). Now that the layout correctly
+escapes the whole title string once, these two double-escaped:
+`Building &amp; Construction` was rendering as `Building &amp;amp; Construction`.
+Fixed at the source — removed both premature `esc()` calls, since escaping now
+happens exactly once, at render time, in the layout. Verified: `Electronics &
+Electrical` now renders as `&amp;` exactly once, confirmed against raw
+response bytes. Grepped all controllers for the same `= esc(...)`-into-title
+pattern; these were the only two.
+
+### Layouts missing description/canonical support entirely
+
+- `inner-pkg.php` and `supplier-profile.php` had a meta description block but
+  without the `$metaDescription ??` override (`main.php`/`inner.php` already
+  had this from the earlier canonical-tag work) and no canonical tag at all.
+- `auth.php` (used by `login.php`/`register.php`) had **neither** — not even
+  the site-wide description fallback.
+- `forget-password.php`/`reset-password.php` don't extend any layout (standalone
+  full-HTML files, pre-existing and out of scope to fix here) — added the same
+  description/canonical tags directly into their own `<head>`, wired through
+  `Auth::forgotPassword()`/`resetPassword()`.
+
+All fixed to match the pattern already established on `main.php`/`inner.php`.
+
+### H1 promotions — 17 pages had zero H1s, now exactly one each
+
+Per the owner's instructions: observed each promoted heading's original level,
+added a matching class (e.g. a promoted `<h2>` gets `class="h2"`) so existing
+CSS keeps applying, then changed the tag to `<h1>`. All 17: `about-us`,
+`buyer-main`, `contact`, `gold-package`, `login`, `platinum-package`,
+`premium-services`, `product-detail`, `product`, `register`, `search-results`,
+`starter-package`, `success-stories`, `supplier-category`, `supplier-country`,
+`supplier`, `vip-package`.
+
+- `contact.php`: promoted "Contact Us" (h3, mid-page) rather than "Office
+  Location" (h2, structurally first) — a judgment call, since the page's H1
+  should describe the whole page, not one subsection of it. Noted since it's
+  the one page where the promoted heading isn't literally the first one.
+- **Homepage deliberately NOT promoted.** Its only pre-H1 headings are
+  "Categories" (a sidebar label) and "Register Quick Now! And get free
+  Buyers/Suppliers Leads" (a signup CTA) — promoting either would tell search
+  engines the page is *about* that text, which is actively wrong for the
+  highest-traffic page on the site. Flagged for the owner rather than guessed.
+- Verified after: every page in scope has exactly 1 `<h1>`, none have 0 or 2+.
+
+### Verified
+
+Full live sweep of all 30 in-scope pages plus dynamic variants (search with a
+query, category/country filters, product/supplier detail) confirmed unique
+title, description, canonical, and exactly one H1 on each. `buyer-detail.php`
+and the rest of the site spot-checked unaffected.
+
+**Still open:** the homepage's H1 (needs a decision, not a promotion — see
+above), and `thankyou.php`/`rfq.php` being dead code (unrelated finding, noted
+for a separate cleanup).
+
+---
+
+## 2026-08-05 — JSON-LD structured data on inquiry pages, and a stored XSS found+fixed along the way
+
+**Files:** `app/Views/pages/buyer-detail.php`, all 6 `app/Views/layouts/*.php`
+**Why:** owner asked for a schema.org `WebPage`/`Demand` JSON-LD block on inquiry
+pages (search-result rich snippets). Testing it against buyer-submitted content
+surfaced a live, unrelated, site-wide stored XSS — fixed in the same change
+since it was found via the same file and the fix is the same `esc()` pattern
+already used elsewhere on this page.
+
+**JSON-LD block:**
+- Added to `buyer-detail.php`, right after `$this->section('content')` opens.
+  Built as a PHP array and passed through `json_encode()` with
+  `JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT` — **not** raw
+  string substitution into the `{{placeholder}}` template as originally
+  specified — because inquiry title/description/product_name are buyer-submitted
+  free text with no server-side validation (BLOCKERS #11), and a literal `</script>`
+  or unescaped quote in any of them would otherwise break out of the tag or
+  corrupt the JSON.
+- Reuses `$canonical`, `$title`, `$metaDescription` already set by
+  `Buyer::detail()` — no new controller data needed for those three.
+- `Demand.description` uses the **raw** `$inquiry['description']`, not the
+  160-char-truncated meta version, since structured data has no length
+  constraint; falls back to `$metaDescription`'s templated sentence for the 3
+  rows with no description at all, so it's never empty.
+- **Verified:** valid JSON on a normal row and on the empty-description
+  fallback row (id 22). Adversarial test — submitted a real RFQ via the public
+  form with a title containing `"`, `'`, `</script>`, and a raw `<script>alert(1)</script>`
+  payload — confirmed the JSON-LD output HEX-escapes all of it (`<`,
+  `"`, etc.), stays as exactly one `<script>` tag, and does not execute.
+
+**XSS found and fixed (not part of the original ask, but found while testing it):**
+- That same adversarial title exposed a real, exploitable stored XSS: every
+  layout's `<title>` tag interpolated `$title` with **no escaping at all** —
+  `<title><?= ($title ?? 'Home') . ' | ' . ... ?></title>`. The payload's
+  `</script><script>alert(1)</script>` rendered as a live, executing script tag.
+  This page's own `<h1>` already used `esc()` on the same field one line away —
+  the `<title>` tag was simply missed, not a deliberate choice.
+- Reachable via at least three user-controlled fields, confirmed by grep:
+  inquiry title (`Buyer.php:151`, buyer-submitted via the public RFQ form),
+  product name (`Product.php:124`, supplier-submitted), and supplier company
+  name (`Supplier.php:125`, submitted at registration). Any visitor to that
+  page — including an admin — would execute the payload. Given CSRF is already
+  disabled site-wide (BLOCKERS #7), this combination was a real session-hijack
+  path, not a theoretical one.
+- Fixed in all 6 layouts (`auth.php`, `dashboard.php`, `inner-pkg.php`,
+  `inner.php`, `main.php`, `supplier-profile.php`) by wrapping the whole
+  `<title>` expression in `esc()`, matching the pattern already used for meta
+  description and canonical URL in the same files.
+- **Verified:** the adversarial row's `<title>` now renders as inert
+  HTML-entity text (`&lt;/script&gt;&lt;script&gt;...`), zero raw
+  `<script>alert(1)</script>` anywhere on the page, JSON-LD unaffected. Spot-checked
+  three unrelated pages (`/buyer-inquiry/...`, `/`, `/login`) to confirm normal
+  titles still render correctly with no regression.
+
+Test row (id 476, `escapetest@example.invalid`) removed; `buyer_inquiries` back
+to baseline 470.
+
+---
+
+## 2026-08-04 — Premium membership now actually gates buyer contact details
 
 **Files:** `app/Controllers/Buyer.php`, `app/Views/pages/buyer-detail.php`
 **Why:** the "Premium Members only" mask on Purchaser/Contact Number/Company Name
@@ -52,7 +404,7 @@ role, approved. Delete after testing — it is not real data.
 
 ---
 
-## 2026-07-31 — Close the duplicate `/public/*` URL surface
+## 2026-08-02 — Close the duplicate `/public/*` URL surface
 
 **Files:** `public/.htaccess`
 **Why:** every route on the site was reachable a second way, under `/public/*`
@@ -85,7 +437,7 @@ above the new rule.
 
 ---
 
-## 2026-07-31 — Manual SEO/branding changes (owner, outside this session)
+## 2026-08-02 — Manual SEO/branding changes (owner, outside this session)
 
 Made directly by Nabeel; logged here after the fact per project convention, verified
 against the live files rather than taken on faith.
@@ -122,7 +474,7 @@ which one is authoritative before that setting is ever populated for real.
 
 ---
 
-## 2026-07-31 — Dynamic per-inquiry meta descriptions
+## 2026-08-02 — Dynamic per-inquiry meta descriptions
 
 **Files:** `app/Helpers/inquiry_helper.php`, `app/Controllers/Buyer.php`,
 `app/Views/layouts/{inner,main}.php`
@@ -153,7 +505,7 @@ empty-description fallback path renders the templated sentence; unrelated pages
 
 ---
 
-## 2026-07-31 — Slug work deployed to production
+## 2026-08-02 — Slug work deployed to production
 
 **Files:** the 20-file set below, deployed to the cPanel host
 **Why:** ship the fix for BLOCKERS #14.
@@ -179,7 +531,7 @@ unconditional `down()` that drops five real columns.
 
 ---
 
-## 2026-07-30 — Inquiry URLs migrated to real slugs (BLOCKERS #14 closed)
+## 2026-08-01 — Inquiry URLs migrated to real slugs (BLOCKERS #14 closed)
 
 **Files:** 20 — `app/Config/{Autoload,Routes}.php`, `app/Controllers/{Buyer,Dashboard,AdminSettings}.php`,
 `app/Models/BuyerInquiryModel.php`, `app/Helpers/inquiry_helper.php` (new),

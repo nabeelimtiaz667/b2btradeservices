@@ -40,8 +40,17 @@ class Supplier extends BaseController
                 ->findAll();
         }
 
+        // '/supplier-profile' (no id) and '/supplier' route to this same
+        // method and render identical content -- the former is never linked
+        // internally (checked: no href anywhere points to it), so this
+        // canonicalizes to '/supplier' regardless of which URL was used to
+        // reach it, while still preserving the pagination query string.
+        $query = service('request')->getUri()->getQuery();
+
         $data = [
             'title' => 'Suppliers',
+            'metaDescription' => 'Find verified exporters, global suppliers, and worldwide recognized companies on B2B Trade Services.',
+            'canonical' => base_url('supplier') . ($query !== '' ? '?' . $query : ''),
             'suppliers' => $suppliers,
             'pager' => $this->userModel->pager,
             'categories' => $this->categoryModel->getActiveCategories(),
@@ -121,8 +130,22 @@ class Supplier extends BaseController
             $related['country'] = !empty($related['country_id']) ? $this->countryModel->find($related['country_id']) : null;
         }
 
+        $supplierDisplayName = $supplier['company_name'] ?? $supplier['name'];
+
+        if (!empty($supplier['company_introduction'])) {
+            $supplierMetaDescription = truncate_for_meta($supplier['company_introduction']);
+        } elseif (!empty($supplier['selling_products'])) {
+            $supplierMetaDescription = truncate_for_meta(
+                $supplierDisplayName . ' on B2B Trade Services, dealing in: ' . $supplier['selling_products']
+            );
+        } else {
+            $supplierMetaDescription = $supplierDisplayName . ' - verified supplier profile on B2B Trade Services.';
+        }
+
         $data = [
-            'title' => $supplier['company_name'] ?? $supplier['name'],
+            'title' => $supplierDisplayName,
+            'metaDescription' => $supplierMetaDescription,
+            'canonical' => current_url(),
             'supplier' => $supplier,
             'products' => $products,
             'productsByCategory' => $productsByCategory,
@@ -178,8 +201,14 @@ class Supplier extends BaseController
             }
         }
 
+        $catQuery = service('request')->getUri()->getQuery();
+
         $data = [
-            'title' => $category ? $category['name'] : 'Find Suppliers By Category',
+            'title' => $category ? 'Suppliers in ' . $category['name'] : 'Find Suppliers By Category',
+            'metaDescription' => $category
+                ? 'Find verified suppliers in ' . $category['name'] . ' on B2B Trade Services.'
+                : 'Browse suppliers by category on B2B Trade Services and find the right manufacturer or exporter for your needs.',
+            'canonical' => current_url() . ($catQuery !== '' ? '?' . $catQuery : ''),
             'category' => $category,
             'suppliers' => $suppliers,
             'pager' => $this->userModel->pager,
@@ -216,8 +245,14 @@ class Supplier extends BaseController
                 ->findAll();
         }
 
+        $countryQuery = service('request')->getUri()->getQuery();
+
         $data = [
             'title' => $country ? 'Suppliers in ' . $country['name'] : 'Find Suppliers By Country',
+            'metaDescription' => $country
+                ? 'Find verified suppliers in ' . $country['name'] . ' on B2B Trade Services.'
+                : 'Browse suppliers by country and region on B2B Trade Services and find the right trade partner near you.',
+            'canonical' => current_url() . ($countryQuery !== '' ? '?' . $countryQuery : ''),
             'country' => $country,
             'suppliers' => $suppliers,
             'pager' => $this->userModel->pager,
@@ -266,7 +301,11 @@ class Supplier extends BaseController
         }
 
         $data = [
-            'title' => 'Search Results',
+            'title' => $keyword ? 'Search Results for "' . $keyword . '" - Suppliers' : 'Search Suppliers',
+            'metaDescription' => $keyword
+                ? 'Suppliers matching "' . $keyword . '" on B2B Trade Services.'
+                : 'Search verified suppliers and manufacturers on B2B Trade Services by keyword, country, or membership.',
+            'canonical' => canonical_self_url(),
             'suppliers' => $suppliers,
             'categories' => $this->categoryModel->getActiveCategories(),
             'countries' => $this->countryModel->getActiveCountries(),

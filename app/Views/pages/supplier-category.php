@@ -11,7 +11,7 @@
 
 <section class="supplier-page-sec mt-5">
     <div class="container">
-        <h2 class="text-center"><?= isset($category) ? esc($category['name']) : 'Find Suppliers' ?><br>By Category</h2>
+        <h1 class="text-center h2"><?= isset($category) ? esc($category['name']) : 'Find Suppliers' ?><br>By Category</h1>
         <div class="searchbar-box mb-5">
             <form action="<?= base_url('supplier/search') ?>" method="get">
                 <div class="searchbar-input">
@@ -26,7 +26,7 @@
             <div class="col-md-3">
                 <div class="supplier-side-form supplier-side-form-sub-page sup-cat">
                     <div class="sup-cat-form">
-                         <h3 class="custom-h3 mb-3 text-white">Categories</h3>
+                         <h2 class="custom-h3 mb-3 text-white h3">Categories</h2>
                     <ul class="list-unstyled">
                         <?php if (isset($categories)): ?>
                             <?php foreach ($categories as $cat): ?>
@@ -41,7 +41,7 @@
                     </div>
                     
                     <div class="sup-cat-flag d-none">
-                        <h3 class="custom-h3 mb-3 mt-4">Find Suppliers By Country/Region</h3>
+                        <h2 class="custom-h3 mb-3 mt-4 h3">Find Suppliers By Country/Region</h2>
                     <div class="flags-grid mt-0 mb-5">
                         <?php if (isset($countries)): ?>
                             <?php foreach (array_slice($countries, 0, 10) as $country): ?>
@@ -84,12 +84,12 @@
                                                 <?php endif; ?>
                                             </div>
                                             <p class="supplier-list-info"><?= isset($supplier['category']) ? esc($supplier['category']['name']) : 'Other' ?></p>
-                                            <h4>
+                                            <h3 class="h4">
                                                 <?= esc($supplier['company_name']) ?>
                                                 <?php if (isset($supplier['is_verified']) && $supplier['is_verified']): ?>
                                                     <img src="<?= base_url('assets/images/badge-icon.svg') ?>">
                                                 <?php endif; ?>
-                                            </h4>
+                                            </h3>
                                             <p>Products: <?= esc(substr($supplier['main_products'] ?? 'Various', 0, 30)) ?><br>
                                             Country: <?= isset($supplier['country']['name']) ? esc($supplier['country']['name']) : 'N/A' ?></p>
                                             <div class="supplier-product-list-box-img">

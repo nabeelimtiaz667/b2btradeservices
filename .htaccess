@@ -1,11 +1,17 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-
+    
     # Leave the WordPress install, the front controller folder and cgi-bin
     # alone. These patterns are directory-relative, so this works whether the
     # app is served from a document root or from a subfolder.
     RewriteRule ^(public|blog|cgi-bin)(/|$) - [L]
 
-    # Redirect everything else to public folder
+    # Force canonical HTTPS non-www domain (Commented in Dev Only)
+    # RewriteCond %{HTTPS} !=on [OR]
+    # RewriteCond %{HTTP_HOST} !^b2btradeservices\.com$ [NC]
+    # RewriteRule ^ https://b2btradeservices.com%{REQUEST_URI} [R=301,L]
+
+    # Redirect everything to public folder
+    RewriteCond %{REQUEST_URI} !^/public/
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>

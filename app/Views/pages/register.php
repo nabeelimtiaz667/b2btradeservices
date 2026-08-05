@@ -10,7 +10,7 @@
         <div class="b2b-logo">
             <img src="<?= base_url('assets/images/logo.svg') ?>" class="w-100">
         </div>
-        <h2>Sign Up Now</h2>
+        <h1 class="h2">Sign Up Now</h1>
         <p>Step into the world of Global Exporters &amp; Importers and Grow your Business 10x Times</p>
         <?php if (session()->getFlashdata('success')): ?>
             <div class="alert alert-success" style="background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 15px;"><?= session()->getFlashdata('success') ?></div>

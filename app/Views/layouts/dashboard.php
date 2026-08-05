@@ -33,7 +33,7 @@
     <meta name="msapplication-TileImage" content="<?= base_url('assets/site-identity/ms-icon-144x144.png') ?>">
     <meta name="theme-color" content="#ffffff">
 
-    <title><?= $title ?? (($siteSettings['site_name'] ?? 'B2B Trade Services') . ' - Dashboard') ?></title>
+    <title><?= esc($title ?? (($siteSettings['site_name'] ?? 'B2B Trade Services') . ' - Dashboard')) ?></title>
     <style>
     :root {
         --primary-dark: #0A504F;

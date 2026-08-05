@@ -11,7 +11,7 @@
 
 <section class="supplier-page-sec mt-5">
     <div class="container">
-        <h2 class="text-center">Find Verified Exporters, Global Suppliers and Worldwide recognized Companies</h2>
+        <h1 class="text-center h2">Find Verified Exporters, Global Suppliers and Worldwide recognized Companies</h1>
         <div class="searchbar-box mb-5">
             <form action="<?= base_url('supplier/search') ?>" method="get">
                 <div class="searchbar-input">
@@ -61,7 +61,7 @@
 
         <?php if (isset($searchKeyword) && !empty($searchKeyword)): ?>
         <div class="mb-5">
-            <h3 class="text-center custom-h3">Search Results for "<?= esc($searchKeyword) ?>"</h3>
+            <h2 class="text-center custom-h3 h3">Search Results for "<?= esc($searchKeyword) ?>"</h2>
             <div class="supplier-product-list">
                 <div class="row mt-4">
                     <?php if (isset($suppliers) && count($suppliers) > 0): ?>
@@ -84,12 +84,12 @@
                                             <img src="<?= base_url('assets/images/vip-coin.webp') ?>" style="width: 50px; margin-bottom: 10px;">
                                         <?php endif; ?>
                                     </div>
-                                    <h4>
+                                    <h3 class="h4">
                                         <?= esc($supplier['company_name'] ?? $supplier['name']) ?>
                                         <?php if (isset($supplier['country']['name'])): ?>
                                             <img src="<?= base_url('assets/images/flags/flag_' . str_replace(' ', '_', $supplier['country']['name']) . '.svg') ?>" width="20" onerror="this.style.display='none'">
                                         <?php endif; ?>
-                                    </h4>
+                                    </h3>
                                     <p>Products: <?= esc($supplier['selling_products'] ?? 'Various') ?><br>
                                     Country: <?= isset($supplier['country']['name']) ? esc($supplier['country']['name']) : 'N/A' ?></p>
                                     <div class="supplier-product-list-box-img">
@@ -120,7 +120,7 @@
         <?php if (!isset($searchKeyword) || empty($searchKeyword)): ?>
 <section class="row mt-md-5 mt-4 align-items-start sp-page">
     <div class="container">
-        <h3 class="text-center custom-h3">All Suppliers</h3>
+        <h2 class="text-center custom-h3 h3">All Suppliers</h2>
         <div class="supplier-product-list supplier-product-list-main">
             <div class="row mt-4">
                 <?php if (isset($suppliers) && count($suppliers) > 0): ?>
@@ -144,12 +144,12 @@
                                             <img src="<?= base_url('assets/images/vip-coin.webp') ?>" style="width: 50px; margin-bottom: 10px;">
                                         <?php endif; ?>
                                     </div>
-                                <h4>
+                                <h3 class="h4">
                                     <?= esc($supplier['company_name'] ?? $supplier['name']) ?>
                                     <?php if (isset($supplier['country']['name'])): ?>
                                         <img src="<?= base_url('assets/images/flags/flag_' . str_replace(' ', '_', $supplier['country']['name']) . '.svg') ?>" width="20" onerror="this.style.display='none'">
                                     <?php endif; ?>
-                                </h4>
+                                </h3>
                                 <p>Products: <?= esc($supplier['selling_products'] ?? 'Various') ?><br>
                                 Country: <?= isset($supplier['country']['name']) ? esc($supplier['country']['name']) : 'N/A' ?></p>
                                 <div class="supplier-product-list-box-img">
@@ -182,7 +182,7 @@
 </section>
 <?php endif; ?>
 
-        <h3 class="text-center custom-h3">Find Suppliers <br>By Country/Region</h3>
+        <h2 class="text-center custom-h3 h3">Find Suppliers <br>By Country/Region</h2>
 
         <div class="row mt-5 align-items-start">
             <div class="supplier-side-form">
@@ -227,7 +227,7 @@
 
 <section class="mt-5 pt-md-5 pb-4 mb-5">
     <div class="container">
-        <h3 class="text-center custom-h3">Find Suppliers <br>By Industry</h3>
+        <h2 class="text-center custom-h3 h3">Find Suppliers <br>By Industry</h2>
         <div class="category-slider-sec mt-md-5 mt-3">
             <div class="category-slider">
                 <div>

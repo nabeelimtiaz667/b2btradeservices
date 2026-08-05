@@ -60,6 +60,8 @@ class Auth extends BaseController
 
         if ($this->request->getMethod() === 'GET') {
             $data['title'] = 'Register';
+            $data['metaDescription'] = 'Create your free B2B Trade Services account as a buyer or supplier and start connecting with trade partners today.';
+            $data['canonical'] = current_url();
             $data['countries'] = $this->countryModel->getActiveCountries();
             return view('pages/register', $data);
         }
@@ -134,6 +136,8 @@ class Auth extends BaseController
     {
         if ($this->request->getMethod() === 'GET') {
             $data['title'] = 'Login';
+            $data['metaDescription'] = 'Log in to your B2B Trade Services account to manage your inquiries, products, and supplier profile.';
+            $data['canonical'] = current_url();
             return view('pages/login', $data);
         }
 
@@ -194,13 +198,18 @@ class Auth extends BaseController
 
     public function forgotPassword()
     {
+        $meta = [
+            'metaDescription' => 'Reset your B2B Trade Services account password.',
+            'canonical' => base_url('forgot-password'),
+        ];
+
         if ($this->request->getMethod() === 'GET') {
-            return view('pages/forget-password', ['title' => 'Forgot Password']);
+            return view('pages/forget-password', ['title' => 'Forgot Password'] + $meta);
         }
 
         $email = trim($this->request->getPost('email') ?? '');
 
-        $viewData = ['title' => 'Forgot Password', 'email' => $email];
+        $viewData = ['title' => 'Forgot Password', 'email' => $email] + $meta;
 
         if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $viewData['error'] = 'Please enter a valid email address.';
@@ -251,11 +260,21 @@ class Auth extends BaseController
             return redirect()->to('/forgot-password')->with('error', 'This password reset link is invalid or has expired. Please request a new one.');
         }
 
+        // Self-referencing canonical, not site-wide: the token makes this URL
+        // single-use and per-request by design. It should stay out of search
+        // results entirely (robots noindex, not just canonical) -- flagged
+        // separately since that's a robots-directive decision, not something
+        // this pass adds unasked.
+        $meta = [
+            'metaDescription' => 'Set a new password for your B2B Trade Services account.',
+            'canonical' => current_url(),
+        ];
+
         if ($this->request->getMethod() === 'GET') {
             return view('pages/reset-password', [
                 'title' => 'Reset Password',
                 'token' => $token,
-            ]);
+            ] + $meta);
         }
 
         $password        = $this->request->getPost('password');
@@ -266,7 +285,7 @@ class Auth extends BaseController
                 'title' => 'Reset Password',
                 'token' => $token,
                 'error' => 'Password must be at least 6 characters.',
-            ]);
+            ] + $meta);
         }
 
         if ($password !== $passwordConfirm) {
@@ -274,7 +293,7 @@ class Auth extends BaseController
                 'title' => 'Reset Password',
                 'token' => $token,
                 'error' => 'Passwords do not match.',
-            ]);
+            ] + $meta);
         }
 
         $db = \Config\Database::connect();

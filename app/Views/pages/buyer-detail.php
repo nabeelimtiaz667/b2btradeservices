@@ -1,13 +1,56 @@
 <?= $this->extend('layouts/inner') ?>
 
 <?= $this->section('content') ?>
+<?php
+// Structured data for this inquiry. Built server-side with json_encode's HEX_*
+// flags rather than string-substituting {{placeholders}} into the JSON, because
+// inquiry title/description/product_name are buyer-submitted free text with no
+// server-side validation (BLOCKERS #11) -- a raw quote or "</script>" in any of
+// them would otherwise break out of the <script> tag or corrupt the JSON.
+$jsonLd = [
+    '@context' => 'https://schema.org',
+    '@graph' => [
+        [
+            '@type' => 'WebPage',
+            '@id' => $canonical . '#webpage',
+            'url' => $canonical,
+            'name' => $title,
+            'description' => $metaDescription,
+        ],
+        [
+            '@type' => 'Demand',
+            '@id' => $canonical . '#demand',
+            'name' => $inquiry['title'] ?? $title,
+            // Raw description here, not the truncated meta version -- structured
+            // data has no 160-char SEO constraint. Falls back to the same
+            // templated sentence the meta description uses for the 3 rows with
+            // no description at all, so this is never an empty string.
+            'description' => !empty($inquiry['description']) ? $inquiry['description'] : $metaDescription,
+            'url' => $canonical,
+            'itemOffered' => [
+                '@type' => 'Product',
+                'name' => $inquiry['product_name'] ?? ($inquiry['title'] ?? $title),
+            ],
+        ],
+    ],
+];
+?>
+<script type="application/ld+json"><?= json_encode(
+    $jsonLd,
+    JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+) ?></script>
 <section class="inner-banner-sec mt-4">
     <div class="container">
         <div class="inner-banner-img">
             <img src="<?= base_url('assets/images/buyers-single-banner.webp') ?>" class="w-100">
             <div class="inner-banner-sec-content">
-                <h2 class="h1">Find B2B Buying Leads</h2>
-                <h2>For Your Business</h2>
+                <!-- Decorative banner slogan, not document structure: it is the
+                     same generic text on every inquiry page, so it must not
+                     outrank or precede the inquiry title in the heading
+                     outline. Rendered as <p> with the original h1/h2 classes
+                     so the styling is byte-identical to before. -->
+                <p class="h1">Find B2B Buying Leads</p>
+                <p class="h2">For Your Business</p>
             </div>
         </div>
     </div>
@@ -226,8 +269,8 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title light-green-h2-color font-weight-600" id="contactBuyerModalLabel">Contact Buyer
-                </h5>
+                <h3 class="modal-title h5 light-green-h2-color font-weight-600" id="contactBuyerModalLabel">Contact Buyer
+                </h3>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">

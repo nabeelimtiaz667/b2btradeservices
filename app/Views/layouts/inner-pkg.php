@@ -37,10 +37,13 @@
     <meta name="msapplication-TileImage" content="<?= base_url('assets/site-identity/ms-icon-144x144.png') ?>">
     <meta name="theme-color" content="#ffffff">
 
-    <title><?= ($title ?? 'Home') . ' | ' . ($siteSettings['site_name'] ?? 'B2B Trade Services') ?></title>
-    <?php $metaDesc = $siteSettings['meta_description'] ?? '';
+    <title><?= esc(($title ?? 'Home') . ' | ' . ($siteSettings['site_name'] ?? 'B2B Trade Services')) ?></title>
+    <?php $metaDesc = $metaDescription ?? $siteSettings['meta_description'] ?? '';
     if ($metaDesc): ?>
     <meta name="description" content="<?= esc($metaDesc) ?>">
+    <?php endif; ?>
+    <?php if (!empty($canonical)): ?>
+    <link rel="canonical" href="<?= esc($canonical) ?>">
     <?php endif; ?>
     <?php $metaKw = $siteSettings['meta_keywords'] ?? '';
     if ($metaKw): ?>

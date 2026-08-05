@@ -55,6 +55,8 @@ class Buyer extends BaseController
 
         $data = [
             'title' => 'Buyer Inquiries',
+            'metaDescription' => 'Browse the latest buyer inquiries and RFQs on B2B Trade Services. Find genuine buying leads and connect with importers looking for your products.',
+            'canonical' => canonical_self_url(),
             'inquiries' => $inquiries,
             'pager' => $pager,
             'categories' => $this->categoryModel->getActiveCategories(),
@@ -193,6 +195,8 @@ class Buyer extends BaseController
     {
         $data = [
             'title' => 'Post a Buy Offer',
+            'metaDescription' => 'Post your buying requirement or RFQ on B2B Trade Services and let verified suppliers reach out to you directly with quotes.',
+            'canonical' => current_url(),
             'categories' => $this->categoryModel->getActiveCategories(),
             'countries' => $this->countryModel->getActiveCountries(),
         ];
@@ -236,7 +240,11 @@ class Buyer extends BaseController
         }
 
         $data = [
-            'title' => 'Search Results',
+            'title' => $keyword ? 'Search Results for "' . $keyword . '" - Buyer Inquiries' : 'Search Buyer Inquiries',
+            'metaDescription' => $keyword
+                ? 'Buyer inquiries matching "' . $keyword . '" on B2B Trade Services.'
+                : 'Search buyer inquiries and RFQs on B2B Trade Services by keyword, category, or country.',
+            'canonical' => canonical_self_url(),
             'inquiries' => $inquiries,
             'categories' => $this->categoryModel->getActiveCategories(),
             'countries' => $this->countryModel->getActiveCountries(),
@@ -265,7 +273,12 @@ class Buyer extends BaseController
                 ->orderBy('inquiry_date', 'DESC')
                 ->findAll();
             
-            $categoryName = esc($category['name']);
+            // Not esc()'d here: $categoryName only ever flows into 'title' and
+            // 'metaDescription', both of which the layout already escapes
+            // exactly once. Escaping it here too would double-encode any
+            // category name containing '&' (e.g. "Building & Construction"
+            // rendering as "Building &amp;amp; Construction").
+            $categoryName = $category['name'];
         } else {
             $inquiries = $this->inquiryModel
                 ->where('status', 'active')
@@ -280,6 +293,8 @@ class Buyer extends BaseController
 
         $data = [
             'title' => $categoryName . ' - Buyer Inquiries',
+            'metaDescription' => 'Browse ' . $categoryName . ' buyer inquiries and RFQs on B2B Trade Services and connect with buyers looking for your products.',
+            'canonical' => current_url(),
             'inquiries' => $inquiries,
             'categories' => $this->categoryModel->getActiveCategories(),
             'countries' => $this->countryModel->getActiveCountries(),

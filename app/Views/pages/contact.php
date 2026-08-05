@@ -179,7 +179,7 @@
 
 <div class="container">
     <div class="section-header mt-5">
-        <h2>Office Location</h2>
+        <h1 class="h2">Office Location</h1>
     </div>
 
     <div class="office-locations">
@@ -189,7 +189,7 @@
                     <img src="https://flagcdn.com/w40/us.png" alt="USA Flag">
                     <span style="font-size: 10px; display: block;">USA</span>
                 </div>
-                <h3>Address</h3>
+                <h2 class="h3">Address</h2>
                 <p>1001 S MAIN STREET, STE 500 - Kalispell, MONTANA, UNITED STATES 59901</p>
 
                 <!--<div class="phone-info">-->
@@ -208,7 +208,7 @@
         </div>
 
         <div class="contact-form-container">
-            <h3>Contact Us</h3>
+            <h2 class="h3">Contact Us</h2>
             <?php if (session()->getFlashdata('success')): ?>
                 <div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
             <?php endif; ?>

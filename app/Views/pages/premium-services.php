@@ -13,7 +13,7 @@
 
 <section class="pricing-sec pricing-sec-with-tabs text-center mt-5 mb-5">
     <div class="container">
-        <h2>Premium Exclusive Services</h2>
+        <h1 class="h2">Premium Exclusive Services</h1>
         <p>Get 10x more leads with our result oriented service packs</p>
         <div>
             <ul class="nav nav-tabs mb-3 gap-2 justify-content-center d-md-none" id="mobilePackageTabs" role="tablist">
@@ -39,7 +39,7 @@
                                 <div class="price-box-img text-center">
                                     <img style="width: 125px;" src="<?= base_url('assets/images/starter-coin.webp') ?>">
                                 </div>
-                                <h3><b>$499/<span>Year</span></b></h3>
+                                <h2 class="h3"><b>$499/<span>Year</span></b></h2>
                                 <div class="price-box-content mt-4">
                                     <p><span><img src="<?= base_url('assets/images/right-check.svg') ?>"></span><span>Company Profile Page
 </span></p>
@@ -87,7 +87,7 @@
                                 <div class="price-box-img text-center">
                                     <img style="width: 125px;" src="<?= base_url('assets/images/gold-coin.webp') ?>">
                                 </div>
-                                <h3 class="text-white"><b>$1,499/<span>Year</span></b></h3>
+                                <h2 class="text-white h3"><b>$1,499/<span>Year</span></b></h2>
                                 <div class="price-box-content text-white mt-4">
                                     <p><span><img src="<?= base_url('assets/images/right-check.svg') ?>"></span><span>Company Profile Page
 </span></p>
@@ -136,7 +136,7 @@
                                 <div class="price-box-img text-center">
                                     <img style="width: 125px;" src="<?= base_url('assets/images/palti-coin.webp') ?>">
                                 </div>
-                                <h3 class="text-white"><b>$3,999/<span>Year</span></b></h3>
+                                <h2 class="text-white h3"><b>$3,999/<span>Year</span></b></h2>
                                 <div class="price-box-content mt-4">
                                       <p><span><img src="<?= base_url('assets/images/right-check.svg') ?>"></span><span>Company Profile Page
 </span></p>
@@ -185,7 +185,7 @@
                                 <div class="price-box-img text-center">
                                     <img style="width: 125px;" src="<?= base_url('assets/images/vip-coin.webp') ?>">
                                 </div>
-                                <h3 class="text-white"><b>$7,999/<span>Year</span></b></h3>
+                                <h2 class="text-white h3"><b>$7,999/<span>Year</span></b></h2>
                                 <div class="price-box-content mt-4">
                                     <p><span><img src="<?= base_url('assets/images/right-check.svg') ?>"></span><span>Company Profile Page
 </span></p>
@@ -291,19 +291,19 @@
                     <h2 class="text-white">Built for Global Business Growth</h2>
                     <ul class="checkbox-ul-new text-white premeium-ul">
                         <li>
-                            <h5 class="mb-1 text-white mt-3 f-18">Connect</h5>
+                            <h3 class="mb-1 text-white mt-3 f-18 h5">Connect</h3>
                             <p class="text-white">Find reliable buyers, suppliers, and trade partners from different regions through a structured and trusted B2B network.</p>
                         </li>
                         <li>
-                            <h5 class="mb-1 text-white mt-3 f-18">Discover</h5>
+                            <h3 class="mb-1 text-white mt-3 f-18 h5">Discover</h3>
                             <p class="text-white">Explore verified business opportunities, new markets, and industry insights to expand your reach internationally.</p>
                         </li>
                         <li>
-                            <h5 class="mb-1 text-white mt-3 f-18">Promote</h5>
+                            <h3 class="mb-1 text-white mt-3 f-18 h5">Promote</h3>
                             <p class="text-white">Showcase your products and services to a targeted global audience and increase your brand visibility among potential partners.</p>
                         </li>
                         <li>
-                            <h5 class="mb-1 text-white mt-3 f-18">Trade</h5>
+                            <h3 class="mb-1 text-white mt-3 f-18 h5">Trade</h3>
                             <p class="text-white">Turn business connections into real transactions by engaging with companies that are actively looking for products and services like yours.</p>
                         </li>
                     </ul>

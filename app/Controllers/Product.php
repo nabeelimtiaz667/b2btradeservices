@@ -43,6 +43,15 @@ class Product extends BaseController
 
         $data = [
             'title' => $supplierName ? 'Products by ' . $supplierName : 'Products',
+            'metaDescription' => $supplierName
+                ? 'Browse products from ' . $supplierName . ' on B2B Trade Services.'
+                : 'Browse products from verified suppliers and manufacturers on B2B Trade Services.',
+            // ?supplier= and /product/supplier/{id} render identical content;
+            // /product/supplier/{id} is the form actually linked from supplier
+            // profiles (see supplier-profile.php), so the query-param form
+            // canonicalizes to it rather than self-referencing a URL nothing
+            // links to.
+            'canonical' => $supplierId ? base_url('product/supplier/' . $supplierId) : current_url(),
             'products' => $products,
             'categories' => $this->categoryModel->getActiveCategories(),
         ];
@@ -69,6 +78,10 @@ class Product extends BaseController
 
         $data = [
             'title' => $supplierName ? 'Products by ' . $supplierName : 'Products',
+            'metaDescription' => $supplierName
+                ? 'Browse products from ' . $supplierName . ' on B2B Trade Services.'
+                : 'Browse products from verified suppliers and manufacturers on B2B Trade Services.',
+            'canonical' => current_url(),
             'products' => $products,
             'categories' => $this->categoryModel->getActiveCategories(),
         ];
@@ -122,6 +135,10 @@ class Product extends BaseController
 
         $data = [
             'title' => $product['name'],
+            'metaDescription' => !empty($product['description'])
+                ? truncate_for_meta($product['description'])
+                : $product['name'] . ' - available from verified suppliers on B2B Trade Services.',
+            'canonical' => current_url(),
             'product' => $product,
             'supplierProducts' => $supplierProducts,
             'relatedProducts' => $relatedProducts,
@@ -157,7 +174,11 @@ class Product extends BaseController
         }
 
         $data = [
-            'title' => 'Search Results',
+            'title' => $keyword ? 'Search Results for "' . $keyword . '" - Products' : 'Search Products',
+            'metaDescription' => $keyword
+                ? 'Products matching "' . $keyword . '" on B2B Trade Services.'
+                : 'Search products from verified suppliers and manufacturers on B2B Trade Services.',
+            'canonical' => canonical_self_url(),
             'products' => $products,
             'categories' => $this->categoryModel->getActiveCategories(),
             'searchKeyword' => $keyword,

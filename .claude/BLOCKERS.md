@@ -7,7 +7,7 @@ Severity: `CRITICAL` · `HIGH` · `MEDIUM` · `LOW`
 
 Resolved and removed: #1 (Aiven credential — rotated), #2 (`_database.php` —
 deleted), #3 (`app.zip` — deleted), #5 (app unverified — swept 2026-07-29),
-#14 (inquiry slugs — shipped to dev 2026-07-30, pending production deploy T-15).
+#14 (inquiry slugs — shipped to dev 2026-08-01, pending production deploy T-15).
 
 **Still open despite the slug work:** #10 and #13, the "01 Jan, 1970" rendering
 bugs. They share the same `buyer_inquiries` table but are a separate defect —
@@ -15,8 +15,54 @@ nothing in the slug change touched `inquiry_date`. Tasks T-5, T-6, T-12.
 
 ---
 
+## #19 — Homepage has no H1, and no existing heading is fit to promote
+**Severity:** LOW · **Raised:** 2026-08-05 · **Open — needs an owner decision**
+
+Every other page audited for T-24 (see CHANGELOG 2026-08-05) got a proper H1,
+either one that already existed or a promoted heading. The homepage is the one
+exception, deliberately left alone.
+
+`app/Views/pages/index.php`'s only headings before the fold are "Categories"
+(`<h5>`, a sidebar filter label) and "Register Quick Now! And get free
+Buyers/Suppliers Leads" (`<h3>`, a signup CTA). Promoting either would tell
+search engines the homepage's primary topic is a sidebar label or a signup
+nag — actively worse than having no H1 at all, on the single highest-traffic
+page on the site.
+
+**Needs:** a real, written H1 for the homepage — something like "B2B Trade
+Services — Connect with Verified Global Suppliers and Buyers" (illustrative,
+not a suggestion to ship as-is). This is new copy, not a promotion of existing
+text, which is why it wasn't done unilaterally here.
+
+**Update 2026-08-06 (T-26):** the homepage's *internal* ordering is now fixed —
+it used to open `h5 (Categories) → h3 (Register Quick Now) → h2`, the exact
+"starts deep then jumps" pattern; both are now `h2` with their original sizing
+preserved via classes. So the outline is clean and consistent apart from the
+missing top level. Adding the H1 is now a one-line change with nothing else to
+untangle: put it in `app/Views/pages/index.php` above the banner section, and
+the page goes from NO-H1 to fully compliant.
+
+---
+
+## #20 — `thankyou.php` and `rfq.php` are dead view files, no route anywhere
+**Severity:** LOW · **Raised:** 2026-08-05 · **Open**
+
+Found while auditing all `app/Views/pages/*.php` files for T-24. Neither has a
+route in `Routes.php`, and neither is referenced by `view()` in any controller
+— confirmed by grepping the whole `app/` tree for both slugs. `post-rfq.php` is
+the file actually used for the RFQ form (`Buyer::postRfq()`); `rfq.php` appears
+to be an earlier, superseded version left behind.
+
+Not fixed here (SEO tags on an unreachable page would be wasted work) or
+deleted (out of scope for an SEO audit — deleting code wasn't asked for). Same
+category of issue as BLOCKERS #12 (`suppliers` table / `SupplierModel`): safe
+to delete once someone confirms neither is referenced from outside this repo
+(an email template, a hardcoded link elsewhere, etc.).
+
+---
+
 ## #18 — Two Google Analytics snippets would fire simultaneously if the admin GA setting is ever used
-**Severity:** LOW · **Raised:** 2026-07-31 (owner change, logged after the fact) · **Open**
+**Severity:** LOW · **Raised:** 2026-08-02 (owner change, logged after the fact) · **Open**
 
 `app/Views/partials/footer.php:294-305` now has a hardcoded `gtag.js` snippet for
 `G-L52TR0D4JK`, rendered on every page that includes the footer partial (`inner.php`,
@@ -42,7 +88,7 @@ configure). Not urgent — only bites if that setting is ever populated.
 ---
 
 ## #15 — RFQ form's Country field is labelled required but is not
-**Severity:** MEDIUM · **Raised:** 2026-07-30 · **Open**
+**Severity:** MEDIUM · **Raised:** 2026-08-01 · **Open**
 
 `app/Views/pages/post-rfq.php:89-90` renders
 `Country <span class="text-danger">*</span>` above a `<select name="country">` that
@@ -72,7 +118,7 @@ Worth auditing the other nullable FKs on the same form (`category_id`) and the s
 ---
 
 ## #17 — `migrate:rollback` will drop five real production columns
-**Severity:** HIGH · **Raised:** 2026-07-30 · **Open**
+**Severity:** HIGH · **Raised:** 2026-08-01 · **Open**
 
 **Do not run `php spark migrate:rollback` on this codebase without reading this.**
 
@@ -81,7 +127,7 @@ Three migrations have a **guarded `up()` but an unconditional `down()`**:
 | Migration | `up()` | `down()` |
 |---|---|---|
 | `2024-03-14-000001_AddIsFeaturedToUsers` | `if (! in_array('is_featured', ...))` | `dropColumn('users', 'is_featured')` |
-| `2026-03-14-222249_AddFieldsToContactSubmissions` | guarded (fixed 2026-07-30) | `dropColumn('contact_submissions', ['country_id','partnership','whatsapp'])` |
+| `2026-03-14-222249_AddFieldsToContactSubmissions` | guarded (fixed 2026-08-01) | `dropColumn('contact_submissions', ['country_id','partnership','whatsapp'])` |
 | `2026-03-14-222841_AddFormDataToContactSubmissions` | `if (! in_array('form_data', ...))` | `dropColumn('contact_submissions', 'form_data')` |
 
 All three columns sets already existed when the migrations were written — they were
@@ -146,7 +192,7 @@ Related: the schema drift that caused this is the same drift behind `buyer_whats
 ---
 
 ## #16 — HEAD requests return 404 on every route
-**Severity:** LOW · **Raised:** 2026-07-30 · **Open**
+**Severity:** LOW · **Raised:** 2026-08-01 · **Open**
 
 Verified site-wide, including untouched routes:
 

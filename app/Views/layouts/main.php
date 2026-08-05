@@ -42,7 +42,7 @@
     <meta name="theme-color" content="#ffffff">
 
     <title>
-        <?= ($title ?? $siteSettings['meta_title'] ?? 'Home') . ' | ' . ($siteSettings['site_name'] ?? 'B2B Trade Services') . $tagline ?>
+        <?= esc(($title ?? $siteSettings['meta_title'] ?? 'Home') . ' | ' . ($siteSettings['site_name'] ?? 'B2B Trade Services') . $tagline) ?>
     </title>
     <?php $metaDesc = $metaDescription ?? $siteSettings['meta_description'] ?? '';
     if ($metaDesc): ?>

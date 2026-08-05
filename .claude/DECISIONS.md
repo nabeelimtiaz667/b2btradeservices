@@ -192,7 +192,7 @@ credentials.
 ---
 
 ## #13 — Inquiry slugs are frozen at creation, never regenerated
-**Date:** 2026-07-30 · **Status:** Active · **Decided by:** Nabeel
+**Date:** 2026-08-01 · **Status:** Active · **Decided by:** Nabeel
 
 `BuyerInquiryModel` generates `slug` on `$beforeInsert` only. There is deliberately
 **no `$beforeUpdate` entry**, so editing a title never moves the slug.
@@ -223,7 +223,7 @@ deliberate, admin-triggered, rare. Do not quietly add `generateSlug` to
 ---
 
 ## #14 — Widen the inquiry status ENUM rather than remap `'inactive'`
-**Date:** 2026-07-30 · **Status:** Active
+**Date:** 2026-08-01 · **Status:** Active
 
 `buyer_inquiries.status` gained `inactive`, giving
 `enum('active','inactive','closed','pending','expired')`. Separately,

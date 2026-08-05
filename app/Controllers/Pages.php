@@ -10,13 +10,98 @@ use App\Models\BuyerInquiryModel;
 
 class Pages extends BaseController
 {
+    /**
+     * Per-page title and meta description for every static page this
+     * controller serves. Replaces the old ucfirst(str_replace('-', ' ', $page))
+     * title, which only capitalized the first letter of the whole slug (e.g.
+     * "banned-keywords-and-illegal-products-policy" -> "Banned keywords and
+     * illegal products policy") and never set a description at all -- every
+     * one of these pages fell through to the single site-wide
+     * meta_description, so they were all identical in search results.
+     *
+     * The homepage ('index') is deliberately absent: it keeps using
+     * $siteSettings['meta_title']/['meta_description'] as its title/description,
+     * since those settings exist precisely to be the site's own identity, and
+     * the homepage is the one page where that's the correct value rather than
+     * a fallback being reused where it shouldn't be.
+     */
+    private function getPageMeta(): array
+    {
+        return [
+            'about-us' => [
+                'title' => 'About Us',
+                'description' => 'B2B Trade Services connects suppliers, buyers, and entrepreneurs in one trusted marketplace, with company formation and trade consultancy services.',
+            ],
+            'contact' => [
+                'title' => 'Contact Us',
+                'description' => 'Get in touch with B2B Trade Services. Find our office locations or send us a message for support with your buying and selling needs.',
+            ],
+            'success-stories' => [
+                'title' => 'Success Stories',
+                'description' => 'Real success stories from buyers and suppliers who found reliable trade partners through B2B Trade Services.',
+            ],
+            'privacy-policy' => [
+                'title' => 'Privacy Policy',
+                'description' => 'How B2B Trade Services collects, uses, shares, and protects your information when you use our website and services.',
+            ],
+            'refund-policy' => [
+                'title' => 'Refund Policy',
+                'description' => 'The conditions under which refunds may be requested and processed for B2B Trade Services memberships and services.',
+            ],
+            'terms-and-conditions' => [
+                'title' => 'Terms and Conditions',
+                'description' => 'The Terms and Conditions governing your access to and use of the B2B Trade Services website and marketplace.',
+            ],
+            'user-guide' => [
+                'title' => 'User Guide',
+                'description' => 'A quick reference guide to using the B2B Trade Services platform to find partners, post inquiries, and grow your business.',
+            ],
+            'banned-keywords-and-illegal-products-policy' => [
+                'title' => 'Banned Keywords and Illegal Products Policy',
+                'description' => 'Our policy on banned keywords and prohibited products, in place to ensure legal compliance, platform safety, and responsible trade.',
+            ],
+            'become-our-agent-partner' => [
+                'title' => 'Become Our Agent Partner',
+                'description' => 'Join the B2B Trade Services Agency Partnership Program and earn commissions by referring businesses to our global B2B marketplace.',
+            ],
+            'tradeshow-marketing-services' => [
+                'title' => 'Trade Show Marketing Services',
+                'description' => 'Trade show and exhibition marketing services from B2B Trade Services to help you drive traffic, generate leads, and boost your brand presence.',
+            ],
+            'premium-services' => [
+                'title' => 'Premium Membership Plans',
+                'description' => 'Compare Starter, Gold, Platinum, and VIP membership plans on B2B Trade Services and get up to 10x more leads with premium features.',
+            ],
+            'starter-package' => [
+                'title' => 'Starter Package',
+                'description' => 'The Starter membership plan on B2B Trade Services: an official company profile page and a 10-product online store, from $499/year.',
+            ],
+            'gold-package' => [
+                'title' => 'Gold Package',
+                'description' => 'The Gold membership plan on B2B Trade Services: a 20-product store, buyer database access, and a dedicated consultant, from $1,499/year.',
+            ],
+            'platinum-package' => [
+                'title' => 'Platinum Package',
+                'description' => 'The Platinum membership plan on B2B Trade Services: a 30-product store, a consultant team, and LLC/LTD company registration, from $3,999/year.',
+            ],
+            'vip-package' => [
+                'title' => 'VIP Package',
+                'description' => 'The VIP membership plan on B2B Trade Services: a 50-product store, Google SEO, and full buyer database access, from $7,999/year.',
+            ],
+        ];
+    }
+
     public function index($page = 'index')
     {
         if (! is_file(APPPATH . 'Views/pages/' . $page . '.php')) {
             throw new \CodeIgniter\Exceptions\PageNotFoundException($page);
         }
 
-        $data['title'] = ($page === 'index') ? null : ucfirst(str_replace('-', ' ', $page));
+        $meta = $this->getPageMeta()[$page] ?? null;
+
+        $data['title'] = $meta['title'] ?? null;
+        $data['metaDescription'] = $meta['description'] ?? null;
+        $data['canonical'] = current_url();
 
         if ($page === 'index') {
             $categoryModel = new CategoryModel();

@@ -11,7 +11,7 @@
 
 <section class="supplier-page-sec mt-5">
     <div class="container">
-        <h2 class="text-center">Find the most Authentic, Relevant and Recent Buying Leads/ Importers/ RFQ's</h2>
+        <h1 class="text-center h2">Find the most Authentic, Relevant and Recent Buying Leads/ Importers/ RFQ's</h1>
         
         
       <div class="searchbar-box-shadow mb-5">  <div class="searchbar-box  mt-0">

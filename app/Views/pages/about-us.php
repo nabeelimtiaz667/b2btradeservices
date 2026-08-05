@@ -13,8 +13,8 @@
     <div class="container">
         <div class="row justify-content-center text-center">
             <div class="col-md-10">
-                <h2>Connecting Businesses. <br>
-Building Trust. Enabling Growth.</h2>
+                <h1 class="h2">Connecting Businesses. <br>
+Building Trust. Enabling Growth.</h1>
                 <p>At B2BTradeServices, we believe that successful business begins with the right connections. In today's fast-moving global economy, finding reliable suppliers, serious buyers, and trusted partners should not be complicated or time-consuming. Yet for many businesses, it still is.</p>
                 <p class="light-green-h2-color"><b>B2BTradeServices was created to change that.</b></p>
                 <p>We are a B2B marketplace and business services platform designed to bring suppliers, buyers, and entrepreneurs together in one trusted environment. Beyond connecting businesses, we also support company formation through LLC and LTD services and provide professional trade consultancy to help companies operate, expand, and trade with confidence.</p>
