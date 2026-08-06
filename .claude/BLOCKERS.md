@@ -15,6 +15,28 @@ nothing in the slug change touched `inquiry_date`. Tasks T-5, T-6, T-12.
 
 ---
 
+## #21 — Supplier search's "Category" filter dropdown does nothing
+**Severity:** LOW · **Raised:** 2026-08-07 · **Open**
+
+`app/Views/pages/supplier.php`'s search form has a `<select name="category">`
+in its "More Options" panel, alongside working membership and country
+filters. `Supplier::search()` has never read a `category` GET parameter —
+confirmed against the pre-migration code, so this predates the 2026-08-07
+clean-URL work (T-28) and isn't something that change introduced.
+
+Found incidentally while browser-testing T-28's filter dropdowns; not fixed,
+since it's a pre-existing gap unrelated to URL structure. A user picking a
+category from that dropdown and searching gets unfiltered results with no
+indication the filter was ignored.
+
+**Fix, when someone gets to it:** either wire `category` into the query
+builder (`Buyer::search()` and `Product::search()` both already show the
+pattern — resolve the submitted value to a category id and add a `where()`),
+or remove the dropdown if the category-scoped supplier search isn't wanted
+(browsing suppliers by category already exists via `/supplier-category/{slug}`).
+
+---
+
 ## #19 — Homepage has no H1, and no existing heading is fit to promote
 **Severity:** LOW · **Raised:** 2026-08-05 · **Open — needs an owner decision**
 

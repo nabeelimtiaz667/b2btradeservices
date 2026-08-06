@@ -10,26 +10,55 @@ use App\Models\CountryModel;
 
 class Search extends BaseController
 {
-    public function index()
+    /**
+     * Clean-URL search: /search/{keyword}.
+     *
+     * Global search has no additional filters (the header's "type" dropdown
+     * routes to a different controller entirely, see below), so this only
+     * ever decodes a single keyword segment -- no need for the labeled
+     * key/value parsing Buyer/Product/Supplier::search() use.
+     *
+     * The old ?q=...&type=... form still works (a submitted GET form can only
+     * produce a query string) but 301s rather than rendering: when a specific
+     * type is chosen it redirects straight to that controller's own clean
+     * URL, not through its query-string form, so this never produces two
+     * redirect hops for the single most common search action on the site.
+     */
+    public function index(...$segments)
     {
-        $keyword = $this->request->getGet('q');
-        $type = $this->request->getGet('type') ?? 'all';
+        // See Buyer::search() for why this is variadic rather than a single
+        // $pathParams argument: CI4 re-splits an (:any) capture on '/' before
+        // binding to a real controller method's parameters.
+        $pathParams = $segments === [] ? null : implode('/', $segments);
 
-        if (empty($keyword)) {
-            return redirect()->to('/');
+        if ($pathParams === null && service('request')->getUri()->getQuery() !== '') {
+            $keyword = $this->request->getGet('q');
+            $type    = $this->request->getGet('type') ?? 'all';
+
+            if (empty($keyword)) {
+                return redirect()->to(base_url());
+            }
+
+            if ($type === 'suppliers') {
+                return redirect()->to(base_url('supplier/search/' . search_slug_encode($keyword)), 301);
+            }
+
+            if ($type === 'buyers') {
+                return redirect()->to(base_url('buyer/search/' . search_slug_encode($keyword)), 301);
+            }
+
+            if ($type === 'products') {
+                return redirect()->to(base_url('product/search/' . search_slug_encode($keyword)), 301);
+            }
+
+            return redirect()->to(base_url('search/' . search_slug_encode($keyword)), 301);
         }
 
-        if ($type === 'suppliers') {
-            return redirect()->to('supplier/search?q=' . urlencode($keyword));
+        if (empty($pathParams)) {
+            return redirect()->to(base_url());
         }
 
-        if ($type === 'buyers') {
-            return redirect()->to('buyer/search?q=' . urlencode($keyword));
-        }
-
-        if ($type === 'products') {
-            return redirect()->to('product/search?q=' . urlencode($keyword));
-        }
+        $keyword = search_slug_decode($pathParams);
 
         $userModel = new UserModel();
         $productModel = new ProductModel();
@@ -90,7 +119,7 @@ class Search extends BaseController
             // containing '&', '<', etc. (e.g. rendering "&amp;amp;").
             'title' => 'Search Results for "' . $keyword . '"',
             'metaDescription' => 'Suppliers, products, and buyer inquiries matching "' . $keyword . '" on B2B Trade Services.',
-            'canonical' => canonical_self_url(),
+            'canonical' => current_url(),
             'keyword' => $keyword,
             'suppliers' => $suppliers,
             'products' => $products,

@@ -147,10 +147,43 @@ class Product extends BaseController
         return view('pages/product-detail', $data);
     }
 
-    public function search()
+    /**
+     * Clean-URL search: /product/search/{keyword}/category/{slug}.
+     * See Buyer::search() for the full explanation of the redirect pattern.
+     */
+    public function search(...$segments)
     {
-        $keyword = $this->request->getGet('q');
-        $categoryId = $this->request->getGet('category');
+        // See Buyer::search() for why this is variadic rather than a single
+        // $pathParams argument: CI4 re-splits an (:any) capture on '/' before
+        // binding to a real controller method's parameters.
+        $pathParams = $segments === [] ? null : implode('/', $segments);
+
+        $knownKeys = ['category'];
+
+        if ($pathParams === null && service('request')->getUri()->getQuery() !== '') {
+            $filters = [];
+
+            if ($categoryId = $this->request->getGet('category')) {
+                $cat = $this->categoryModel->find($categoryId);
+                if (! empty($cat['slug'])) {
+                    $filters['category'] = $cat['slug'];
+                }
+            }
+
+            $clean = build_search_path($this->request->getGet('q'), $filters);
+
+            return redirect()->to(base_url('product/search' . ($clean !== '' ? '/' . $clean : '')), 301);
+        }
+
+        $parsed  = parse_search_path($pathParams, $knownKeys);
+        $keyword = $parsed['keyword'];
+        $filters = $parsed['filters'];
+
+        $categoryId = null;
+        if (! empty($filters['category'])) {
+            $cat = $this->categoryModel->getCategoryBySlug($filters['category']);
+            $categoryId = $cat['id'] ?? null;
+        }
 
         $builder = $this->productModel->where('status', 'active');
 
@@ -178,7 +211,7 @@ class Product extends BaseController
             'metaDescription' => $keyword
                 ? 'Products matching "' . $keyword . '" on B2B Trade Services.'
                 : 'Search products from verified suppliers and manufacturers on B2B Trade Services.',
-            'canonical' => canonical_self_url(),
+            'canonical' => current_url(),
             'products' => $products,
             'categories' => $this->categoryModel->getActiveCategories(),
             'searchKeyword' => $keyword,

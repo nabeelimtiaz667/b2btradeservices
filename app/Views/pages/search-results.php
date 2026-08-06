@@ -9,7 +9,7 @@
         <div class="mt-4">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h2 class="h3">Suppliers (<?= count($suppliers) ?>)</h2>
-                <a href="<?= base_url('supplier/search?q=' . urlencode($keyword)) ?>" class="view-all-link d-flex align-items-center gap-2">View All <img src="<?= base_url('assets/images/arrow-right.svg') ?>"></a>
+                <a href="<?= base_url('supplier/search/' . search_slug_encode($keyword)) ?>" class="view-all-link d-flex align-items-center gap-2">View All <img src="<?= base_url('assets/images/arrow-right.svg') ?>"></a>
             </div>
             <div class="row">
                 <?php foreach ($suppliers as $supplier): ?>
@@ -32,7 +32,7 @@
         <div class="mt-4">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h2 class="h3">Products (<?= count($products) ?>)</h2>
-                <a href="<?= base_url('product/search?q=' . urlencode($keyword)) ?>" class="view-all-link d-flex align-items-center gap-2">View All <img src="<?= base_url('assets/images/arrow-right.svg') ?>"></a>
+                <a href="<?= base_url('product/search/' . search_slug_encode($keyword)) ?>" class="view-all-link d-flex align-items-center gap-2">View All <img src="<?= base_url('assets/images/arrow-right.svg') ?>"></a>
             </div>
             <div class="row">
                 <?php foreach ($products as $product): ?>
@@ -61,7 +61,7 @@
         <div class="mt-4">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h2 class="h3">Buyer Inquiries (<?= count($inquiries) ?>)</h2>
-                <a href="<?= base_url('buyer/search?q=' . urlencode($keyword)) ?>" class="view-all-link d-flex align-items-center gap-2">View All <img src="<?= base_url('assets/images/arrow-right.svg') ?>"></a>
+                <a href="<?= base_url('buyer/search/' . search_slug_encode($keyword)) ?>" class="view-all-link d-flex align-items-center gap-2">View All <img src="<?= base_url('assets/images/arrow-right.svg') ?>"></a>
             </div>
             <div class="row">
                 <?php foreach ($inquiries as $inquiry): ?>

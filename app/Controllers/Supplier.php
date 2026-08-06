@@ -263,11 +263,49 @@ class Supplier extends BaseController
         return view('pages/supplier-country', $data);
     }
 
-    public function search()
+    /**
+     * Clean-URL search: /supplier/search/{keyword}/country/{code}/membership/{level}.
+     * See Buyer::search() for the full explanation of the redirect pattern.
+     */
+    public function search(...$segments)
     {
-        $keyword = $this->request->getGet('q');
-        $countryId = $this->request->getGet('country');
-        $membership = $this->request->getGet('membership');
+        // See Buyer::search() for why this is variadic rather than a single
+        // $pathParams argument: CI4 re-splits an (:any) capture on '/' before
+        // binding to a real controller method's parameters.
+        $pathParams = $segments === [] ? null : implode('/', $segments);
+
+        $knownKeys = ['country', 'membership'];
+
+        if ($pathParams === null && service('request')->getUri()->getQuery() !== '') {
+            $filters = [];
+
+            if ($countryId = $this->request->getGet('country')) {
+                $country = $this->countryModel->find($countryId);
+                if (! empty($country['code'])) {
+                    $filters['country'] = $country['code'];
+                }
+            }
+
+            if ($membership = $this->request->getGet('membership')) {
+                $filters['membership'] = $membership;
+            }
+
+            $clean = build_search_path($this->request->getGet('q'), $filters);
+
+            return redirect()->to(base_url('supplier/search' . ($clean !== '' ? '/' . $clean : '')), 301);
+        }
+
+        $parsed  = parse_search_path($pathParams, $knownKeys);
+        $keyword = $parsed['keyword'];
+        $filters = $parsed['filters'];
+
+        $countryId = null;
+        if (! empty($filters['country'])) {
+            $country = $this->countryModel->getCountryByCode($filters['country']);
+            $countryId = $country['id'] ?? null;
+        }
+
+        $membership = $filters['membership'] ?? null;
 
         $builder = $this->userModel
             ->where('user_type', 'supplier')
@@ -305,7 +343,7 @@ class Supplier extends BaseController
             'metaDescription' => $keyword
                 ? 'Suppliers matching "' . $keyword . '" on B2B Trade Services.'
                 : 'Search verified suppliers and manufacturers on B2B Trade Services by keyword, country, or membership.',
-            'canonical' => canonical_self_url(),
+            'canonical' => current_url(),
             'suppliers' => $suppliers,
             'categories' => $this->categoryModel->getActiveCategories(),
             'countries' => $this->countryModel->getActiveCountries(),

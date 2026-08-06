@@ -14,6 +14,94 @@ Entry format:
 
 ---
 
+## 2026-08-07 — Clean, query-string-free search URLs across buyer/product/supplier/global search
+
+**Files:** `app/Config/Routes.php`, `app/Helpers/seo_helper.php`,
+`app/Controllers/{Buyer,Product,Supplier,Search}.php`,
+`app/Views/pages/search-results.php`
+**Why:** owner reported every search (buyer/supplier/product, with or without
+filters) produced query-string URLs (`?q=...&category=...`), which is bad for
+SEO. Asked for a clean, structured search and browser-verified proof.
+
+### Design
+
+Keyword becomes a path segment; additional filters become labeled path pairs
+in a fixed order, e.g. `/buyer/search/steel-plates/country/us/date/2026-01-01`.
+Old `?q=`-style URLs still work — a plain HTML `method="get"` form can only
+ever produce a query string, so the route stays registered — but the
+controller **301s to the clean equivalent** rather than rendering directly,
+mirroring the pattern already used for `buyer-inquiry` id-to-slug migration.
+The clean path is always what search engines and the browser's address bar
+see; the query-string form is never canonical.
+
+- **New shared helpers** in `seo_helper.php`: `search_slug_encode()` /
+  `search_slug_decode()` (same lossy `url_title()` transform already used for
+  inquiry/product/category slugs — reused rather than reinvented, so the whole
+  site slugifies consistently), `parse_search_path()` (turns
+  `"steel/country/us"` into `['keyword' => 'steel', 'filters' => ['country' =>
+  'us']]`, with a filter-only URL like `/buyer/search/country/us` parsing
+  correctly because the first segment is checked against the known filter
+  keys before being treated as a keyword), and `build_search_path()` (the
+  inverse, used to build the 301 target).
+- **Category and country move from database ids to their slug/code** in the
+  URL, matching the rest of the site (`getCategoryBySlug()`/
+  `getCountryByCode()` for the inbound direction; a plain `find($id)` for the
+  outbound id-to-slug translation on the legacy redirect).
+- **Global search's `type` redirect shortened by one hop.** Previously
+  `/search?q=x&type=suppliers` redirected to `/supplier/search?q=x`, which
+  would then itself have needed a second redirect to the clean form. Now it
+  redirects straight to `/supplier/search/x`.
+- `canonical` on all 4 search actions changed from `canonical_self_url()`
+  (query-preserving) to plain `current_url()`, since the URL itself is now the
+  full canonical form with nothing left in the query string.
+
+### A real bug found and fixed while building this, not part of the ask
+
+First implementation used `public function search($pathParams = null)` with
+the route `buyer/search/(:any) -> Buyer::search/$1`. Testing filters revealed
+category/country were silently being ignored — `/buyer/search/steel/category/
+metals-minerals` returned unfiltered results. Root cause: **CodeIgniter
+re-splits an `(:any)` route capture on `/` before binding a real controller
+method's parameters** -- confirmed by a side-by-side test where an identical
+route pattern bound to a closure received the full string intact, while the
+same pattern bound to a controller method received only the first segment.
+PHP silently drops the extra arguments a variadic-free method doesn't declare,
+so this failed quietly rather than erroring -- worth knowing for any future
+route using `(:any)` with a controller method rather than a closure. Fixed by
+making all 4 methods variadic (`search(...$segments)`) and rejoining with
+`implode('/', $segments)`.
+
+**Pre-existing, not touched:** `Supplier::search()`'s form has a `category`
+filter dropdown, but the controller has never read a `category` GET
+param -- confirmed against the original pre-migration code. Not a regression;
+left as-is, out of scope for a URL-cleanliness pass.
+
+### Verified
+
+Backend: legacy `?q=` URLs for all 4 search actions 301 to the correct clean
+path, including `type=suppliers` skipping straight to `/supplier/search/...`;
+id-based legacy filter params correctly translate to slug/code in the
+redirect target; every clean path (bare, single-filter, and multi-filter
+combinations) returns 200. **Filter correctness proven with real data, not
+just status codes:** 3 inquiries matching "steel" span 3 different
+countries and 2 different categories -- confirmed each single filter and
+category+country combined correctly include/exclude the right rows (an
+empty-intersection combination correctly returned zero). Same precision check
+repeated for `Product::search()`'s category filter against 9 real "steel"
+products split 6/3 across two categories, and `Supplier::search()`'s
+membership filter against real per-tier counts.
+
+Browser: submitted the real `buyer-main.php`/`product.php`/`supplier.php`
+search forms (keyword field, and each page's own filter dropdowns) via actual
+form interaction, and separately submitted the sitewide header search with
+its `type` radio buttons -- confirmed the resulting address-bar URL in every
+case is the clean path with no query string, and that results content matches
+the filter applied (e.g. all buyer results showed "Posted In: United States"
+after filtering by that country). Confirmed the mixed-results page's "View
+All" links are clean URLs requiring no further redirect.
+
+---
+
 ## 2026-08-07 — XML sitemaps (index + 5 child sitemaps), self-refreshing weekly
 
 **Files:** `app/Controllers/Sitemap.php` (new), `app/Config/Routes.php`,

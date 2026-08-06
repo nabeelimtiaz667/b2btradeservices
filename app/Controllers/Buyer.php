@@ -203,12 +203,69 @@ class Buyer extends BaseController
         return view('pages/post-rfq', $data);
     }
 
-    public function search()
+    /**
+     * Clean-URL search: /buyer/search/{keyword}/country/{code}/date/{date}.
+     *
+     * The old /buyer/search?q=...&country=...&date=... form still works --
+     * a submitted GET form or an old link can only produce a query string --
+     * but it 301s to the equivalent clean path rather than rendering
+     * directly, so the query-string form is never the canonical URL search
+     * engines see. See parse_search_path()/build_search_path() in
+     * seo_helper.php for the shared segment encode/decode.
+     */
+    public function search(...$segments)
     {
-        $keyword = $this->request->getGet('q');
-        $categoryId = $this->request->getGet('category');
-        $countryId = $this->request->getGet('country');
-        $date = $this->request->getGet('date');
+        // CI4 re-splits an (:any) route capture back into one method argument
+        // per '/'-delimited piece rather than handing the whole string to a
+        // single parameter -- variadic capture + rejoin recovers it reliably
+        // regardless of how many segments the URL has.
+        $pathParams = $segments === [] ? null : implode('/', $segments);
+
+        $knownKeys = ['category', 'country', 'date'];
+
+        if ($pathParams === null && service('request')->getUri()->getQuery() !== '') {
+            $filters = [];
+
+            if ($categoryId = $this->request->getGet('category')) {
+                $cat = $this->categoryModel->find($categoryId);
+                if (! empty($cat['slug'])) {
+                    $filters['category'] = $cat['slug'];
+                }
+            }
+
+            if ($countryId = $this->request->getGet('country')) {
+                $country = $this->countryModel->find($countryId);
+                if (! empty($country['code'])) {
+                    $filters['country'] = $country['code'];
+                }
+            }
+
+            if ($date = $this->request->getGet('date')) {
+                $filters['date'] = $date;
+            }
+
+            $clean = build_search_path($this->request->getGet('q'), $filters);
+
+            return redirect()->to(base_url('buyer/search' . ($clean !== '' ? '/' . $clean : '')), 301);
+        }
+
+        $parsed  = parse_search_path($pathParams, $knownKeys);
+        $keyword = $parsed['keyword'];
+        $filters = $parsed['filters'];
+
+        $categoryId = null;
+        if (! empty($filters['category'])) {
+            $cat = $this->categoryModel->getCategoryBySlug($filters['category']);
+            $categoryId = $cat['id'] ?? null;
+        }
+
+        $countryId = null;
+        if (! empty($filters['country'])) {
+            $country = $this->countryModel->getCountryByCode($filters['country']);
+            $countryId = $country['id'] ?? null;
+        }
+
+        $date = $filters['date'] ?? null;
 
         $builder = $this->inquiryModel->where('status', 'active');
 
@@ -244,7 +301,7 @@ class Buyer extends BaseController
             'metaDescription' => $keyword
                 ? 'Buyer inquiries matching "' . $keyword . '" on B2B Trade Services.'
                 : 'Search buyer inquiries and RFQs on B2B Trade Services by keyword, category, or country.',
-            'canonical' => canonical_self_url(),
+            'canonical' => current_url(),
             'inquiries' => $inquiries,
             'categories' => $this->categoryModel->getActiveCategories(),
             'countries' => $this->countryModel->getActiveCountries(),

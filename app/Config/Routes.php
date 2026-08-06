@@ -39,14 +39,22 @@ $routes->get('premium-services/starter-package', 'Pages::index/starter-package')
 $routes->get('premium-services/gold-package', 'Pages::index/gold-package');
 $routes->get('premium-services/platinum-package', 'Pages::index/platinum-package');
 $routes->get('premium-services/vip-package', 'Pages::index/vip-package');
+// Search: clean path-segment URLs are canonical (e.g. /buyer/search/steel-plates
+// instead of /buyer/search?q=steel+plates). The bare '?q=' routes below stay
+// registered so old links, bookmarks and submitted GET forms keep working --
+// the controller 301s them to the equivalent clean path. See seo_helper.php
+// (parse_search_path / build_search_path) for the shared encode/decode logic.
 $routes->get('search', 'Search::index');
+$routes->get('search/(:any)', 'Search::index/$1');
 $routes->get('product', 'Product::index');
 $routes->get('product/supplier/(:num)', 'Product::bySupplier/$1');
 $routes->get('product/search', 'Product::search');
+$routes->get('product/search/(:any)', 'Product::search/$1');
 $routes->get('product/detail/(:num)', 'Product::detail/$1');
 
 $routes->get('supplier', 'Supplier::index');
 $routes->get('supplier/search', 'Supplier::search');
+$routes->get('supplier/search/(:any)', 'Supplier::search/$1');
 $routes->get('supplier/profile/(:any)', 'Supplier::profile/$1');
 $routes->get('supplier-profile', 'Supplier::index');
 $routes->get('supplier-country', 'Supplier::country');
@@ -59,6 +67,7 @@ $routes->get('buyers', 'Buyer::index');
 $routes->get('buyer/post-rfq', 'Buyer::postRfq');
 $routes->post('buyer/post-rfq', 'Contact::submit');
 $routes->get('buyer/search', 'Buyer::search');
+$routes->get('buyer/search/(:any)', 'Buyer::search/$1');
 $routes->get('buyers/(:segment)', 'Buyer::category/$1');
 $routes->get('buyer-category/(:segment)', static function($slug) { return redirect()->to(base_url('buyers/' . $slug), 301); });
 $routes->get('buyer-category', static function() { return redirect()->to(base_url('buyers'), 301); });
