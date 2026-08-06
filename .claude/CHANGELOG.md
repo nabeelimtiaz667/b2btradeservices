@@ -14,6 +14,66 @@ Entry format:
 
 ---
 
+## 2026-08-07 — XML sitemaps (index + 5 child sitemaps), self-refreshing weekly
+
+**Files:** `app/Controllers/Sitemap.php` (new), `app/Config/Routes.php`,
+`public/robots.txt`
+**Why:** owner requested sitemaps per content type, a single index calling them
+all, and a mechanism that picks up new entries weekly. Closes T-19; makes T-18
+(Search Console submission) a one-URL job.
+
+**Structure** — `/sitemap.xml` is an index pointing at:
+
+| Sitemap | Contents | Priority | URLs now |
+|---|---|---|---|
+| `sitemap-categories.xml` | `/supplier-category/{slug}` | 0.9 | 22 |
+| `sitemap-locations.xml` | `/supplier-country/{code}` | 0.9 | 122 |
+| `sitemap-static.xml` | static + listing pages | 0.8 (1.0 home, 0.3 policies) | 22 |
+| `sitemap-rfqs-{n}.xml` | `/buyer-inquiry/{slug}` | 0.7 | 470 |
+| `sitemap-suppliers-{n}.xml` | `/supplier/profile/{slug}` | 0.7 | 152 |
+
+**How "weekly" works — two separate things, deliberately:**
+- `<changefreq>weekly</changefreq>` tells crawlers how often to return.
+- Output is cached for 7 days, then rebuilt from the live database, so new
+  inquiries and suppliers appear with no manual step. **No cron**, chosen
+  because a broken cron on shared cPanel hosting fails silently — the sitemap
+  would look fine while quietly going stale. Bust early after a bulk import
+  with `php spark cache:clear`.
+
+**Routes resolve through CI4, not real files on disk** (`Routes.php`, above the
+homepage route). `public/.htaccess` already sends anything that isn't a real
+file to the front controller, and no physical `sitemap*.xml` exists to shadow
+them.
+
+**Only canonical, indexable URLs are emitted.** Rows must be published *and*
+have a slug — 2 of the 154 approved suppliers have a NULL slug and resolve only
+via their numeric id, which 301s. Redirects do not belong in a sitemap, so they
+are excluded (152, not 154). Same rule for inquiries (`status = 'active'`).
+
+**Pagination** at 50,000 URLs/file (protocol limit). The index computes the
+child count from live totals, so `sitemap-rfqs-2.xml` starts being listed and
+served the moment inquiries pass 50k — nothing to change then. Out-of-range
+pages 404 rather than serving an empty sitemap; page 1 always exists so the URL
+stays stable for anything already submitted to Search Console.
+
+`robots.txt` gained a `Sitemap:` directive (absolute production URL, per spec).
+
+**Verified:** all 6 endpoints return 200 with `application/xml`; all parse as
+well-formed XML with the correct root element (`sitemapindex` / `urlset`); URL
+counts match the database exactly (22/122/22/470/152); sampled URLs from every
+sitemap return **200, not 301 or 404**; `rfqs-2`/`suppliers-2` correctly 404.
+
+The refresh mechanism was proven end-to-end rather than assumed: submitted a
+real RFQ through the public form, confirmed the sitemap still served **470**
+from cache, then cleared the cache and confirmed it served **471** including
+the new slug. Probe data removed afterwards.
+
+Also removed a leftover `escapetest@example.invalid` lead row (user id 666)
+from the 2026-08-05 XSS test — the inquiry and submission were cleaned up then,
+but `Contact::submit`'s auto-created lead user was missed.
+
+---
+
 ## 2026-08-06 — Social links: site-wide Organization schema + footer icons
 
 **Files:** `app/Views/partials/footer.php`

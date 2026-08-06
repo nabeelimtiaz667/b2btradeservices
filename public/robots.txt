@@ -1,2 +1,4 @@
 User-agent: *
-Disallow: 
+Disallow:
+
+Sitemap: https://b2btradeservices.com/sitemap.xml

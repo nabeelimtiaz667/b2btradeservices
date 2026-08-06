@@ -5,6 +5,16 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
+// XML sitemaps. These resolve through CI4 rather than being real files on
+// disk, so they always reflect the live database (see Sitemap controller).
+// The (:num) pages exist so RFQ/supplier sitemaps can split at 50k URLs.
+$routes->get('sitemap.xml', 'Sitemap::index');
+$routes->get('sitemap-categories.xml', 'Sitemap::categories');
+$routes->get('sitemap-locations.xml', 'Sitemap::locations');
+$routes->get('sitemap-static.xml', 'Sitemap::staticPagesMap');
+$routes->get('sitemap-rfqs-(:num).xml', 'Sitemap::inquiries/$1');
+$routes->get('sitemap-suppliers-(:num).xml', 'Sitemap::suppliers/$1');
+
 $routes->get('/', 'Pages::index');
 $routes->get('about-us', 'Pages::index/about-us');
 $routes->get('contact', 'Pages::index/contact');
