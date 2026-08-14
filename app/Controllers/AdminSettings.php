@@ -102,6 +102,30 @@ class AdminSettings extends BaseController
         ]);
     }
 
+    /**
+     * Manually forces the sitemap cache to regenerate on next request, ahead
+     * of Sitemap::CACHE_TTL's 7-day auto-refresh -- e.g. right after a bulk
+     * import. Only Sitemap.php uses the cache service (verified), so a full
+     * clean() is equivalent to the targeted deletes the CLI `cache:clear`
+     * command already does for this same purpose, without needing to track
+     * every paginated rfqs-N/suppliers-N cache key here too.
+     */
+    public function refreshSitemaps()
+    {
+        if (!$this->checkAdmin()) {
+            return redirect()->to('/login');
+        }
+
+        if ($this->request->getMethod() !== 'POST') {
+            return redirect()->to('/admin/settings/seo');
+        }
+
+        \Config\Services::cache()->clean();
+
+        $this->session->setFlashdata('success', 'Sitemaps will regenerate from the live database on their next request.');
+        return redirect()->to('/admin/settings/seo');
+    }
+
     public function moderation()
     {
         if (!$this->checkAdmin()) {

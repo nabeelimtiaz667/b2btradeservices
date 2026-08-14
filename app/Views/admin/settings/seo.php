@@ -51,4 +51,20 @@
         </form>
     </div>
 </div>
+
+<div class="card card-custom mt-4">
+    <div class="card-header"><h5 class="mb-0">XML Sitemaps</h5></div>
+    <div class="card-body">
+        <p class="text-muted">
+            Sitemaps rebuild from the live database automatically every 7 days.
+            Use this if you've just made a change you want search engines to
+            pick up sooner — a bulk import, a new category, etc. — instead of
+            waiting out the week.
+        </p>
+        <form method="post" action="<?= base_url('admin/settings/refresh-sitemaps') ?>">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-outline-primary">Refresh Sitemaps Now</button>
+        </form>
+    </div>
+</div>
 <?= $this->endSection() ?>

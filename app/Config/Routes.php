@@ -164,6 +164,7 @@ $routes->get('admin/settings/general', 'AdminSettings::general');
 $routes->post('admin/settings/general', 'AdminSettings::general');
 $routes->get('admin/settings/seo', 'AdminSettings::seo');
 $routes->post('admin/settings/seo', 'AdminSettings::seo');
+$routes->post('admin/settings/refresh-sitemaps', 'AdminSettings::refreshSitemaps');
 $routes->get('admin/settings/moderation', 'AdminSettings::moderation');
 $routes->post('admin/settings/moderation', 'AdminSettings::moderation');
 $routes->get('admin/settings/categories', 'AdminSettings::categories');
