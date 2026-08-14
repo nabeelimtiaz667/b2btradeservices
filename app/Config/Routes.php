@@ -10,6 +10,7 @@ use CodeIgniter\Router\RouteCollection;
 // The (:num) pages exist so RFQ/supplier sitemaps can split at 50k URLs.
 $routes->get('sitemap.xml', 'Sitemap::index');
 $routes->get('sitemap-categories.xml', 'Sitemap::categories');
+$routes->get('sitemap-buyer-categories.xml', 'Sitemap::buyerCategories');
 $routes->get('sitemap-locations.xml', 'Sitemap::locations');
 $routes->get('sitemap-static.xml', 'Sitemap::staticPagesMap');
 $routes->get('sitemap-rfqs-(:num).xml', 'Sitemap::inquiries/$1');

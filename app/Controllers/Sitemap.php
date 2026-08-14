@@ -16,6 +16,7 @@ use CodeIgniter\HTTP\ResponseInterface;
  *
  *   /sitemap.xml                   index of everything below
  *   /sitemap-categories.xml        supplier category archives   (0.9)
+ *   /sitemap-buyer-categories.xml  buyer category archives      (0.9)
  *   /sitemap-locations.xml         supplier country archives    (0.9)
  *   /sitemap-static.xml            static + listing pages       (0.8)
  *   /sitemap-rfqs-1.xml            buyer inquiries, 50k/file    (0.7)
@@ -83,6 +84,7 @@ class Sitemap extends BaseController
         return $this->render('sitemap_index', function () {
             $maps = [
                 'sitemap-categories.xml',
+                'sitemap-buyer-categories.xml',
                 'sitemap-locations.xml',
                 'sitemap-static.xml',
             ];
@@ -128,6 +130,35 @@ class Sitemap extends BaseController
             foreach ($rows as $r) {
                 $urls[] = [
                     'loc'     => base_url('supplier-category/' . $r['slug']),
+                    'lastmod' => $this->lastmod($r),
+                ];
+            }
+
+            return $this->urlset($urls, '0.9');
+        });
+    }
+
+    /**
+     * Buyer category archive pages -- /buyers/{slug} (Buyer::category()).
+     * Same categories table/rules as categories() above, just pointed at the
+     * buyer-inquiry archive route instead of the supplier one -- these are two
+     * separate pages per category (see .claude/PROJECT.md), not duplicates.
+     */
+    public function buyerCategories()
+    {
+        return $this->render('sitemap_buyer_categories', function () {
+            $rows = (new CategoryModel())
+                ->select('slug, updated_at, created_at')
+                ->where('status', 'active')
+                ->where('slug IS NOT NULL', null, false)
+                ->where('slug !=', '')
+                ->orderBy('id', 'ASC')
+                ->findAll();
+
+            $urls = [];
+            foreach ($rows as $r) {
+                $urls[] = [
+                    'loc'     => base_url('buyers/' . $r['slug']),
                     'lastmod' => $this->lastmod($r),
                 ];
             }

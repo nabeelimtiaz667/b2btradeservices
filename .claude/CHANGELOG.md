@@ -14,6 +14,30 @@ Entry format:
 
 ---
 
+## 2026-08-14 — `/sitemap-buyer-categories.xml` — buyer category archives
+
+**Files:** `app/Controllers/Sitemap.php`, `app/Config/Routes.php`
+**Why:** owner traced a set of client-supplied URLs (`/buyers/{category-slug}`)
+to the "Browse Inquiries By Category" carousel on the buyer pages
+(`Buyer::category()`), then asked for the same dynamic sitemap treatment T-27
+already gave the equivalent supplier-category archive.
+
+- New `Sitemap::buyerCategories()`, structurally identical to the existing
+  `categories()` (same `categories` table, same active/slug filters, same
+  0.9 priority, same weekly cache), just pointed at `buyers/{slug}` instead of
+  `supplier-category/{slug}` — these are two separate archive pages per
+  category (buyer inquiries vs. supplier listings), not duplicates of each
+  other.
+- No pagination — 22 active categories, nowhere near the 50k/file limit the
+  RFQ/supplier sitemaps need. Matches the existing `categories()`/`locations()`
+  pattern, which are unpaginated for the same reason.
+- Registered as `sitemap-buyer-categories.xml` and added to the `sitemap.xml`
+  index alongside the existing five children.
+- Verified: 22 URLs emitted, matches the live `categories` table count exactly;
+  index references the new child sitemap; sampled URLs all return 200.
+
+---
+
 ## 2026-08-14 — Reactivation resend: T-29 phase 2
 
 **Files:** `app/Controllers/LeadCapture.php`, `app/Helpers/email_helper.php`,
