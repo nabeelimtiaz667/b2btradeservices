@@ -199,6 +199,131 @@ if (!function_exists('sendPasswordResetEmail')) {
     }
 }
 
+if (!function_exists('sendLeadVerificationEmail')) {
+    function sendLeadVerificationEmail(string $toEmail, string $toName, string $verifyLink): bool
+    {
+        log_message('info', 'Lead verification requested for ' . $toEmail . ' — link generated successfully.');
+
+        $settingModel = new SiteSettingModel();
+        $smtpHost = $settingModel->getSetting('smtp_host', '');
+        $smtpPort = (int) $settingModel->getSetting('smtp_port', '587');
+        $smtpUser = $settingModel->getSetting('smtp_user', '');
+        $smtpPass = $settingModel->getSetting('smtp_pass', '');
+        $siteName = $settingModel->getSetting('site_name', 'B2B Trade Services');
+        $contactEmail = $settingModel->getSetting('contact_email', '');
+
+        $fromEmail = !empty($contactEmail) ? $contactEmail : (!empty($smtpUser) ? $smtpUser : 'noreply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+        $logoUrl   = 'https://securecdn.sirv.com/b2b-header-logov2.png'; // rtrim(base_url(), '/') . '/assets/images/b2b-header-logov2.png';
+
+        $subject = '[' . $siteName . '] Confirm your email to continue';
+
+        $message  = "<div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>";
+        $message .= "<div style='text-align:center;padding:24px;background:#ffffff;border-radius:8px 8px 0 0;border-bottom:3px solid #15A2A0;margin-bottom:24px;'>";
+        $message .= "<img src='" . esc($logoUrl) . "' alt='" . esc($siteName) . "' style='max-height:60px;max-width:200px;'>";
+        $message .= "</div>";
+        $message .= "<h2 style='color:#333;'>Confirm Your Email</h2>";
+        $message .= "<p>Hi <strong>" . esc($toName) . "</strong>,</p>";
+        $message .= "<p>Thanks for your interest in <strong>" . esc($siteName) . "</strong>. Click the button below to confirm your email and finish setting up your account.</p>";
+        $message .= "<p>This link is valid for <strong>7 days</strong>.</p>";
+        $message .= "<p style='margin:30px 0;'><a href='" . esc($verifyLink) . "' style='background:linear-gradient(45deg,#15A2A0,#5FC86B);color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;'>Confirm My Email</a></p>";
+        $message .= "<p style='color:#666;font-size:13px;'>If the button above doesn't work, copy and paste this link into your browser:</p>";
+        $message .= "<p style='color:#009688;font-size:13px;word-break:break-all;'>" . esc($verifyLink) . "</p>";
+        $message .= "<hr style='border:none;border-top:1px solid #eee;margin:24px 0;'>";
+        $message .= "<p style='color:#999;font-size:12px;'>If you did not request this, please ignore this email.</p>";
+        $message .= "</div>";
+
+        $hasSmtp = !empty($smtpHost) && !empty($smtpUser) && !empty($smtpPass);
+
+        if ($hasSmtp) {
+            try {
+                if (sendViaSmtp($toEmail, $subject, $message, $fromEmail, $siteName, $smtpHost, $smtpPort, $smtpUser, $smtpPass)) {
+                    log_message('info', 'Lead verification email sent via SMTP to ' . $toEmail);
+                    return true;
+                }
+            } catch (\Exception $e) {
+                log_message('error', 'Lead verification SMTP exception: ' . $e->getMessage());
+            }
+            log_message('warning', 'Lead verification SMTP failed for ' . $toEmail . ', falling back to PHP mail().');
+        } else {
+            log_message('info', 'Lead verification: no SMTP configured, using PHP mail().');
+        }
+
+        if (sendViaPhpMail($toEmail, $subject, $message, $fromEmail, $siteName)) {
+            log_message('info', 'Lead verification email sent via PHP mail() to ' . $toEmail);
+            return true;
+        }
+
+        log_message('error', 'Lead verification email failed via both SMTP and PHP mail() for ' . $toEmail . ' — verify link: ' . $verifyLink);
+        return false;
+    }
+}
+
+if (!function_exists('sendLeadResumeEmail')) {
+    /**
+     * Reactivation email for T-29 phase 2: sent when someone who already
+     * verified their email resubmits the popup, i.e. they started signing up,
+     * verified, but never finished step 2 (or lost the link). Distinct from
+     * sendLeadVerificationEmail() -- no "confirm your email" framing (they
+     * already did) and no expiry mention (verified links don't expire, see
+     * .claude/plans/T-29-lead-capture.md).
+     */
+    function sendLeadResumeEmail(string $toEmail, string $toName, string $resumeLink): bool
+    {
+        log_message('info', 'Lead reactivation resend for ' . $toEmail . ' — link generated successfully.');
+
+        $settingModel = new SiteSettingModel();
+        $smtpHost = $settingModel->getSetting('smtp_host', '');
+        $smtpPort = (int) $settingModel->getSetting('smtp_port', '587');
+        $smtpUser = $settingModel->getSetting('smtp_user', '');
+        $smtpPass = $settingModel->getSetting('smtp_pass', '');
+        $siteName = $settingModel->getSetting('site_name', 'B2B Trade Services');
+        $contactEmail = $settingModel->getSetting('contact_email', '');
+
+        $fromEmail = !empty($contactEmail) ? $contactEmail : (!empty($smtpUser) ? $smtpUser : 'noreply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+        $logoUrl   = 'https://securecdn.sirv.com/b2b-header-logov2.png'; // rtrim(base_url(), '/') . '/assets/images/b2b-header-logov2.png';
+
+        $subject = '[' . $siteName . '] Finish setting up your account';
+
+        $message  = "<div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>";
+        $message .= "<div style='text-align:center;padding:24px;background:#ffffff;border-radius:8px 8px 0 0;border-bottom:3px solid #15A2A0;margin-bottom:24px;'>";
+        $message .= "<img src='" . esc($logoUrl) . "' alt='" . esc($siteName) . "' style='max-height:60px;max-width:200px;'>";
+        $message .= "</div>";
+        $message .= "<h2 style='color:#333;'>Welcome Back</h2>";
+        $message .= "<p>Hi <strong>" . esc($toName) . "</strong>,</p>";
+        $message .= "<p>Your email is already confirmed — you just need to finish setting up your <strong>" . esc($siteName) . "</strong> account. Click below to pick up where you left off.</p>";
+        $message .= "<p style='margin:30px 0;'><a href='" . esc($resumeLink) . "' style='background:linear-gradient(45deg,#15A2A0,#5FC86B);color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;'>Finish My Account</a></p>";
+        $message .= "<p style='color:#666;font-size:13px;'>If the button above doesn't work, copy and paste this link into your browser:</p>";
+        $message .= "<p style='color:#009688;font-size:13px;word-break:break-all;'>" . esc($resumeLink) . "</p>";
+        $message .= "<hr style='border:none;border-top:1px solid #eee;margin:24px 0;'>";
+        $message .= "<p style='color:#999;font-size:12px;'>If you did not request this, please ignore this email.</p>";
+        $message .= "</div>";
+
+        $hasSmtp = !empty($smtpHost) && !empty($smtpUser) && !empty($smtpPass);
+
+        if ($hasSmtp) {
+            try {
+                if (sendViaSmtp($toEmail, $subject, $message, $fromEmail, $siteName, $smtpHost, $smtpPort, $smtpUser, $smtpPass)) {
+                    log_message('info', 'Lead reactivation email sent via SMTP to ' . $toEmail);
+                    return true;
+                }
+            } catch (\Exception $e) {
+                log_message('error', 'Lead reactivation SMTP exception: ' . $e->getMessage());
+            }
+            log_message('warning', 'Lead reactivation SMTP failed for ' . $toEmail . ', falling back to PHP mail().');
+        } else {
+            log_message('info', 'Lead reactivation: no SMTP configured, using PHP mail().');
+        }
+
+        if (sendViaPhpMail($toEmail, $subject, $message, $fromEmail, $siteName)) {
+            log_message('info', 'Lead reactivation email sent via PHP mail() to ' . $toEmail);
+            return true;
+        }
+
+        log_message('error', 'Lead reactivation email failed via both SMTP and PHP mail() for ' . $toEmail . ' — resume link: ' . $resumeLink);
+        return false;
+    }
+}
+
 if (!function_exists('sendWelcomeEmail')) {
     function sendWelcomeEmail(array $userData): bool
     {

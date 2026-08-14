@@ -14,6 +14,147 @@ Entry format:
 
 ---
 
+## 2026-08-14 — Reactivation resend: T-29 phase 2
+
+**Files:** `app/Controllers/LeadCapture.php`, `app/Helpers/email_helper.php`,
+`.claude/plans/T-29-lead-capture.md`
+**Why:** resolves the previously-deferred question — a lead who verified their
+email but never finished step 2 (or lost the link) had no way back in.
+Resubmitting the popup only ever regenerated a token for `status='new'`.
+
+- `LeadCapture::capture()`'s `status='verified'` branch now re-sends the lead's
+  existing link (same token — it's still valid, verified links don't expire)
+  via a new `sendLeadResumeEmail()`, distinct copy from the initial
+  verification email (no "confirm your email" framing, no expiry mention).
+- 5-minute cooldown (`RESEND_COOLDOWN_MINUTES`) based on the lead row's
+  `updated_at`, captured before the contact-fields update touches it, so
+  repeatedly resubmitting the popup can't be used to spam an inbox that isn't
+  the submitter's own. Within the cooldown, the response reverts to the
+  original "you're already verified" message with no email sent — the popup
+  UI needed no changes since it already just displays whatever message the
+  server returns.
+- Verified against the real local DB: capture → verify → immediate resubmit
+  (same token, cooldown message, no resend) → force `updated_at` into the past
+  → resubmit again (resend message) → confirmed the re-sent link still
+  resolves correctly to step 2. Test data cleaned up afterward.
+
+---
+
+## 2026-08-14 — Popup UI + trigger engine: T-29 complete
+
+**Files:** `app/Views/partials/lead-popup-modal.php` (new),
+`public/assets/js/lead-popup-triggers.js` (new), `public/assets/js/lead-popup.js`
+(new), `app/Views/partials/footer.php`
+**Why:** final slice of T-29 — the actual popup UI and its triggers, wired
+site-wide. Backend (previous two entries) was already verified independently;
+this connects it to a real visitor-facing form.
+
+- Config (`lead-popup-triggers.js`) and engine (`lead-popup.js`) are
+  deliberately split, per owner's request to have triggers/copy "in a place I
+  can edit and test myself" without touching logic. Config holds: the
+  buyer/supplier page-matching rules, and four starting triggers (exit-intent,
+  60% scroll depth, 25s time-on-page, results-grid visibility via
+  `IntersectionObserver`) each with their own heading/subtext.
+- Popup included once, in the shared `footer.php` (present in all 4 public
+  layouts), gated by `<?php if (! session()->get('logged_in')): ?>` — never
+  shown to logged-in visitors, matches the spec.
+- No cooldown between different triggers (owner's instruction); each trigger
+  fires at most once per page load; the popup itself won't reopen once a
+  visitor has submitted successfully in the current session
+  (`sessionStorage`), so a successful step-1 submit doesn't get followed by
+  another trigger nagging them again immediately.
+- **Real bug found and fixed during browser verification:** the buyer/supplier
+  default-radio patterns are anchored to app-relative paths (`^/buyers`,
+  `^/supplier`, ...), but local dev serves the app from a `/b2btradeservices`
+  subfolder, so `location.pathname` is actually `/b2btradeservices/buyers` —
+  every pattern silently failed to match and the popup always fell through to
+  the hardcoded default. Fixed by computing the app's actual base path
+  server-side (`parse_url(base_url(), PHP_URL_PATH)`) and stripping it from
+  `location.pathname` before matching, so this works whether or not the
+  deployment sits in a subfolder — confirmed correct both locally (subfolder)
+  and would be a no-op in production (root-deployed, per CLAUDE.md).
+- **Verified in the actual browser**, not just by reading the code: opened the
+  popup, filled and submitted the real form (network tab confirmed the POST to
+  `lead/capture` and the JSON response), watched it advance to the "check your
+  email" step, and re-confirmed the default-radio fix on both a buyer-context
+  page (`/buyers` → defaults supplier) and a supplier-context page (`/supplier`
+  → defaults buyer) after the fix. All test lead rows deleted afterward.
+
+---
+
+## 2026-08-14 — `LeadCapture` controller, routes, verification email, step-2 signup: T-29 backend complete
+
+**Files:** `app/Controllers/LeadCapture.php` (new), `app/Config/Routes.php`,
+`app/Helpers/email_helper.php`, `app/Views/pages/lead-complete-signup.php` (new),
+`app/Views/pages/lead-verify-result.php` (new)
+**Why:** second slice of T-29 — the full server-side flow from step-1 capture
+through email verification to the step-2 `users` insert. No popup UI/JS yet
+(next slice); this is reachable today via direct POST/links only.
+
+- `LeadCapture::capture()` — AJAX step-1 endpoint, same `{status, message}` JSON
+  shape as `Contact::submitAjax`. Rejects emails already in `users`; for `leads`
+  rows still `status='new'` it updates and reissues token+email (self-healing
+  expired links); for `status='verified'` it updates contact fields only, no
+  email resent.
+- `LeadCapture::verify($token)` — implements the state table from the plan
+  exactly: `new`+not-expired marks verified and continues to step 2; `new`+expired
+  shows "link expired"; `verified` always re-opens step 2 regardless of age;
+  `converted` (or an email that's since appeared in `users` under any stored
+  status) shows "already registered". Routed as `lead/verify/(:alphanum)` —
+  deliberately not `(:any)`, the token never contains `/` so there's no exposure
+  to the CI4 re-splitting bug found during T-28.
+- `LeadCapture::completeSignup($token)` — only reachable once `verified`. Single
+  `users` insert combining the lead's name/type/email/phone with this step's
+  password/company/country/products, then the exact same post-creation sequence
+  `Auth::register()` runs (activity log, admin notification, welcome email,
+  redirect to `/login` — deliberately **no** auto-login, matching
+  `Auth::register()`'s actual behavior rather than the auto-dashboard-redirect
+  language earlier drafts of the plan used). Race guard re-checks `users.email`
+  immediately before insert. Marks the lead `converted` either way.
+- `sendLeadVerificationEmail()` added to `email_helper.php`, built from the same
+  template/SMTP-fallback chain as `sendPasswordResetEmail()`/`sendWelcomeEmail()`.
+- Route naming: singular `lead/*`, deliberately distinct from the existing
+  plural `leads/*` (LeadManagement's unrelated `users`-as-CRM-leads admin pages).
+- **Verified end-to-end against the real local DB** (not just unit-style): step-1
+  capture → token in DB → `/lead/verify/{token}` → redirect to step 2 → step-2
+  page pre-fills name/email/phone/type correctly → full POST creates the `users`
+  row with correct fields and flips the lead to `converted`. Also verified:
+  already-a-user rejection, resubmit-while-new reissues a different token,
+  resubmit-while-verified leaves the token unchanged, an expired `new` link shows
+  "expired", and a `converted` lead's link shows "already registered" rather than
+  re-verifying. All test rows deleted afterward — `leads` table back to empty.
+
+---
+
+## 2026-08-14 — `leads` table + `LeadModel`: foundation for T-29 lead capture
+
+**Files:** `app/Database/Migrations/2026-08-14-000001_CreateLeadsTable.php`,
+`app/Models/LeadModel.php`, `.claude/plans/T-29-lead-capture.md` (new),
+`.claude/TASKS.md`, `.claude/BLOCKERS.md`
+**Why:** first slice of T-29 (two-step lead capture popup → email-verified
+account creation) — schema and status-lifecycle logic, no controller/UI yet.
+Full design lives in `.claude/plans/T-29-lead-capture.md`.
+
+- New `leads` table, no FK to `users`, unique `email`. `verification_token_expires_at`
+  and `verified_at` are `DATETIME`, not `TIMESTAMP` — deliberate, to avoid MySQL's
+  session-timezone conversion on `TIMESTAMP` columns given this machine's OS clock
+  already disagrees with the app's UTC config (CONTEXT.md point 8). All expiry
+  reads/writes use PHP's `gmdate()` explicitly rather than relying on the app-wide
+  timezone config staying UTC.
+- `LeadModel` implements the full status lifecycle (`new → verified → converted`):
+  resubmitting the popup while `status='new'` reissues a fresh token + 7-day expiry
+  (self-heals an expired, never-verified link); expiry is only ever checked while
+  `status='new'` — once `verified` the same link stays valid indefinitely, matching
+  how a real password-reset-style token differs from a "resume where you left off"
+  pointer.
+- Verified via a throwaway `spark` command exercising every transition against the
+  real local DB (create → force-expire → reissue → verify → force-expire-again to
+  confirm verified bypasses expiry → contact-only update leaves token/email
+  untouched → convert → duplicate-email insert correctly rejected). Command and
+  scratch files deleted after; not part of the deployed app.
+
+---
+
 ## 2026-08-07 — Clean, query-string-free search URLs across buyer/product/supplier/global search
 
 **Files:** `app/Config/Routes.php`, `app/Helpers/seo_helper.php`,

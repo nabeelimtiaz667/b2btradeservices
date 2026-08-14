@@ -277,6 +277,12 @@ user edits, supplier/product changes, admin imports and settings updates.
 Compounded by #8: with CSRF off *and* destructive actions on GET, an authenticated
 admin merely loading a hostile page can have records deleted.
 
+**Also applies to:** the planned public lead-capture popup (T-29) — its `POST
+lead/capture` endpoint is unauthenticated by design (that's the point of a lead
+form) and will carry the same exposure as every other POST route here. Not a
+separate issue, logged here per the owner's call to group it with the existing
+CSRF gap rather than open a new entry.
+
 **Fix:** uncomment `'csrf'` in `$globals['before']`, then confirm every form and
 AJAX call sends the token. Not done unilaterally — enabling it will break any form
 that does not currently include `csrf_field()`, so it needs a pass over the views.

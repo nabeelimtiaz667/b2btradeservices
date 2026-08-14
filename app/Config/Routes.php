@@ -174,6 +174,17 @@ $routes->post('admin/settings/registration', 'AdminSettings::registration');
 $routes->get('admin/settings/email', 'AdminSettings::email');
 $routes->post('admin/settings/email', 'AdminSettings::email');
 
+// Popup lead-capture flow (T-29). Singular 'lead' -- deliberately distinct from
+// the plural 'leads/*' CRM routes just below, which are LeadManagement's
+// unrelated `users`-as-leads admin views. See .claude/plans/T-29-lead-capture.md
+// (:alphanum), matching reset-password/(:alphanum) above -- the token is a
+// plain hex string, never contains '/', so there's no risk of the (:any)
+// re-splitting behaviour found and fixed during the search-URL work (T-28).
+$routes->post('lead/capture', 'LeadCapture::capture');
+$routes->get('lead/verify/(:alphanum)', 'LeadCapture::verify/$1');
+$routes->get('lead/complete/(:alphanum)', 'LeadCapture::completeSignup/$1');
+$routes->post('lead/complete/(:alphanum)', 'LeadCapture::completeSignup/$1');
+
 $routes->get('leads/all', 'LeadManagement::allLeads');
 $routes->get('leads/buyer', 'LeadManagement::buyerLeads');
 $routes->get('leads/supplier', 'LeadManagement::supplierLeads');

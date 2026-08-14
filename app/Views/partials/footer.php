@@ -326,3 +326,6 @@ gtag('js', new Date());
 
 gtag('config', 'G-L52TR0D4JK');
 </script> -->
+<?php if (! session()->get('logged_in')): ?>
+<?= $this->include('partials/lead-popup-modal') ?>
+<?php endif; ?>
