@@ -66,11 +66,21 @@ class LeadModel extends Model
     protected $cleanValidationRules = true;
 
     /**
-     * Token lifetime. Only ever checked while status = 'new' — once verified the
-     * same link stays valid indefinitely (see plan: "Timezone & expiry safety" and
-     * "Status lifecycle" sections for why).
+     * Token lifetime. Only ever checked while status = 'popup_form_filled' —
+     * once email-verified the same link stays valid indefinitely (see plan:
+     * "Timezone & expiry safety" and "Status lifecycle" sections for why).
      */
     protected const TOKEN_TTL_DAYS = 7;
+
+    /**
+     * Status values, named for the event each one represents rather than
+     * generic lifecycle words -- see the rename note in the
+     * 2026-08-16 migration for why ('new' collided in meaning with the
+     * unrelated `users.lead_stage` CRM field, which also has a 'new').
+     */
+    private const STATUS_FORM_FILLED = 'popup_form_filled';
+    private const STATUS_EMAIL_VERIFIED = 'email_verified';
+    private const STATUS_ACCOUNT_REGISTERED = 'account_registered';
 
     public function findByEmail(string $email): ?array
     {
@@ -87,9 +97,10 @@ class LeadModel extends Model
     }
 
     /**
-     * Insert a brand-new lead (status 'new') with a fresh verification token.
-     * Caller is responsible for confirming the email isn't already a `users` row
-     * first -- this model only knows about the `leads` table.
+     * Insert a brand-new lead (status 'popup_form_filled') with a fresh
+     * verification token. Caller is responsible for confirming the email isn't
+     * already a `users` row first -- this model only knows about the `leads`
+     * table.
      */
     public function createLead(array $data): int|false
     {
@@ -102,7 +113,7 @@ class LeadModel extends Model
             'phone'                         => $data['phone'] ?? null,
             'phone_code'                    => $data['phone_code'] ?? null,
             'whatsapp'                      => !empty($data['whatsapp']) ? 1 : 0,
-            'status'                        => 'new',
+            'status'                        => self::STATUS_FORM_FILLED,
             'verification_token'            => $token,
             'verification_token_expires_at' => $this->newExpiry(),
         ]);
@@ -111,9 +122,10 @@ class LeadModel extends Model
     }
 
     /**
-     * Update an existing 'new' lead's contact fields and reissue a fresh token +
-     * expiry -- this is what makes an expired, never-verified link self-healing:
-     * the visitor just fills the popup out again with the same email.
+     * Update an existing 'popup_form_filled' lead's contact fields and reissue
+     * a fresh token + expiry -- this is what makes an expired, never-verified
+     * link self-healing: the visitor just fills the popup out again with the
+     * same email.
      */
     public function reissueForNewLead(int $id, array $data): bool
     {
@@ -143,39 +155,39 @@ class LeadModel extends Model
         ]);
     }
 
-    public function markVerified(int $id): bool
+    public function markEmailVerified(int $id): bool
     {
         return $this->update($id, [
-            'status'      => 'verified',
+            'status'      => self::STATUS_EMAIL_VERIFIED,
             'verified_at' => gmdate('Y-m-d H:i:s'),
         ]);
     }
 
-    public function markConverted(int $id): bool
+    public function markAccountRegistered(int $id): bool
     {
         return $this->update($id, [
-            'status' => 'converted',
+            'status' => self::STATUS_ACCOUNT_REGISTERED,
         ]);
     }
 
-    public function isNew(array $lead): bool
+    public function isPopupFormFilled(array $lead): bool
     {
-        return $lead['status'] === 'new';
+        return $lead['status'] === self::STATUS_FORM_FILLED;
     }
 
-    public function isVerified(array $lead): bool
+    public function isEmailVerified(array $lead): bool
     {
-        return $lead['status'] === 'verified';
+        return $lead['status'] === self::STATUS_EMAIL_VERIFIED;
     }
 
-    public function isConverted(array $lead): bool
+    public function isAccountRegistered(array $lead): bool
     {
-        return $lead['status'] === 'converted';
+        return $lead['status'] === self::STATUS_ACCOUNT_REGISTERED;
     }
 
     /**
-     * Only meaningful while status = 'new'. A 'verified' lead's link has no
-     * expiry -- see plan's "Status lifecycle" table.
+     * Only meaningful while status = 'popup_form_filled'. An 'email_verified'
+     * lead's link has no expiry -- see plan's "Status lifecycle" table.
      */
     public function isTokenExpired(array $lead): bool
     {
@@ -184,6 +196,71 @@ class LeadModel extends Model
         }
 
         return $lead['verification_token_expires_at'] < gmdate('Y-m-d H:i:s');
+    }
+
+    /**
+     * Filtered, paginated listing for the admin "Popup Leads" page. Deliberately
+     * separate from `UserModel::getLeads()` -- that method lists `users` rows
+     * being nurtured through the CRM `lead_stage` pipeline; this one lists raw
+     * `leads` table captures, an unrelated concept that happens to share the
+     * word "lead". See .claude/plans/T-29-lead-capture.md.
+     */
+    public function getPopupLeads(array $filters = [], int $perPage = 25, int $page = 1): array
+    {
+        $builder = $this;
+
+        if (!empty($filters['user_type'])) {
+            $builder = $builder->where('user_type', $filters['user_type']);
+        }
+
+        if (!empty($filters['status'])) {
+            $builder = $builder->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['name'])) {
+            $builder = $builder->like('name', $filters['name']);
+        }
+
+        if (!empty($filters['email'])) {
+            $builder = $builder->like('email', $filters['email']);
+        }
+
+        if (!empty($filters['phone'])) {
+            $builder = $builder->like('phone', $filters['phone']);
+        }
+
+        if (isset($filters['whatsapp']) && $filters['whatsapp'] !== '') {
+            $builder = $builder->where('whatsapp', $filters['whatsapp']);
+        }
+
+        if (!empty($filters['date_from'])) {
+            $builder = $builder->where('created_at >=', $filters['date_from'] . ' 00:00:00');
+        }
+
+        if (!empty($filters['date_to'])) {
+            $builder = $builder->where('created_at <=', $filters['date_to'] . ' 23:59:59');
+        }
+
+        $sortField = $filters['sort'] ?? 'created_at';
+        $sortDir   = $filters['sort_dir'] ?? 'DESC';
+        $allowedSorts = ['name', 'email', 'user_type', 'status', 'created_at', 'verified_at'];
+        if (!in_array($sortField, $allowedSorts, true)) {
+            $sortField = 'created_at';
+        }
+        $sortDir = strtoupper($sortDir) === 'ASC' ? 'ASC' : 'DESC';
+
+        $builder = $builder->orderBy($sortField, $sortDir);
+
+        $total = $builder->countAllResults(false);
+        $leads = $builder->limit($perPage, ($page - 1) * $perPage)->findAll();
+
+        return [
+            'leads'       => $leads,
+            'total'       => $total,
+            'perPage'     => $perPage,
+            'currentPage' => $page,
+            'totalPages'  => max(1, (int) ceil($total / $perPage)),
+        ];
     }
 
     protected function generateToken(): string

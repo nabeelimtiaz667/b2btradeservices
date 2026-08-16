@@ -773,6 +773,13 @@
                 </svg>
                 Supplier Leads
             </a>
+            <a href="<?= base_url('leads/popup') ?>"
+                class="<?= preg_match('#/leads/popup/?(\?|$)#', current_url()) ? 'active' : '' ?>">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2.5 4a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm2 0a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM16 3a1 1 0 0 0-1-1H1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V3zM1 3h14v2H1V3zm0 3h14v7H1V6z" />
+                </svg>
+                Popup Leads
+            </a>
             <div class="md-section">My Leads</div>
             <a href="<?= base_url('leads/my-supplier') ?>"
                 class="<?= preg_match('#/leads/my-supplier/?(\?|$)#', current_url()) ? 'active' : '' ?>">
@@ -985,6 +992,13 @@
                         d="M3 2.5a2.5 2.5 0 0 1 5 0 2.5 2.5 0 0 1 5 0v.006c0 .07 0 .27-.038.494H15a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 14.5V7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2.038A2.968 2.968 0 0 1 3 2.506V2.5z" />
                 </svg>
                 Supplier Leads
+            </a>
+            <a href="<?= base_url('leads/popup') ?>"
+                class="nav-link <?= preg_match('#/leads/popup/?(\?|$)#', current_url()) ? 'active' : '' ?>">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2.5 4a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm2 0a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM16 3a1 1 0 0 0-1-1H1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V3zM1 3h14v2H1V3zm0 3h14v7H1V6z" />
+                </svg>
+                Popup Leads
             </a>
 
             <div class="nav-section-label">My Leads</div>

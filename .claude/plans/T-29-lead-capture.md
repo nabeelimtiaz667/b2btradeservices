@@ -4,6 +4,12 @@ Full design for the lead-capture feature. Referenced from [TASKS.md](../TASKS.md
 Decisions below came out of a planning conversation with Nabeel on 2026-08-14 —
 treat this file as the source of truth for that discussion, not the conversation log.
 
+**Status values renamed 2026-08-16:** `new`/`verified`/`converted` became
+`popup_form_filled`/`email_verified`/`account_registered` — the generic names read
+ambiguously next to `users.lead_stage` (the unrelated CRM field, which also has a
+`new`). This doc uses the current names throughout; see the
+`2026-08-16-000001_RenameLeadsStatusValues` migration for the rename itself.
+
 ## Objective
 
 Buyers/suppliers currently only get created through the existing `/register` form,
@@ -23,7 +29,8 @@ name                            VARCHAR(255)
 email                           VARCHAR(255) UNIQUE
 phone, phone_code               VARCHAR
 whatsapp                        TINYINT(1)
-status                          ENUM('new','verified','converted') DEFAULT 'new'
+status                          ENUM('popup_form_filled','email_verified','account_registered')
+                                 DEFAULT 'popup_form_filled'
 verification_token              VARCHAR(64), indexed
 verification_token_expires_at   DATETIME   -- UTC, set on token issue, +7 days
 verified_at                     DATETIME NULL
@@ -77,34 +84,35 @@ exactly one clock in play (PHP's, forced to UTC) for the entire comparison.
 
 **Step 1 submit (popup), by email:**
 - Email already exists in `users` → reject: "you already have an account, please log in."
-- No existing `leads` row → insert new row, `status='new'`, issue token (+7 days), send verification email.
-- Existing `leads` row, `status='new'` → **update** the row's name/type/phone/whatsapp,
+- No existing `leads` row → insert new row, `status='popup_form_filled'`, issue token (+7 days), send verification email.
+- Existing `leads` row, `status='popup_form_filled'` → **update** the row's name/type/phone/whatsapp,
   **reissue** a fresh token and expiry, resend the verification email. This is what
   makes an expired, never-verified link self-healing — no separate regeneration UI needed.
-- Existing `leads` row, `status='verified'` → update contact fields only; token/status
+- Existing `leads` row, `status='email_verified'` → update contact fields only; token/status
   untouched (Q&A: email itself is never editable once captured).
-- Existing `leads` row, `status='converted'` → same as "already in `users`" above.
+- Existing `leads` row, `status='account_registered'` → same as "already in `users`" above.
 
 **Verification link click (`GET lead/verify/{token}`):** token identifies one lead row.
 
 | Lead status when clicked | Expiry checked? | Result |
 |---|---|---|
 | token not found | — | invalid-link message |
-| `new`, not expired | yes | mark `verified` (+`verified_at`), show step 2 |
-| `new`, expired | yes | "this link has expired" — recovery is resubmitting the step-1 popup |
-| `verified` | **no** | same link always re-opens step 2, no matter how old |
-| `converted` | — | "you already have an account, please log in" |
+| `popup_form_filled`, not expired | yes | mark `email_verified` (+`verified_at`), show step 2 |
+| `popup_form_filled`, expired | yes | "this link has expired" — recovery is resubmitting the step-1 popup |
+| `email_verified` | **no** | same link always re-opens step 2, no matter how old |
+| `account_registered` | — | "you already have an account, please log in" |
 
-The key rule: expiry only gates the *first* click (new→verified). Once verified, the
-link is a durable "resume where you left off" pointer with no time limit.
+The key rule: expiry only gates the *first* click (popup_form_filled→email_verified).
+Once verified, the link is a durable "resume where you left off" pointer with no time
+limit.
 
-**Resolved in phase 2 (2026-08-14):** see "Reactivation (phase 2)" below — a
-`verified` lead who loses that link now gets it re-sent by resubmitting the popup.
+**Resolved in phase 2 (2026-08-14):** see "Reactivation (phase 2)" below — an
+`email_verified` lead who loses that link now gets it re-sent by resubmitting the popup.
 
 ## Step 2 — the actual account creation
 
-`GET/POST lead/complete/{token}` — only reachable once a lead is `verified` (see table
-above). New view extending `layouts/auth`, styled like
+`GET/POST lead/complete/{token}` — only reachable once a lead is `email_verified` (see
+table above). New view extending `layouts/auth`, styled like
 [register.php](../../app/Views/pages/register.php):
 
 - Prefilled from the lead row: `user_type` (radio), `name`, `phone` — all editable.
@@ -118,7 +126,7 @@ into `users` combining the lead's carried fields with the new ones — same shap
 `Auth::register()`'s `$userData` array. Then run the exact same post-creation sequence
 `Auth::register()` already does: activity log, admin notification email, welcome
 email, session login, redirect to dashboard (or pending-approval message, same as
-today). `leads.status` flips to `converted` as a side effect of that insert
+today). `leads.status` flips to `account_registered` as a side effect of that insert
 succeeding — nothing else changes on the lead row.
 
 ## Reactivation (phase 2)
@@ -127,8 +135,8 @@ Resolves the question originally logged as an open question, then as a deliberat
 deferred gap: **a lead who verified their email but never finished step 2 — how do
 they get back in if they lose the link?**
 
-The answer doesn't need a new token type or a new page — it reuses the fact that a
-`verified` lead's link never expires (see the lifecycle table above). Resubmitting
+The answer doesn't need a new token type or a new page — it reuses the fact that an
+`email_verified` lead's link never expires (see the lifecycle table above). Resubmitting
 the step-1 popup with that same, already-verified email now:
 
 1. Updates contact fields, same as before (unchanged from phase 1).

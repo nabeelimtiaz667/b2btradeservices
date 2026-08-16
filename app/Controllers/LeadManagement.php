@@ -6,6 +6,7 @@ use App\Models\UserModel;
 use App\Models\CountryModel;
 use App\Models\LeadNoteModel;
 use App\Models\LeadActivityModel;
+use App\Models\LeadModel;
 
 class LeadManagement extends BaseController
 {
@@ -13,6 +14,7 @@ class LeadManagement extends BaseController
     protected $countryModel;
     protected $noteModel;
     protected $activityModel;
+    protected $leadModel;
     protected $session;
 
     public function __construct()
@@ -21,6 +23,7 @@ class LeadManagement extends BaseController
         $this->countryModel = new CountryModel();
         $this->noteModel = new LeadNoteModel();
         $this->activityModel = new LeadActivityModel();
+        $this->leadModel = new LeadModel();
         $this->session = session();
     }
 
@@ -147,6 +150,46 @@ class LeadManagement extends BaseController
         $data['latest_notes'] = $this->noteModel->getLatestNotesForLeads(array_column($result['leads'], 'id'));
 
         return view('dashboard/admin/leads', $data);
+    }
+
+    /**
+     * "Popup Leads" — a separate data source from all the other methods on
+     * this controller, which list `users` rows (people who already have
+     * accounts) being tracked through the CRM lead_stage pipeline. This lists
+     * raw `leads` table captures instead: prospects from the popup CTA who
+     * may not have an account at all yet. See
+     * .claude/plans/T-29-lead-capture.md.
+     */
+    public function popupLeads()
+    {
+        $redirect = $this->checkAccess();
+        if ($redirect) return $redirect;
+
+        $filters = [
+            'user_type'  => $this->request->getGet('user_type'),
+            'status'     => $this->request->getGet('status'),
+            'name'       => $this->request->getGet('name'),
+            'email'      => $this->request->getGet('email'),
+            'phone'      => $this->request->getGet('phone'),
+            'whatsapp'   => $this->request->getGet('whatsapp'),
+            'date_from'  => $this->request->getGet('date_from'),
+            'date_to'    => $this->request->getGet('date_to'),
+            'sort'       => $this->request->getGet('sort'),
+            'sort_dir'   => $this->request->getGet('sort_dir'),
+        ];
+        $page = max(1, (int) $this->request->getGet('page') ?: 1);
+
+        $result = $this->leadModel->getPopupLeads($filters, 25, $page);
+
+        $data = [
+            'title'      => 'Popup Leads',
+            'user'       => $this->userModel->find($this->session->get('user_id')),
+            'leads'      => $result['leads'],
+            'pagination' => $result,
+            'filters'    => $filters,
+        ];
+
+        return view('dashboard/admin/popup-leads', $data);
     }
 
     public function mySupplierLeads()

@@ -14,6 +14,78 @@ Entry format:
 
 ---
 
+## 2026-08-16 — Admin "Popup Leads" tab under Lead Management
+
+**Files:** `app/Models/LeadModel.php`, `app/Controllers/LeadManagement.php`,
+`app/Config/Routes.php`, `app/Views/layouts/dashboard.php`,
+`app/Views/dashboard/admin/popup-leads.php` (new)
+**Why:** owner wanted the popup-captured `leads` (T-29) visible in the admin
+panel, combined across buyer/supplier, alongside the existing All/Buyer/Supplier
+Leads pages — which are a separate, unrelated data source (`users` rows being
+tracked through the CRM `lead_stage` pipeline, not popup captures).
+
+- `LeadModel::getPopupLeads()` — filtered, paginated listing (type, status,
+  name, email, phone, whatsapp, date range, sortable columns), same shape as
+  `UserModel::getLeads()` but querying `leads` instead of `users`, kept as a
+  clearly separate method/name rather than overloading the existing one.
+- `LeadManagement::popupLeads()` — same `checkAccess()` gate as every other
+  method on this controller (admin or agent), new route `leads/popup`.
+- New nav item "Popup Leads" in both the mobile drawer and desktop sidebar,
+  placed under "Lead Management" next to All/Buyer/Supplier Leads.
+- New view `dashboard/admin/popup-leads.php` — filters + sortable table +
+  pagination matching the existing leads page's styling, with a short note at
+  the top clarifying these are prospects (not necessarily accounts yet),
+  distinct from the CRM leads listed elsewhere on the same page's siblings.
+  No notes/agent-assignment/membership columns — none of that applies to a
+  `leads` table row.
+- **Verified filtering at the layer that actually matters:** a CLI-driven test
+  of the full controller flow gave a false negative — `Services::request()`
+  resolves to a `CLIRequest` outside real HTTP, whose `getGet()` doesn't see
+  synthetic `setGlobal()` calls, so every filter silently no-op'd in that
+  harness. Isolated by testing `LeadModel::getPopupLeads()` directly instead
+  (bypassing the request layer entirely): all seven filter/sort cases —
+  by type, status, name, email substring, whatsapp, and name-ascending sort —
+  narrowed results exactly as expected. Confirmed the route resolves and
+  redirects unauthenticated requests to `/login` over real HTTP. All test data
+  deleted afterward, `leads` table confirmed empty.
+
+---
+
+## 2026-08-16 — Rename `leads.status` values to name the event, not a generic stage
+
+**Files:** `app/Database/Migrations/2026-08-16-000001_RenameLeadsStatusValues.php`
+(new), `app/Models/LeadModel.php`, `app/Controllers/LeadCapture.php`,
+`.claude/plans/T-29-lead-capture.md`
+**Why:** owner asked to rename `new`/`verified`/`converted` to
+`popup_form_filled`/`email_verified`/`account_registered` — the generic names
+read ambiguously next to `users.lead_stage` (the unrelated CRM field on the
+existing lead-management system, which also has a `new`).
+
+- Migration widens the `status` ENUM to include both old and new values,
+  `UPDATE`s existing rows to the new values, then narrows the ENUM to just the
+  new three — the safe way to rename a MySQL ENUM without a data-loss window
+  (a straight rename would reject the old values mid-migration).
+- Renamed `LeadModel`'s status-checking/setting methods to match, rather than
+  leaving e.g. `isNew()` comparing against `'popup_form_filled'`:
+  `isNew→isPopupFormFilled`, `isVerified→isEmailVerified`,
+  `isConverted→isAccountRegistered`, `markVerified→markEmailVerified`,
+  `markConverted→markAccountRegistered`. All call sites in `LeadCapture.php`
+  updated to match — confirmed via grep that no stale references remain, and
+  confirmed the *unrelated* `users.lead_stage = 'new'` line in
+  `LeadCapture::completeSignup()` (CRM field, different concept) was correctly
+  left untouched.
+- Verified against the real local DB: `SHOW COLUMNS` confirms the new ENUM;
+  a throwaway `spark` command drove a lead through all three statuses and
+  confirmed both the stored value and the renamed `isXxx()` checks agree at
+  each step. Test command deleted afterward.
+- **Dating note:** this and the entry below are correctly dated by the app's
+  own UTC clock (`gmdate()`/`Server Time` from `spark`), which read
+  2026-08-16 while the local OS clock read 2026-08-17 — the exact Windows/UTC
+  drift already documented in CONTEXT.md point 8. Worth knowing if reconciling
+  this date against anything dated by the OS clock instead.
+
+---
+
 ## 2026-08-14 — Admin "Refresh Sitemaps Now" button, Settings → SEO
 
 **Files:** `app/Controllers/AdminSettings.php`, `app/Config/Routes.php`,

@@ -190,6 +190,7 @@ $routes->post('lead/complete/(:alphanum)', 'LeadCapture::completeSignup/$1');
 $routes->get('leads/all', 'LeadManagement::allLeads');
 $routes->get('leads/buyer', 'LeadManagement::buyerLeads');
 $routes->get('leads/supplier', 'LeadManagement::supplierLeads');
+$routes->get('leads/popup', 'LeadManagement::popupLeads');
 $routes->get('leads/my-supplier', 'LeadManagement::mySupplierLeads');
 $routes->get('leads/my-buyer', 'LeadManagement::myBuyerLeads');
 $routes->get('leads/detail/(:segment)', 'LeadManagement::leadDetail/$1');
