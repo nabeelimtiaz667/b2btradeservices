@@ -7,8 +7,76 @@ $statusInfo = [
     'email_verified'     => ['Email Verified', '#0d6efd'],
     'account_registered' => ['Account Registered', '#198754'],
 ];
+// Same stage labels/colors as dashboard/admin/leads.php's $stages, so a
+// stage reads identically whether it's on a CRM lead or a popup lead.
+$stageInfo = [
+    'new'                => ['New', '#0d6efd'],
+    'trying_to_connect'  => ['Trying to Connect', '#6610f2'],
+    'connected_talking'  => ['Connected & Talking', '#6f42c1'],
+    'services_pitched'   => ['Services Pitched', '#d63384'],
+    'interested_premium' => ['Interested in Premium', '#fd7e14'],
+    'contract_sent'      => ['Contract Sent', '#20c997'],
+    'not_interested'     => ['Not Interested', '#dc3545'],
+    'lead_lost'          => ['Lead Lost', '#6c757d'],
+];
+$agentLookup = [];
+foreach (($agents ?? []) as $a) {
+    $agentLookup[$a['id']] = $a['name'];
+}
 ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+/* Custom themed tooltip for the disabled Edit button -- deliberately not
+   Bootstrap's tooltip (which needs a JS init call per element); this is a
+   plain CSS hover bubble styled with the same admin theme variables
+   (--primary-dark/--primary-gradient) used throughout this layout. */
+.locked-edit-wrap { position: relative; display: inline-block; }
+.locked-edit-btn {
+    font-size: 11px;
+    padding: 3px 10px;
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: #e9ecef;
+    color: #6c757d;
+    border: 1px solid #ced4da;
+}
+.locked-edit-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: var(--primary-dark);
+    background-image: var(--primary-gradient);
+    color: #fff;
+    font-size: 11px;
+    line-height: 1.4;
+    padding: 8px 12px;
+    border-radius: 6px;
+    white-space: normal;
+    width: 200px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 20;
+}
+.locked-edit-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #5FC86B;
+}
+.locked-edit-wrap:hover .locked-edit-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+</style>
 <div class="page-header d-flex justify-content-between align-items-center mb-3">
     <h1 class="page-title"><?= esc($title) ?></h1>
     <span class="badge bg-dark" style="font-size: 14px; padding: 8px 16px;">Total: <?= $pagination['total'] ?? 0 ?> Leads</span>
@@ -121,6 +189,10 @@ $statusInfo = [
                         ?>
                         <th><a href="<?= $dateSortUrl ?>" class="text-decoration-none" style="color: var(--primary-dark);">Submitted <?php if ($currentSort === $dateCol): ?><?= $currentDir === 'ASC' ? '&#9650;' : '&#9660;' ?><?php endif; ?></a></th>
                         <th>Email Verified</th>
+                        <th>Agent</th>
+                        <th>Stage</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -149,6 +221,47 @@ $statusInfo = [
                             <?php else: ?>
                                 <span style="color:#ccc;">—</span>
                             <?php endif; ?>
+                        </td>
+                        <td style="font-size:11px; white-space:nowrap;">
+                            <?php
+                                $assignedAgentId = $lead['assigned_agent_id'] ?? null;
+                                $agentName = $assignedAgentId ? ($agentLookup[$assignedAgentId] ?? null) : null;
+                            ?>
+                            <?php if ($agentName): ?>
+                                <span style="color:var(--primary-teal); font-weight:500;"><?= esc($agentName) ?></span>
+                            <?php else: ?>
+                                <span style="color:#ccc;">—</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php $stage = $stageInfo[$lead['lead_stage'] ?? 'new'] ?? ['New', '#0d6efd']; ?>
+                            <span class="badge" style="background:<?= $stage[1] ?>20; color:<?= $stage[1] ?>; border:1px solid <?= $stage[1] ?>; font-size:10px; padding:4px 8px;"><?= $stage[0] ?></span>
+                        </td>
+                        <td style="min-width:160px;">
+                            <?php $lastNote = ($latest_notes ?? [])[$lead['id']] ?? ''; ?>
+                            <?php if ($lastNote): ?>
+                                <div class="last-note-text" data-lead-id="<?= $lead['id'] ?>" style="font-size:10px; color:#6c757d; margin-bottom:4px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<?= esc($lastNote) ?>"><?= esc($lastNote) ?></div>
+                            <?php else: ?>
+                                <div class="last-note-text" data-lead-id="<?= $lead['id'] ?>" style="font-size:10px; color:#6c757d; margin-bottom:4px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></div>
+                            <?php endif; ?>
+                            <div class="d-flex flex-column gap-1">
+                                <input type="text" class="form-control form-control-sm popup-note-input" data-lead-id="<?= $lead['id'] ?>" placeholder="Add note..." style="font-size:11px;">
+                                <button class="btn btn-sm btn-outline-primary popup-save-note-btn" data-lead-id="<?= $lead['id'] ?>" style="font-size:10px; padding:4px 8px;">Save</button>
+                            </div>
+                        </td>
+                        <td style="white-space:nowrap;">
+                            <?php if ($lead['status'] === 'account_registered'): ?>
+                                <span class="locked-edit-wrap">
+                                    <button type="button" class="btn btn-sm locked-edit-btn" disabled>Edit</button>
+                                    <span class="locked-edit-tooltip">Registered leads can't be edited here — this lead already has an account in Manage Users.</span>
+                                </span>
+                            <?php else: ?>
+                                <a href="<?= base_url('leads/popup/edit/' . $lead['id']) ?>" class="btn btn-sm btn-outline-primary" style="font-size:11px; padding:3px 10px;">Edit</a>
+                            <?php endif; ?>
+                            <form method="post" action="<?= base_url('leads/popup/delete/' . $lead['id']) ?>" class="d-inline" onsubmit="return confirm('Delete this popup lead? This cannot be undone.');">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size:11px; padding:3px 10px;">Delete</button>
+                            </form>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -195,4 +308,52 @@ $statusInfo = [
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+document.querySelectorAll('.popup-save-note-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        const leadId = this.dataset.leadId;
+        const saveBtn = this;
+        const input = document.querySelector('.popup-note-input[data-lead-id="' + leadId + '"]');
+        const note = input.value.trim();
+        if (!note) return;
+        saveBtn.disabled = true;
+        saveBtn.textContent = '...';
+        fetch('<?= base_url("leads/popup/add-note") ?>', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest'},
+            body: 'lead_id=' + leadId + '&note=' + encodeURIComponent(note)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                var noteDisplay = document.querySelector('.last-note-text[data-lead-id="' + leadId + '"]');
+                if (noteDisplay) {
+                    noteDisplay.textContent = note;
+                    noteDisplay.title = note;
+                }
+                input.value = '';
+                saveBtn.textContent = 'Saved';
+                saveBtn.classList.remove('btn-outline-primary');
+                saveBtn.classList.add('btn-success');
+                setTimeout(function() {
+                    saveBtn.textContent = 'Save';
+                    saveBtn.classList.remove('btn-success');
+                    saveBtn.classList.add('btn-outline-primary');
+                    saveBtn.disabled = false;
+                }, 2000);
+            } else {
+                alert(data.message || 'Failed to save note');
+                saveBtn.textContent = 'Save';
+                saveBtn.disabled = false;
+            }
+        })
+        .catch(function() {
+            alert('Network error');
+            saveBtn.textContent = 'Save';
+            saveBtn.disabled = false;
+        });
+    });
+});
+</script>
 <?= $this->endSection() ?>

@@ -26,6 +26,8 @@ class LeadModel extends Model
         'phone_code',
         'whatsapp',
         'status',
+        'assigned_agent_id',
+        'lead_stage',
         'verification_token',
         'verification_token_expires_at',
         'verified_at',
@@ -40,6 +42,14 @@ class LeadModel extends Model
     protected $updatedField  = 'updated_at';
 
     protected $validationRules = [
+        // Only referenced as the {id} placeholder target below -- present in
+        // $row solely when a caller deliberately includes 'id' (e.g. the
+        // admin edit form's update() call); cleanValidationRules() drops this
+        // rule entirely when 'id' isn't in $row, so createLead()'s insert()
+        // is unaffected. Required by this CI4 version's placeholder
+        // mechanism: it validates the placeholder's own value using a rule
+        // registered under that same field name before substituting it in.
+        'id'        => 'permit_empty|is_natural_no_zero',
         'user_type' => 'required|in_list[supplier,buyer]',
         'name'      => 'required|min_length[2]|max_length[255]',
         'email'     => 'required|valid_email|is_unique[leads.email,id,{id}]',

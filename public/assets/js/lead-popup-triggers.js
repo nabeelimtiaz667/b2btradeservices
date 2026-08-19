@@ -15,6 +15,7 @@ window.LeadPopupConfig = {
      * about -- and vice versa for supplier/product pages.
      */
     defaultTypeRules: [
+        { pattern: /^\/$/, type: 'supplier' },
         { pattern: /^\/buyer-detail(\/|$)/, type: 'supplier' },
         { pattern: /^\/buyer-inquiry(\/|$)/, type: 'supplier' },
         { pattern: /^\/buyers?\/search(\/|$)/, type: 'supplier' },

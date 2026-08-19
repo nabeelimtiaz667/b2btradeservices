@@ -15,6 +15,61 @@ nothing in the slug change touched `inquiry_date`. Tasks T-5, T-6, T-12.
 
 ---
 
+## #22 — `is_unique[...,id,{id}]` validation rejects a row's own unchanged value on update -- latent in `UserModel`, not currently reachable
+
+**Severity:** LOW (downgraded from MEDIUM — see verification) · **Raised:** 2026-08-17 · **Verified, open**
+
+Found while building edit/delete for the admin "Popup Leads" page (T-29). CI4's
+`{id}` validation placeholder only gets filled from a key literally named `id`
+**inside the data array passed to `update()`** — not from `update()`'s separate
+`$id` argument (confirmed against `Validation::fillPlaceholders()` and
+`BaseModel::update()`, which calls `$this->validate($row)` without the id). This
+CI4 version also requires an explicit validation rule registered for that `id`
+field itself, or `fillPlaceholders()` throws
+`LogicException: No validation rules for the placeholder: "id"`.
+
+**Confirmed broken today:** `LeadModel`'s own `is_unique[leads.email,id,{id}]`
+rejected a lead's own unchanged email on `update()` until fixed (this session) by
+adding `'id' => $id` to the update data array *and* an `'id' => 'permit_empty|is_natural_no_zero'`
+rule to `$validationRules`.
+
+**Same broken pattern exists in `UserModel`** (`is_unique[users.email,id,{id}]`,
+`app/Models/UserModel.php:65`, no `id` validation rule) — **confirmed live at the
+model layer** via a throwaway test user: calling `update()` with the user's own
+unchanged email in the payload does incorrectly return `false` with `"This email
+is already registered."`.
+
+**But verified NOT reachable through any real call site**, checked all six
+`userModel->update()` calls in `Dashboard.php`/`Auth.php`:
+
+| Call site | Exposed? | Why not |
+|---|---|---|
+| `Dashboard::adminEditUser` (`:1944-1953`) | No | Manual `where('email',...)->where('id !=', $id)` check; `email` key only added to `$data` when it actually changed |
+| `Dashboard.php:1619` (own-profile edit) | No | Same pattern — manual check, conditional `$data['email']` |
+| `Dashboard.php:1964` (supplier edit) | No | Same pattern |
+| `Dashboard::editAgent` (`:1857-1858`) | No | Calls `$this->userModel->setValidationRules([])` right before `update()`, disabling model validation entirely — relies solely on its own manual check |
+| `Dashboard.php:838,855` (approve/reject) | No | Only ever update `status`, never touch `email` |
+| `Auth.php:167` (login) | No | Only updates `last_login_at`/`last_login_ip`/`last_device_type` |
+
+Every real site was written defensively (manual duplicate-check plus
+conditional field inclusion, or validation disabled outright) — not by luck,
+by consistent pattern. So the framework-level footgun is real and reproducible,
+but nothing in the live app currently steps on it. Downgraded from MEDIUM to LOW
+on that basis.
+
+**Fix, if `UserModel`'s `is_unique[...,{id}]` rule is ever actually relied on** (a
+future `update()` call that passes `email` unconditionally, the way this session's
+first draft of `LeadModel` did): either (a) include `'id' => $id` in the data array
+and add an `id` validation rule to the model — the fix applied to `LeadModel`
+here — or (b) drop the `{id}` placeholder entirely, matching what every existing
+call site already does today: a manual "is this email taken by a *different* row"
+check before calling `update()`. Given every current call site already does (b)
+independently of the model rule, the pragmatic fix is arguably to just delete the
+dead, misleading `is_unique[...,{id}]` half of `UserModel`'s email rule rather than
+repair it.
+
+---
+
 ## #21 — Supplier search's "Category" filter dropdown does nothing
 **Severity:** LOW · **Raised:** 2026-08-07 · **Open**
 

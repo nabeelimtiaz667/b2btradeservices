@@ -7,6 +7,7 @@ use App\Models\CountryModel;
 use App\Models\LeadNoteModel;
 use App\Models\LeadActivityModel;
 use App\Models\LeadModel;
+use App\Models\PopupLeadNoteModel;
 
 class LeadManagement extends BaseController
 {
@@ -15,6 +16,7 @@ class LeadManagement extends BaseController
     protected $noteModel;
     protected $activityModel;
     protected $leadModel;
+    protected $popupNoteModel;
     protected $session;
 
     public function __construct()
@@ -24,6 +26,7 @@ class LeadManagement extends BaseController
         $this->noteModel = new LeadNoteModel();
         $this->activityModel = new LeadActivityModel();
         $this->leadModel = new LeadModel();
+        $this->popupNoteModel = new PopupLeadNoteModel();
         $this->session = session();
     }
 
@@ -182,14 +185,157 @@ class LeadManagement extends BaseController
         $result = $this->leadModel->getPopupLeads($filters, 25, $page);
 
         $data = [
-            'title'      => 'Popup Leads',
-            'user'       => $this->userModel->find($this->session->get('user_id')),
-            'leads'      => $result['leads'],
-            'pagination' => $result,
-            'filters'    => $filters,
+            'title'        => 'Popup Leads',
+            'user'         => $this->userModel->find($this->session->get('user_id')),
+            'leads'        => $result['leads'],
+            'pagination'   => $result,
+            'filters'      => $filters,
+            'agents'       => $this->userModel->getAgents(),
+            'lead_stages'  => $this->userModel->getLeadStages(),
+            'latest_notes' => $this->popupNoteModel->getLatestNotesForLeads(array_column($result['leads'], 'id')),
         ];
 
         return view('dashboard/admin/popup-leads', $data);
+    }
+
+    /**
+     * AJAX note-add for a popup lead, mirroring LeadManagement::ajaxAddNote()
+     * but against PopupLeadNoteModel/`leads` instead of LeadNoteModel/`users`.
+     */
+    public function addPopupLeadNote()
+    {
+        $redirect = $this->checkAccess();
+        if ($redirect) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized']);
+        }
+
+        $leadId = $this->request->getPost('lead_id');
+        $noteText = $this->request->getPost('note');
+
+        if (empty($noteText)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Note cannot be empty']);
+        }
+
+        $lead = $this->leadModel->find($leadId);
+        if (!$lead) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Lead not found']);
+        }
+
+        $this->popupNoteModel->insert([
+            'lead_id'       => $leadId,
+            'agent_user_id' => $this->session->get('user_id'),
+            'note'          => $noteText,
+        ]);
+
+        return $this->response->setJSON(['success' => true, 'message' => 'Note added']);
+    }
+
+    /**
+     * Admin correction of a popup lead's captured details -- typos, a wrong
+     * phone number, etc. Deliberately not routed through LeadModel's
+     * capture-flow methods (createLead/reissueForNewLead/updateContactOnly):
+     * those exist to enforce the popup's own state machine (token reissue,
+     * resend cooldowns...), which doesn't apply here -- this is a direct,
+     * plain field edit by an admin, including `status` itself, since an admin
+     * may need to correct a stuck lead by hand.
+     */
+    public function editPopupLead($id)
+    {
+        $redirect = $this->checkAccess();
+        if ($redirect) return $redirect;
+
+        $lead = $this->leadModel->find($id);
+        if (!$lead) {
+            return redirect()->to('/leads/popup')->with('error', 'Lead not found.');
+        }
+
+        // Server-side backstop for the disabled Edit button on the popup-leads
+        // list: an account_registered lead already has a real row in `users`,
+        // so this stops a direct URL hit from bypassing what's otherwise just
+        // a UI-level disable. Delete is deliberately left untouched -- not
+        // part of this restriction.
+        if ($lead['status'] === 'account_registered') {
+            return redirect()->to('/leads/popup')->with('error', "Registered leads can't be edited here — this lead already has an account in Manage Users.");
+        }
+
+        if ($this->request->getMethod() === 'GET') {
+            return view('dashboard/admin/popup-lead-edit', [
+                'title'       => 'Edit Popup Lead',
+                'user'        => $this->userModel->find($this->session->get('user_id')),
+                'lead'        => $lead,
+                'agents'      => $this->userModel->getAgents(),
+                'lead_stages' => $this->userModel->getLeadStages(),
+            ]);
+        }
+
+        $statusOptions = ['popup_form_filled', 'email_verified', 'account_registered'];
+        $status = $this->request->getPost('status');
+        if (!in_array($status, $statusOptions, true)) {
+            return redirect()->back()->withInput()->with('error', 'Invalid status.');
+        }
+
+        $stageOptions = array_keys($this->userModel->getLeadStages());
+        $leadStage = $this->request->getPost('lead_stage');
+        if (!in_array($leadStage, $stageOptions, true)) {
+            return redirect()->back()->withInput()->with('error', 'Invalid stage.');
+        }
+
+        // Agent assignment: 'assigned_agent_id' references users.id where
+        // user_type='agent', same convention as users.assigned_agent_id
+        // (UserModel::getAgents() -- confirmed both filter on that same
+        // criterion). Empty selection means unassigned.
+        $agentId = $this->request->getPost('assigned_agent_id') ?: null;
+        if ($agentId !== null) {
+            $agent = $this->userModel->find($agentId);
+            if (!$agent || !in_array($agent['user_type'], ['agent', 'admin'], true)) {
+                return redirect()->back()->withInput()->with('error', 'Invalid agent.');
+            }
+        }
+
+        // Email is not editable from this form -- it's the identity the
+        // lead's verification link/token is tied to, same reasoning as the
+        // read-only email on the public step-2 signup page. The view's email
+        // input has no `name` attribute, so it's never posted; nothing here
+        // ever writes to `email`. That also means the is_unique[...,{id}]
+        // rule on `email` never fires (cleanValidationRules() drops a rule
+        // for any field absent from the update payload) -- so this method no
+        // longer needs the 'id' => $id inclusion BLOCKERS #22 documents;
+        // that's still required wherever email itself IS being changed.
+        $updated = $this->leadModel->update($id, [
+            'user_type'         => $this->request->getPost('user_type'),
+            'name'              => $this->request->getPost('name'),
+            'phone'             => $this->request->getPost('phone'),
+            'phone_code'        => $this->request->getPost('phone_code'),
+            'whatsapp'          => $this->request->getPost('whatsapp') ? 1 : 0,
+            'status'            => $status,
+            'assigned_agent_id' => $agentId,
+            'lead_stage'        => $leadStage,
+        ]);
+
+        if (!$updated) {
+            return redirect()->back()->withInput()->with('errors', $this->leadModel->errors());
+        }
+
+        return redirect()->to('/leads/popup')->with('success', 'Popup lead updated successfully.');
+    }
+
+    public function deletePopupLead($id)
+    {
+        $redirect = $this->checkAccess();
+        if ($redirect) return $redirect;
+
+        if ($this->request->getMethod() !== 'POST') {
+            return redirect()->to('/leads/popup');
+        }
+
+        $lead = $this->leadModel->find($id);
+        if (!$lead) {
+            return redirect()->to('/leads/popup')->with('error', 'Lead not found.');
+        }
+
+        $this->leadModel->delete($id);
+
+        return redirect()->to('/leads/popup')->with('success', 'Popup lead deleted.');
     }
 
     public function mySupplierLeads()

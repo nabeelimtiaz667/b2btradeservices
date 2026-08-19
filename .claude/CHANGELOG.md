@@ -14,6 +14,226 @@ Entry format:
 
 ---
 
+## 2026-08-19 — Agent, Stage, and Notes for Popup Leads
+
+**Files:** `app/Database/Migrations/2026-08-19-000001_AddAgentStageToLeads.php`
+(new), `app/Database/Migrations/2026-08-19-000002_CreatePopupLeadsNotesTable.php`
+(new), `app/Models/PopupLeadNoteModel.php` (new), `app/Models/LeadModel.php`,
+`app/Controllers/LeadManagement.php`, `app/Config/Routes.php`,
+`app/Views/dashboard/admin/popup-leads.php`,
+`app/Views/dashboard/admin/popup-lead-edit.php`
+**Why:** owner wanted the three `users`-table CRM fields (Agent, Stage,
+Notes) mirrored onto popup leads, with Notes using the same inline design as
+the existing leads view, and Agent/Stage editable through the existing
+"Edit" button page instead.
+
+- **Agent** — `leads.assigned_agent_id`, same convention as
+  `users.assigned_agent_id`: an application-level reference to `users.id`
+  where `user_type='agent'` (confirmed by reading `UserModel::getAgents()`,
+  which filters on exactly that). No DB foreign key, matching how the rest
+  of this codebase already does agent references.
+- **Stage** — `leads.lead_stage`, same 8-value ENUM as `users.lead_stage`,
+  reusing `UserModel::getLeadStages()` for labels rather than duplicating
+  them. Deliberately kept as its own column even though `leads.status` was
+  renamed away from a colliding `'new'` value in an earlier migration
+  (2026-08-16) — `lead_stage` is a distinct CRM-pipeline concept the owner
+  explicitly wants replicated verbatim, not a naming collision this
+  migration introduces; noted directly in the migration's own doc comment
+  so it doesn't read as an oversight later.
+- **Notes** — new `popup_leads_notes` table + `PopupLeadNoteModel`, mirroring
+  `lead_notes`/`LeadNoteModel` field-for-field and method-for-method (kept
+  separate per owner's instruction, since a popup lead's `id` isn't a
+  `users.id` and reusing `lead_notes` would make `lead_user_id` lie about
+  which table it points at — renamed to `lead_id` for that reason). New
+  `LeadManagement::addPopupLeadNote()` AJAX endpoint mirrors `ajaxAddNote()`
+  exactly (same JSON response shape). Table UI is a line-for-line copy of
+  `leads.php`'s notes column (latest-note preview, input, Save button,
+  identical AJAX flow) — separate CSS classes (`popup-note-input` /
+  `popup-save-note-btn`) to avoid any collision if both scripts ever loaded
+  on the same page.
+- Agent and Stage are edited through the existing "Edit" popup-lead form
+  (two new `<select>`s, saved alongside the fields already there) rather
+  than inline — this differs from how the source `leads.php` does Stage
+  (an inline AJAX-updating dropdown in the table), per the owner's explicit
+  instruction to treat Agent/Stage differently from Notes.
+- List view (`popup-leads.php`) appended all three as read-only display
+  columns (Agent name, Stage badge using the same color mapping as
+  `leads.php`'s `$stages`) plus the interactive Notes column.
+- **Verified** end-to-end against throwaway data only (never the 7
+  persistent samples): `LeadModel::update()` persists both new fields
+  correctly; `PopupLeadNoteModel`'s insert/latest-note/with-agent-join all
+  match `LeadNoteModel`'s shape; the AJAX note endpoint's underlying model
+  operation and its unauthenticated-request response (`{"success":false,
+  "message":"Unauthorized"}`, matching the existing `ajaxAddNote()` pattern
+  exactly) both confirmed; the three new template cells render correctly
+  via isolated eval (same technique used for earlier verifications this
+  session, still needed since the CLI harness can't execute
+  `csrf_field()`/`base_url()`). Sample-lead count confirmed still 7,
+  `popup_leads_notes` confirmed empty, before and after.
+
+---
+
+## 2026-08-18 — Popup Leads: lock Edit for account_registered rows
+
+**Files:** `app/Views/dashboard/admin/popup-leads.php`,
+`app/Controllers/LeadManagement.php`
+**Why:** owner wanted Edit disabled for `account_registered` leads (they
+already have a real `users` row by that point) with a themed tooltip
+explaining why. Delete deliberately left untouched, per instruction.
+
+- Custom CSS tooltip (not Bootstrap's, which needs a JS init per element) —
+  a plain hover bubble styled with the admin layout's own
+  `--primary-dark`/`--primary-gradient` variables, so it matches the theme
+  without pulling in anything new.
+- `account_registered` rows get a disabled-looking button + tooltip instead
+  of the Edit link; every other status is unaffected. Delete's markup and
+  behavior untouched for all statuses.
+- Added the equivalent guard server-side in `editPopupLead()` — an
+  `account_registered` lead redirects with an error instead of showing the
+  edit form, so this holds against a direct URL hit too, not just the
+  disabled button. This wasn't explicitly asked for beyond "disable the
+  edit," but a UI-only disable isn't actually disabled if the URL still
+  works, so treated the request as covering both.
+- **Verified via isolated template/logic eval** (full-page rendering still
+  blocked by the same csrf_field()/base_url() CLI-context limitations
+  documented in the two entries above): all three statuses produce the
+  correct branch (locked button+tooltip only for `account_registered`,
+  normal Edit link otherwise, Delete form present in every case); the
+  controller guard redirects with the correct message and leaves a
+  throwaway `account_registered` row completely unchanged, while a
+  non-`account_registered` throwaway row is still editable as before.
+- **Found a real, unrelated issue while checking baseline state for this
+  task**: the persistent sample-lead count had dropped from 8 to 7 (Sarah
+  Chen, Supplier/Account Registered, missing). Traced back through
+  everything run since the last confirmed-8 checkpoint and found nothing on
+  my end that could explain it — flagged it to the owner rather than
+  guessing. Confirmed: they'd tested the Delete button themselves, exactly
+  as suggested at the end of the previous task. Working as intended; left at
+  7 rows, no restoration needed.
+
+---
+
+## 2026-08-18 — Popup Leads edit form: intlTelInput phone widget, read-only email
+
+**Files:** `app/Views/dashboard/admin/popup-lead-edit.php`,
+`app/Controllers/LeadManagement.php`
+**Why:** owner wanted the edit form's phone input to match the standard
+intlTelInput widget used on the public forms (register/popup/step-2 signup),
+and email to no longer be editable there.
+
+- Phone field replaced with the same `intlTelInput` pattern used everywhere
+  else on the site — single `<input type="tel">` + hidden `phone_code`,
+  `separateDialCode: true`. Unlike the public forms (always blank), this one
+  is editing an *existing* number, so on init it calls
+  `iti.setNumber(phone_code + phone)` to auto-select the right country flag
+  from the stored data — without that, the widget would default to US and the
+  submit handler would silently overwrite an existing non-US `phone_code` on
+  every save, even ones that never touched the phone field.
+- Email switched to the same read-only pattern as the public step-2 signup
+  page: shown but `disabled` and given no `name` attribute, so it's never
+  submitted. Controller's `update()` call no longer includes `email` at all —
+  simpler than validating-then-rejecting a change, and means the
+  `is_unique[...,{id}]` mechanics from BLOCKERS #22 no longer apply to this
+  method (nothing here writes to `email`, so `cleanValidationRules()` drops
+  that rule for this call the same way every real `UserModel` call site does).
+- **Verification hit real limits of the CLI test harness** — `csrf_field()`
+  and `base_url()` need a full `IncomingRequest`/`SiteURI` context this
+  environment doesn't cheaply provide (confirmed by constructing one by hand,
+  which got further but then hit a `SiteURI` assertion), and `old()` needs
+  `IncomingRequest::getOldInput()`, which `CLIRequest` doesn't implement.
+  Verified what's actually checkable: read the view's raw template source and
+  confirmed all 9 structural expectations (no editable email input, read-only
+  email correctly bound to `$lead['email']`, phone input wiring, hidden
+  `phone_code`, intlTelInput CSS/JS both present, `setNumber()` call built
+  from `phone_code`+`phone`). The interpolation itself (`esc($lead['field'])`
+  substituting real values) isn't independently re-verified here, but it's the
+  identical pattern already proven correct via real browser testing on the
+  sibling `lead-complete-signup.php` view earlier in this project. Controller
+  logic (email untouched by `update()`, other fields persist correctly)
+  re-confirmed via a throwaway test row. One crashed test attempt left an
+  orphaned row — caught and deleted; final count confirmed back to exactly 8,
+  matching the persistent sample leads.
+
+---
+
+## 2026-08-17 — Verified BLOCKERS #22 against real `UserModel`/admin-edit code
+
+**Files:** `.claude/BLOCKERS.md`
+**Why:** owner asked to verify whether the `{id}`-placeholder validation bug
+found while building Popup Leads edit/delete actually reaches production
+admin-edit-user flows, or was just a theoretical risk.
+
+- Confirmed the underlying bug **is** real and reproducible in `UserModel`
+  itself: a throwaway test user's own unchanged email, included in an
+  `update()` payload, is wrongly rejected as already-registered — same root
+  cause as the `LeadModel` bug fixed earlier today.
+- Checked all six `userModel->update()` call sites in `Dashboard.php`/`Auth.php`
+  individually. **None are exposed** — `adminEditUser`, the own-profile edit,
+  and the supplier-edit flow all do their own manual duplicate check and only
+  include `email` in the update payload when it actually changed;
+  `editAgent` disables model validation entirely
+  (`setValidationRules([])`) before updating; the remaining two never touch
+  `email` at all. Every site avoids the bug by a consistent defensive pattern,
+  not by luck.
+- Downgraded BLOCKERS #22 from MEDIUM to LOW and marked it "verified" with
+  the site-by-site table, since it's a real framework footgun with no current
+  live exposure. Suggested fix if it's ever actually relied on: given every
+  existing call site already does its own manual uniqueness check
+  independently of the model rule, the pragmatic fix is deleting the dead
+  `is_unique[...,{id}]` half of `UserModel`'s email rule rather than repairing it.
+- Test user created and deleted within the same command; confirmed zero
+  leftover rows afterward.
+
+---
+
+## 2026-08-17 — Popup Leads: edit/delete; homepage popup defaults to Supplier
+
+**Files:** `app/Controllers/LeadManagement.php`, `app/Config/Routes.php`,
+`app/Views/dashboard/admin/popup-leads.php`,
+`app/Views/dashboard/admin/popup-lead-edit.php` (new),
+`app/Models/LeadModel.php`, `public/assets/js/lead-popup-triggers.js`,
+`.claude/BLOCKERS.md`
+**Why:** three owner requests. (1) confirmed All/Buyer/Supplier Leads already
+show Agent/Stage/Notes — pre-existing, no change needed. (2) Edit/Delete for
+the popup-leads admin page. (3) Homepage popup should default to Supplier,
+not the site-wide Buyer default.
+
+- `LeadManagement::editPopupLead()` / `deletePopupLead()`, admin-gated the
+  same way as every other method on this controller. Delete is **POST-only**
+  by design — deliberately not matching the site's existing GET-based
+  destructive-route pattern (BLOCKERS #8), since this is new code with no
+  reason to repeat a known anti-pattern.
+- **Found and fixed a real CI4 validation bug along the way**: `is_unique[...,id,{id}]`
+  rejected a lead's own unchanged email on update. Root cause: CI4 only fills
+  the `{id}` placeholder from a key literally named `id` inside the *data
+  array passed to `update()`* — not from `update()`'s separate `$id`
+  argument — and this CI4 version also requires an explicit validation rule
+  registered for `id` itself, or it throws. Fixed in `LeadModel` by including
+  `'id' => $id` in the update payload and adding an `id` validation rule.
+  **The identical pattern exists in `UserModel` and is used throughout
+  `Dashboard.php`'s admin-edit flows — logged as BLOCKERS #22, not fixed
+  there, out of scope for this session.**
+- Homepage (`/`) now defaults the popup's radio to Supplier via a dedicated
+  rule in `lead-popup-triggers.js`'s `defaultTypeRules` — the general
+  unmatched-page fallback (`defaultType: 'buyer'`) is unchanged, so this only
+  affects the homepage specifically, not every other unclassified page.
+- **Verified:** real HTTP confirms both new routes exist and correctly
+  redirect unauthenticated requests to `/login`. Full edit/delete logic
+  verified against a throwaway test row at the model layer — the CLI
+  environment's simulated Request proved unreliable for exercising
+  controller-level GET/POST branching (same class of issue as the earlier
+  `test:popupleadsadmin` false negative), and forging an authenticated
+  session to test over real HTTP was correctly blocked by the harness as an
+  authentication-bypass action, so I didn't attempt to route around it.
+  Regression-checked: editing to a different, already-taken email is still
+  correctly rejected, and duplicate-email rejection on insert still works.
+  The 8 persistent sample leads (owner's own manual-testing data) were
+  confirmed untouched throughout — count checked before and after.
+- **Not click-through-tested by me** — the owner has real admin access and
+  should verify the edit/delete UI directly before relying on it.
+
+---
+
 ## 2026-08-16 — Admin "Popup Leads" tab under Lead Management
 
 **Files:** `app/Models/LeadModel.php`, `app/Controllers/LeadManagement.php`,
