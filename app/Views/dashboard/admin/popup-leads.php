@@ -122,6 +122,26 @@ foreach (($agents ?? []) as $a) {
                         </select>
                     </div>
                     <div class="col-md-3 col-lg-2">
+                        <label class="form-label" style="font-size: 13px; font-weight: 600;">Stage</label>
+                        <select name="lead_stage" class="form-select form-select-sm">
+                            <option value="">All Stages</option>
+                            <?php foreach (($lead_stages ?? []) as $key => $label): ?>
+                            <option value="<?= $key ?>" <?= ($filters['lead_stage'] ?? '') === $key ? 'selected' : '' ?>><?= $label ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php if (($user['user_type'] ?? '') === 'admin'): ?>
+                    <div class="col-md-3 col-lg-2">
+                        <label class="form-label" style="font-size: 13px; font-weight: 600;">Assigned Agent</label>
+                        <select name="assigned_agent_id" class="form-select form-select-sm">
+                            <option value="">All Agents</option>
+                            <?php foreach (($agents ?? []) as $agent): ?>
+                            <option value="<?= $agent['id'] ?>" <?= ($filters['assigned_agent_id'] ?? '') == $agent['id'] ? 'selected' : '' ?>><?= esc($agent['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+                    <div class="col-md-3 col-lg-2">
                         <label class="form-label" style="font-size: 13px; font-weight: 600;">Name</label>
                         <input type="text" name="name" class="form-control form-control-sm" value="<?= esc($filters['name'] ?? '') ?>" placeholder="Search name...">
                     </div>

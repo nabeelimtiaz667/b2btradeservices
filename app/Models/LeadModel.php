@@ -227,6 +227,14 @@ class LeadModel extends Model
             $builder = $builder->where('status', $filters['status']);
         }
 
+        if (!empty($filters['assigned_agent_id'])) {
+            $builder = $builder->where('assigned_agent_id', $filters['assigned_agent_id']);
+        }
+
+        if (!empty($filters['lead_stage'])) {
+            $builder = $builder->where('lead_stage', $filters['lead_stage']);
+        }
+
         if (!empty($filters['name'])) {
             $builder = $builder->like('name', $filters['name']);
         }

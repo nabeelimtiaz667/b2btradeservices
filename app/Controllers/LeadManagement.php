@@ -169,16 +169,18 @@ class LeadManagement extends BaseController
         if ($redirect) return $redirect;
 
         $filters = [
-            'user_type'  => $this->request->getGet('user_type'),
-            'status'     => $this->request->getGet('status'),
-            'name'       => $this->request->getGet('name'),
-            'email'      => $this->request->getGet('email'),
-            'phone'      => $this->request->getGet('phone'),
-            'whatsapp'   => $this->request->getGet('whatsapp'),
-            'date_from'  => $this->request->getGet('date_from'),
-            'date_to'    => $this->request->getGet('date_to'),
-            'sort'       => $this->request->getGet('sort'),
-            'sort_dir'   => $this->request->getGet('sort_dir'),
+            'user_type'         => $this->request->getGet('user_type'),
+            'status'            => $this->request->getGet('status'),
+            'assigned_agent_id' => $this->request->getGet('assigned_agent_id'),
+            'lead_stage'        => $this->request->getGet('lead_stage'),
+            'name'              => $this->request->getGet('name'),
+            'email'             => $this->request->getGet('email'),
+            'phone'             => $this->request->getGet('phone'),
+            'whatsapp'          => $this->request->getGet('whatsapp'),
+            'date_from'         => $this->request->getGet('date_from'),
+            'date_to'           => $this->request->getGet('date_to'),
+            'sort'              => $this->request->getGet('sort'),
+            'sort_dir'          => $this->request->getGet('sort_dir'),
         ];
         $page = max(1, (int) $this->request->getGet('page') ?: 1);
 

@@ -14,6 +14,26 @@ Entry format:
 
 ---
 
+## 2026-08-19 — Popup Leads: Stage and Assigned Agent filters
+
+**Files:** `app/Models/LeadModel.php`, `app/Controllers/LeadManagement.php`,
+`app/Views/dashboard/admin/popup-leads.php`
+**Why:** owner wanted filters for the two fields added earlier today (Agent,
+Stage), matching the existing filter panel on `leads.php`.
+
+- `LeadModel::getPopupLeads()` gained `assigned_agent_id`/`lead_stage`
+  filter clauses.
+- Filter panel gained the same two controls as `leads.php`, same
+  markup/labels/column width — Stage as a plain select, Assigned Agent
+  gated to admins only (matching the source view's own admin-only gate on
+  that filter).
+- Verified all four cases (stage alone, agent alone, both filters combined,
+  and the not-matching negative case) against throwaway leads — each
+  correctly narrowed to just the expected row. Sample-lead count confirmed
+  still 7 before and after.
+
+---
+
 ## 2026-08-19 — Agent, Stage, and Notes for Popup Leads
 
 **Files:** `app/Database/Migrations/2026-08-19-000001_AddAgentStageToLeads.php`
