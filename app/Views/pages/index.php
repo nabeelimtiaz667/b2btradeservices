@@ -40,84 +40,7 @@
             </div>
             <div class="b2b-top-form">
                 <h2 class="h3">Register Quick Now! And get free Buyers/ Suppliers Leads</h2>
-                <form action="<?= base_url('register') ?>" method="POST">
-                    <?= csrf_field() ?>
-                    <div class="filter-group ">
-                        <label class="radio-label">
-                            <input type="radio" name="role" value="supplier" checked onchange="toggleFields(this)">
-                            <span class="radio"></span>
-                            Supplier
-                        </label>
-
-                        <label class="radio-label">
-                            <input type="radio" name="role" value="buyer" onchange="toggleFields(this)">
-                            <span class="radio"></span>
-                            Buyer
-                        </label>
-
-
-                    </div>
-
-                    <div class="form-input mt-3">
-                        <input type="text" name="name" placeholder="Name*" required>
-                    </div>
-
-                    <div class="dual-input">
-                        <div class="form-input ">
-                            <input type="email" name="email" placeholder="Email*" required>
-                        </div>
-                        <div class="form-input password-input">
-                            <input type="password" name="password" class="password" placeholder="Password*" required>
-                            <i class="eye" onclick="togglePassword()"><svg style="fill: #DBDBDB" class="eye-icon"
-                                    height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg">
-                                    <path clip-rule="evenodd"
-                                        d="m12 4.5c-5 0-9.27 3.11-11 7.5 1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z">
-                                    </path>
-                                </svg></i>
-                        </div>
-
-
-                    </div>
-                    <div class="form-input">
-                        <input type="tel" name="phone" class="phone" placeholder="Phone number*" required>
-                    </div>
-                    <div class="whatsapp-checkbox">
-                        <input type="checkbox" name="whatsapp" id="whatsapp"><label for="whatsapp">Whatsapp<img
-                                src="<?= base_url('assets/images/whatsapp-icon.svg') ?>" width="15px"></label>
-                    </div>
-                    <div class="form-input">
-                        <select class="form-control country country-select" required="" name="country_id">
-                            <option value="" selected="selected">Country*</option>
-                            <?php if (isset($countries)): ?>
-                            <?php foreach ($countries as $country): ?>
-                            <option value="<?= $country['id'] ?>"><?= esc($country['name']) ?></option>
-                            <?php endforeach; ?>
-                            <?php endif; ?>
-                        </select>
-                    </div>
-
-                    <div class="form-input selling-field">
-                        <input type="text" name="selling_products" placeholder="Selling Products*" required>
-                    </div>
-
-
-                    <div class="form-input buying-field" style="display:none;">
-                        <input type="text" name="buying_products" placeholder="Buying Products*">
-                    </div>
-
-
-
-                    <div class="radio-join d-flex gap-2 align-items-start">
-                        <input type="checkbox" name="OPT_IN" id="OPT_IN" required><label for="OPT_IN"><span
-                                style="color: #0F9EA5;">*</span>By joining. I agree to terms of use, privacy policy, IPR
-                            and
-                            agree to receive emails related to our services.</label>
-                    </div>
-                    <div class="submit-btn-gradient mt-3">
-                        <button type="submit" class="gradeint-cta">Register Now</button>
-                    </div>
-
-                </form>
+                <?= view('partials/lead-capture-inline-form', ['idPrefix' => 'top', 'defaultRadio' => 'supplier']) ?>
             </div>
         </div>
     </div>
@@ -171,44 +94,7 @@
                 <?php if (session()->getFlashdata('success') && !isset($formSubmitted)): ?>
                 <div class="alert alert-success text-center"><?= session()->getFlashdata('success') ?></div>
                 <?php endif; ?>
-                <form action="<?= base_url('contact/submit') ?>" method="POST">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="form_type" value="quote">
-                    <input type="hidden" name="source_page" value="homepage">
-                    <input type="hidden" name="lead_type" value="buyer">
-                    <div class="form-input">
-                        <input type="text" name="name" placeholder="Name*" required>
-                    </div>
-                    <div class="dual-input">
-                        <div class="form-input">
-                            <input type="email" name="email" placeholder="Email*" required>
-                        </div>
-                        <div class="form-input">
-                            <input type="tel" name="phone" class="phone" placeholder="Phone*" required>
-                        </div>
-                    </div>
-                    <div class="dual-input">
-                        <div class="form-input">
-                            <select class="form-control country-select" name="country_id" required>
-                                <option value="" selected="selected">Country</option>
-                                <?php if (isset($countries)): ?>
-                                <?php foreach ($countries as $country): ?>
-                                <option value="<?= $country['id'] ?>"><?= esc($country['name']) ?></option>
-                                <?php endforeach; ?>
-                                <?php endif; ?>
-                            </select>
-                        </div>
-                        <div class="form-input">
-                            <input type="number" name="quantity" placeholder="Quantity*" required>
-                        </div>
-                    </div>
-                    <div class="form-textarea">
-                        <textarea name="message" placeholder="What are you looking for?"></textarea>
-                    </div>
-                    <div class="submit-btn">
-                        <button type="submit">Submit Now</button>
-                    </div>
-                </form>
+                <?= view('partials/lead-capture-inline-form', ['idPrefix' => 'quote', 'defaultRadio' => 'supplier']) ?>
             </div>
         </div>
     </div>
@@ -223,35 +109,42 @@
                     <a href="<?= base_url('product') ?>" class="view-all-link d-flex align-items-center gap-2"> View All
                         <img src="<?= base_url('assets/images/arrow-right.svg') ?>"></a>
                 </div>
-                <?php if (isset($topProducts) && !empty($topProducts)): ?>
-                <?php foreach (array_slice($topProducts, 0, 3) as $tp): ?>
-                <div class="top-products-box">
-                    <div class="top-products-img">
-                        <?php if (!empty($tp['main_image'])): ?>
-                        <img src="<?= base_url('uploads/products/' . $tp['main_image']) ?>" class="w-100">
-                        <?php else: ?>
-                        <img src="<?= base_url('assets/images/top-product-img-1.webp') ?>" class="w-100">
-                        <?php endif; ?>
-                    </div>
-                    <div class="top-products-content">
-                        <h3><?= esc($tp['name']) ?></h3>
-                        <?php if (isset($tp['supplier']['country'])): ?>
-                        <p class="d-flex align-items-center gap-2">
-                            <img src="<?= base_url('assets/images/flags/' . ($tp['supplier']['country']['flag'] ?? '')) ?>"
-                                width="20" onerror="this.style.display='none'">
-                            <?= esc($tp['supplier']['country']['name'] ?? '') ?>
-                        </p>
-                        <?php else: ?>
-                        <p>&nbsp;</p>
-                        <?php endif; ?>
-                        <div class="product-link d-flex justify-content-between align-items-center">
-                            <a href="<?= base_url('product/detail/' . $tp['id']) ?>">Learn More</a> <a
-                                href="<?= base_url('product/detail/' . $tp['id']) ?>"><img
-                                    src="<?= base_url('assets/images/down-arrow.svg') ?>"></a>
+                <?php if (!empty($topProductSets)): ?>
+                <div class="top-products-carousel"
+                    data-autoplay-speed="<?= (int) (($topProductsIntervalSeconds ?? 5) * 1000) ?>">
+                    <?php foreach ($topProductSets as $productSet): ?>
+                    <div class="top-products-set">
+                        <?php foreach ($productSet as $tp): ?>
+                        <div class="top-products-box">
+                            <div class="top-products-img">
+                                <?php if (!empty($tp['main_image'])): ?>
+                                <img src="<?= base_url('uploads/products/' . $tp['main_image']) ?>" class="w-100">
+                                <?php else: ?>
+                                <img src="<?= base_url('assets/images/top-product-img-1.webp') ?>" class="w-100">
+                                <?php endif; ?>
+                            </div>
+                            <div class="top-products-content">
+                                <h3><?= esc($tp['name']) ?></h3>
+                                <?php if (isset($tp['supplier']['country'])): ?>
+                                <p class="d-flex align-items-center gap-2">
+                                    <img src="<?= base_url('assets/images/flags/' . ($tp['supplier']['country']['flag'] ?? '')) ?>"
+                                        width="20" onerror="this.style.display='none'">
+                                    <?= esc($tp['supplier']['country']['name'] ?? '') ?>
+                                </p>
+                                <?php else: ?>
+                                <p>&nbsp;</p>
+                                <?php endif; ?>
+                                <div class="product-link d-flex justify-content-between align-items-center">
+                                    <a href="<?= base_url('product/detail/' . $tp['id']) ?>">Learn More</a> <a
+                                        href="<?= base_url('product/detail/' . $tp['id']) ?>"><img
+                                            src="<?= base_url('assets/images/down-arrow.svg') ?>"></a>
+                                </div>
+                            </div>
                         </div>
+                        <?php endforeach; ?>
                     </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endforeach; ?>
                 <?php else: ?>
                 <p class="text-muted mt-3">No products available yet.</p>
                 <?php endif; ?>
@@ -265,44 +158,57 @@
                     </div>
 
                     <div class="top-supplier-card-sec">
-                        <div class="row">
-                            <?php if (isset($featuredSuppliers) && !empty($featuredSuppliers)): ?>
-                            <?php $imgIndex = 1;
-                                foreach (array_slice($featuredSuppliers, 0, 2) as $ts): ?>
-                            <div class="top-supplier-card">
-                                <div class="top-supplier-img">
-                                    <?php
-                                            $profileImg = '';
-                                            if (!empty($ts['profile_image'])) {
-                                                $profileImg = base_url('uploads/profiles/' . $ts['profile_image']);
-                                            } elseif (!empty($ts['company_logo'])) {
-                                                $profileImg = base_url('uploads/suppliers/' . $ts['company_logo']);
-                                            } elseif (!empty($ts['products']) && !empty($ts['products'][0]['main_image'])) {
-                                                $profileImg = base_url('uploads/products/' . $ts['products'][0]['main_image']);
-                                            } else {
-                                                $profileImg = base_url('assets/images/supplier-product-list-img.webp');
-                                            }
-                                            ?>
-                                    <img src="<?= $profileImg ?>" class="w-100"
-                                        alt="<?= esc($ts['company_name'] ?? $ts['name']) ?>">
-                                </div>
-                                <div class="top-supplier-content">
-                                    <p class="f-12 mb-3"><?= esc($ts['category'] ?? $ts['industry'] ?? '') ?></p>
-                                    <h3><?= esc($ts['company_name'] ?? $ts['name']) ?></h3>
-                                    <p>Products: <?= esc($ts['selling_products'] ?? '') ?> <br>
-                                        Country: <?= esc($ts['country']['name'] ?? $ts['country_name'] ?? '') ?></p>
-                                    <div class="">
-                                        <a href="<?= base_url('supplier/profile/' . ($ts['slug'] ?? $ts['id'])) ?>"
-                                            class="outline-btn contact-btn btn">Contact</a>
+                        <?php if (!empty($topSupplierSets)): ?>
+                        <div class="top-supplier-carousel"
+                            data-autoplay-speed="<?= (int) (($topSuppliersIntervalSeconds ?? 5) * 1000) ?>">
+                            <?php foreach ($topSupplierSets as $supplierSet): ?>
+                            <?php // Slick turns each direct child of .top-supplier-carousel into a
+                                  // slide and stamps its own display/position styles onto it, which
+                                  // silently overrides Bootstrap's .row{display:flex} if it lands
+                                  // directly on the .row -- that's what broke the two cards' side-by-
+                                  // side layout. This neutral wrapper is what Slick gets instead, so
+                                  // the .row inside keeps its own flex layout untouched. ?>
+                            <div class="top-supplier-slide">
+                                <div class="row top-supplier-set">
+                                <?php foreach ($supplierSet as $ts): ?>
+                                <div class="top-supplier-card">
+                                    <div class="top-supplier-img">
+                                        <?php
+                                                $profileImg = '';
+                                                if (!empty($ts['profile_image'])) {
+                                                    $profileImg = base_url('uploads/profiles/' . $ts['profile_image']);
+                                                } elseif (!empty($ts['company_logo'])) {
+                                                    $profileImg = base_url('uploads/suppliers/' . $ts['company_logo']);
+                                                } elseif (!empty($ts['products']) && !empty($ts['products'][0]['main_image'])) {
+                                                    $profileImg = base_url('uploads/products/' . $ts['products'][0]['main_image']);
+                                                } else {
+                                                    $profileImg = base_url('assets/images/supplier-product-list-img.webp');
+                                                }
+                                                ?>
+                                        <img src="<?= $profileImg ?>" class="w-100"
+                                            alt="<?= esc($ts['company_name'] ?? $ts['name']) ?>">
+                                    </div>
+                                    <div class="top-supplier-content">
+                                        <p class="f-12 mb-3"><?= esc($ts['category'] ?? $ts['industry'] ?? '') ?></p>
+                                        <h3><?= esc($ts['company_name'] ?? $ts['name']) ?></h3>
+                                        <p>Products: <?= esc($ts['selling_products'] ?? '') ?> <br>
+                                            Country: <?= esc($ts['country']['name'] ?? $ts['country_name'] ?? '') ?></p>
+                                        <div class="">
+                                            <a href="<?= base_url('supplier/profile/' . ($ts['slug'] ?? $ts['id'])) ?>"
+                                                class="outline-btn contact-btn btn">Contact</a>
+                                        </div>
                                     </div>
                                 </div>
+                                <?php endforeach; ?>
+                                </div>
                             </div>
-                            <?php $imgIndex++;
-                                endforeach; ?>
-                            <?php else: ?>
-                            <p class="text-muted">No suppliers available yet.</p>
-                            <?php endif; ?>
+                            <?php endforeach; ?>
                         </div>
+                        <?php else: ?>
+                        <div class="row">
+                            <p class="text-muted">No suppliers available yet.</p>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -326,61 +232,7 @@
         <button id="closePopup1">X</button>
         <h2 class="text-center">Buyer Consultant Manager (BCM)</h2>
         <h3>Schedule a Free Appointment with your BCM</h3>
-        <form action="<?= base_url('register') ?>" method="POST">
-            <?= csrf_field() ?>
-            <div class="filter-group">
-                <label class="radio-label">
-                    <input type="radio" name="role" value="supplier" checked onchange="toggleFields(this)">
-                    <span class="radio"></span>
-                    Supplier
-                </label>
-                <label class="radio-label">
-                    <input type="radio" name="role" value="buyer" onchange="toggleFields(this)">
-                    <span class="radio"></span>
-                    Buyer
-                </label>
-            </div>
-            <div class="form-input mt-3">
-                <input type="text" name="name" placeholder="Name" required>
-            </div>
-            <div class="dual-input">
-                <div class="form-input">
-                    <input type="email" name="email" placeholder="Email" required>
-                </div>
-                <div class="form-input password-input">
-                    <input type="password" name="password" class="password" placeholder="Password">
-                    <i class="eye" onclick="togglePassword()">
-                        <svg style="fill: #DBDBDB" class="eye-icon" height="20" viewBox="0 0 24 24" width="20"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path clip-rule="evenodd"
-                                d="m12 4.5c-5 0-9.27 3.11-11 7.5 1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z">
-                            </path>
-                        </svg>
-                    </i>
-                </div>
-            </div>
-            <div class="form-input">
-                <input type="tel" name="phone" class="phone" placeholder="Phone number">
-            </div>
-            <div class="whatsapp-checkbox">
-                <input type="checkbox" name="whatsapp" id="popup_whatsapp"><label for="popup_whatsapp">Whatsapp<img
-                        src="<?= base_url('assets/images/whatsapp-icon.svg') ?>" width="15px"></label>
-            </div>
-            <div class="form-input selling-field">
-                <input type="text" name="selling_products" placeholder="Selling Products">
-            </div>
-            <div class="form-input buying-field" style="display:none;">
-                <input type="text" name="buying_products" placeholder="Buying Products">
-            </div>
-            <div class="radio-join d-flex gap-2 align-items-start">
-                <input type="checkbox" name="OPT_IN" id="popup_OPT_IN" required><label for="popup_OPT_IN"><span
-                        style="color: #0F9EA5;">*</span>By joining, I agree to terms of use, privacy policy, IPR and
-                    agree to receive emails related to our services.</label>
-            </div>
-            <div class="submit-btn-gradient mt-3">
-                <button type="submit" class="gradeint-cta">Join Now</button>
-            </div>
-        </form>
+        <?= view('partials/lead-capture-inline-form', ['idPrefix' => 'bcm', 'defaultRadio' => 'buyer']) ?>
     </div>
 </div>
 
@@ -969,46 +821,7 @@ if (isset($categories) && !empty($categories)) {
                 <div class="supplier-contact-form">
                     <div class="multiple-quote-form">
                         <h2 class=" text-center">Get Multiple Quotes</h2>
-                        <form class="mt-3" action="<?= base_url('contact/submit') ?>" method="POST">
-                            <?= csrf_field() ?>
-                            <input type="hidden" name="form_type" value="quote">
-                            <input type="hidden" name="source_page" value="homepage-suppliers-section">
-                            <input type="hidden" name="lead_type" value="buyer">
-                            <div class="tripple-input">
-                                <div class="form-input">
-                                    <input type="text" name="name" placeholder="Name*" required>
-                                </div>
-                                <div class="form-input">
-                                    <input type="email" name="email" placeholder="Email*" required>
-                                </div>
-                                <div class="form-input">
-                                    <input type="tel" name="phone" class="phone" placeholder="Phone*" required>
-                                </div>
-                            </div>
-                            <div class="dual-input">
-                                <div class="form-input">
-                                    <select name="country_id" class="form-control"
-                                        style="height:45px; border-radius:40px; border:1px solid #ddd; padding:0 12px;"
-                                        required>
-                                        <option value="">Select Country*</option>
-                                        <?php if (isset($countries)): ?>
-                                        <?php foreach ($countries as $country): ?>
-                                        <option value="<?= $country['id'] ?>"><?= esc($country['name']) ?></option>
-                                        <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </select>
-                                </div>
-                                <div class="form-input">
-                                    <input type="number" name="quantity" placeholder="Quantity*" required>
-                                </div>
-                            </div>
-                            <div class="form-textarea">
-                                <textarea name="message" placeholder="What are you looking for?"></textarea>
-                            </div>
-                            <div class="submit-btn-gradient mt-2">
-                                <button type="submit" class="gradeint-cta">Submit Now</button>
-                            </div>
-                        </form>
+                        <?= view('partials/lead-capture-inline-form', ['idPrefix' => 'suppliersection', 'defaultRadio' => 'buyer']) ?>
                     </div>
                 </div>
             </div>
@@ -1113,37 +926,7 @@ if (isset($categories) && !empty($categories)) {
         <div class="row ">
             <div class="multiple-quote-form">
                 <h2 class="text-white text-center">Find us</h2>
-                <form action="<?= base_url('contact/submit') ?>" method="POST">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="form_type" value="contact">
-                    <input type="hidden" name="source_page" value="homepage-find-us">
-                    <input type="hidden" name="lead_type" value="buyer">
-                    <div class="form-input">
-                        <input type="text" name="name" placeholder="Name*" required>
-                    </div>
-                    <div class="dual-input">
-                        <div class="form-input">
-                            <input type="email" name="email" placeholder="Email*" required>
-                        </div>
-                        <div class="form-input">
-                            <input type="tel" name="phone" class="phone" placeholder="Phone*" required>
-                        </div>
-                    </div>
-                    <div class="dual-input">
-                        <div class="form-input">
-                            <input type="text" name="industry" placeholder="Select Industry*" required>
-                        </div>
-                        <div class="form-input">
-                            <input type="number" name="quantity" placeholder="Quantity*" required>
-                        </div>
-                    </div>
-                    <div class="form-textarea">
-                        <textarea name="message" placeholder="What are you looking for?"></textarea>
-                    </div>
-                    <div class="submit-btn">
-                        <button type="submit">Submit Now</button>
-                    </div>
-                </form>
+                <?= view('partials/lead-capture-inline-form', ['idPrefix' => 'findus', 'defaultRadio' => 'supplier']) ?>
             </div>
             <div class="success-stories-col">
                 <div class="d-flex heading align-items-center justify-content-between">
@@ -1279,5 +1062,9 @@ if (isset($categories) && !empty($categories)) {
     ]
 }
 </script>
+
+<?php // homepage-lead-forms.js is now loaded sitewide from footer.php, since
+      // footer.php's own "Register Your Company" popup uses the same
+      // lead-capture-inline-form.php partial as this page's forms. ?>
 
 <?= $this->endSection() ?>

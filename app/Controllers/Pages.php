@@ -7,9 +7,28 @@ use App\Models\CountryModel;
 use App\Models\UserModel;
 use App\Models\ProductModel;
 use App\Models\BuyerInquiryModel;
+use App\Models\SiteSettingModel;
 
 class Pages extends BaseController
 {
+    /**
+     * How many slots index.php's Top Products / Top Suppliers sections
+     * actually render (array_slice($x, 0, N) in the view).
+     */
+    private const TOP_PRODUCTS_DISPLAY_COUNT = 3;
+    private const TOP_SUPPLIERS_DISPLAY_COUNT = 2;
+
+    /**
+     * Bounds for the admin-configurable set count / rotation interval (see
+     * AdminSettings::topSections()) -- re-clamped here too in case a stray
+     * DB value (or a row edited directly) falls outside what that form
+     * allows.
+     */
+    private const TOP_SET_COUNT_MIN = 1;
+    private const TOP_SET_COUNT_MAX = 10;
+    private const TOP_INTERVAL_SECONDS_MIN = 2;
+    private const TOP_INTERVAL_SECONDS_MAX = 60;
+
     /**
      * Per-page title and meta description for every static page this
      * controller serves. Replaces the old ucfirst(str_replace('-', ' ', $page))
@@ -110,34 +129,111 @@ class Pages extends BaseController
             $userModel = new UserModel();
             $productModel = new ProductModel();
             $inquiryModel = new BuyerInquiryModel();
+            $settingModel = new SiteSettingModel();
 
             $data['categories'] = $categoryModel->getActiveCategories();
             $data['countries'] = $countryModel->getActiveCountries();
 
-            $membershipOrder = "FIELD(membership_level, 'platinum', 'gold', 'silver', 'starter', 'free')";
-            $featuredSuppliers = $userModel
-                ->where('user_type', 'supplier')
-                ->where('status', 'approved')
-                ->where('is_featured', 1)
-                ->orderBy($membershipOrder)
-                ->orderBy('created_at', 'DESC')
-                ->findAll();
+            $topSuppliersSetCount = max(self::TOP_SET_COUNT_MIN, min(self::TOP_SET_COUNT_MAX,
+                (int) $settingModel->getSetting('top_suppliers_set_count', 1)));
+            $topSuppliersIntervalSeconds = max(self::TOP_INTERVAL_SECONDS_MIN, min(self::TOP_INTERVAL_SECONDS_MAX,
+                (int) $settingModel->getSetting('top_suppliers_interval_seconds', 5)));
 
-            foreach ($featuredSuppliers as &$s) {
-                $s['country'] = $countryModel->find($s['country_id']);
-                $s['products'] = $productModel
-                    ->where('supplier_id', $s['id'])
-                    ->where('status', 'active')
-                    ->limit(3)
+            // "Top Suppliers" carousel: one rotating set per
+            // topSuppliersSetCount (admin-configurable, see
+            // AdminSettings::topSections()). A supplier is pinned into a
+            // specific set via is_featured + featured_set (set the number on
+            // the supplier edit page) -- a set can hold as many pins as it
+            // has display slots (TOP_SUPPLIERS_DISPLAY_COUNT), no per-set
+            // 1-pin cap; AdminSettings::supplierSetHasRoom() blocks over-
+            // assigning past that at save time, so the query below only ever
+            // needs a defensive limit(), not enforcement. The remaining
+            // slot(s) per set (if any pins are left over) are filled by a
+            // "hotness" score: profile views decayed by age
+            // (views / (days-old + 2)), the same recency-decay ranking
+            // Hacker News/Reddit use, so a supplier added yesterday with a
+            // handful of views can already outrank one from a year ago with
+            // the same raw view count spread thin over time. Membership tier
+            // is a modest *multiplier* on that score (paid tiers keep a
+            // visibility edge, consistent with how membership is weighted
+            // elsewhere on the site) rather than a hard gate.
+            //
+            // A supplier already used in an earlier set (pinned or dynamic)
+            // is excluded from every later set's dynamic fill, so the same
+            // supplier never appears twice across the whole carousel.
+            $membershipWeight = "CASE membership_level "
+                . "WHEN 'platinum' THEN 1.5 "
+                . "WHEN 'gold' THEN 1.3 "
+                . "WHEN 'silver' THEN 1.15 "
+                . "WHEN 'starter' THEN 1.05 "
+                . "ELSE 1.0 END";
+            $supplierHotness = "((profile_view_count / (DATEDIFF(UTC_DATE(), created_at) + 2)) * ($membershipWeight))";
+
+            $supplierSets = [];
+            $usedSupplierIds = [];
+
+            for ($setNumber = 1; $setNumber <= $topSuppliersSetCount; $setNumber++) {
+                $pinnedSuppliers = $userModel
+                    ->where('user_type', 'supplier')
+                    ->where('status', 'approved')
+                    ->where('is_featured', 1)
+                    ->where('featured_set', $setNumber)
+                    ->orderBy('created_at', 'DESC')
+                    ->limit(self::TOP_SUPPLIERS_DISPLAY_COUNT)
                     ->findAll();
-            }
-            unset($s);
 
-            if (count($featuredSuppliers) > 2) {
-                shuffle($featuredSuppliers);
+                $remainingSupplierSlots = self::TOP_SUPPLIERS_DISPLAY_COUNT - count($pinnedSuppliers);
+                $dynamicSuppliers = [];
+
+                if ($remainingSupplierSlots > 0) {
+                    $excludeIds = array_merge($usedSupplierIds, array_column($pinnedSuppliers, 'id'));
+
+                    $dynamicBuilder = $userModel
+                        ->select("users.*, $supplierHotness AS hotness_score")
+                        ->where('user_type', 'supplier')
+                        ->where('status', 'approved')
+                        ->orderBy('hotness_score', 'DESC')
+                        ->orderBy('is_featured', 'DESC')
+                        ->orderBy('created_at', 'DESC')
+                        ->limit($remainingSupplierSlots + 6);
+
+                    if (!empty($excludeIds)) {
+                        $dynamicBuilder->whereNotIn('id', $excludeIds);
+                    }
+
+                    $dynamicSuppliers = $dynamicBuilder->findAll();
+
+                    // Same reasoning as the pre-carousel version this
+                    // replaced: a plain shuffle() of the whole pool gives the
+                    // genuine top-ranked item the same odds as the
+                    // barely-qualifying last one, which defeats ranking by
+                    // real popularity. Anchoring the #1 dynamic slot fixes
+                    // that.
+                    $dynamicSuppliers = $this->anchorTopAndShuffleRest($dynamicSuppliers);
+                }
+
+                $setSuppliers = array_slice(
+                    array_merge($pinnedSuppliers, $dynamicSuppliers),
+                    0,
+                    self::TOP_SUPPLIERS_DISPLAY_COUNT
+                );
+
+                foreach ($setSuppliers as &$s) {
+                    $s['country'] = $countryModel->find($s['country_id']);
+                    $s['products'] = $productModel
+                        ->where('supplier_id', $s['id'])
+                        ->where('status', 'active')
+                        ->limit(3)
+                        ->findAll();
+                }
+                unset($s);
+
+                $supplierSets[] = $setSuppliers;
+                $usedSupplierIds = array_merge($usedSupplierIds, array_column($setSuppliers, 'id'));
             }
 
-            $data['featuredSuppliers'] = $featuredSuppliers;
+            $data['topSupplierSets'] = $supplierSets;
+            $data['topSuppliersIntervalSeconds'] = $topSuppliersIntervalSeconds;
 
             $categorySuppliers = $userModel
                 ->where('user_type', 'supplier')
@@ -159,22 +255,81 @@ class Pages extends BaseController
 
             $data['categorySuppliers'] = $categorySuppliers;
 
-            $topProducts = $productModel
-                ->where('status', 'active')
-                ->orderBy('is_featured', 'DESC')
-                ->orderBy('created_at', 'DESC')
-                ->limit(12)
-                ->findAll();
+            $topProductsSetCount = max(self::TOP_SET_COUNT_MIN, min(self::TOP_SET_COUNT_MAX,
+                (int) $settingModel->getSetting('top_products_set_count', 1)));
+            $topProductsIntervalSeconds = max(self::TOP_INTERVAL_SECONDS_MIN, min(self::TOP_INTERVAL_SECONDS_MAX,
+                (int) $settingModel->getSetting('top_products_interval_seconds', 5)));
 
-            foreach ($topProducts as &$p) {
-                $supplier = $userModel->find($p['supplier_id']);
-                if ($supplier) {
-                    $supplier['country'] = $countryModel->find($supplier['country_id']);
+            // "Top Products" carousel: same rotating-sets approach as Top
+            // Suppliers above -- one set per topProductsSetCount, each
+            // holding whatever's pinned into it via is_featured +
+            // featured_set on the Listings tab (up to
+            // TOP_PRODUCTS_DISPLAY_COUNT pins, enforced at save time by
+            // AdminSettings::productSetHasRoom(), not here) and the rest
+            // filled by the hotness ranking (view_count decayed by age).
+            // See the Top Suppliers block above for the full reasoning on
+            // cross-set exclusion.
+            $productHotness = "(view_count / (DATEDIFF(UTC_DATE(), created_at) + 2))";
+
+            $productSets = [];
+            $usedProductIds = [];
+
+            for ($setNumber = 1; $setNumber <= $topProductsSetCount; $setNumber++) {
+                $pinnedProducts = $productModel
+                    ->where('status', 'active')
+                    ->where('is_featured', 1)
+                    ->where('featured_set', $setNumber)
+                    ->orderBy('created_at', 'DESC')
+                    ->limit(self::TOP_PRODUCTS_DISPLAY_COUNT)
+                    ->findAll();
+
+                $remainingProductSlots = self::TOP_PRODUCTS_DISPLAY_COUNT - count($pinnedProducts);
+                $dynamicProducts = [];
+
+                if ($remainingProductSlots > 0) {
+                    $excludeIds = array_merge($usedProductIds, array_column($pinnedProducts, 'id'));
+
+                    $dynamicBuilder = $productModel
+                        ->select("products.*, $productHotness AS hotness_score")
+                        ->where('status', 'active')
+                        ->orderBy('hotness_score', 'DESC')
+                        ->orderBy('is_featured', 'DESC')
+                        ->orderBy('created_at', 'DESC')
+                        ->limit($remainingProductSlots + 5);
+
+                    if (!empty($excludeIds)) {
+                        $dynamicBuilder->whereNotIn('id', $excludeIds);
+                    }
+
+                    $dynamicProducts = $dynamicBuilder->findAll();
+
+                    // Same reasoning as Top Suppliers: anchor the genuine #1
+                    // dynamic slot so it's always shown, only rotate the rest.
+                    $dynamicProducts = $this->anchorTopAndShuffleRest($dynamicProducts);
                 }
-                $p['supplier'] = $supplier;
-                $p['category'] = $categoryModel->find($p['category_id']);
+
+                $setProducts = array_slice(
+                    array_merge($pinnedProducts, $dynamicProducts),
+                    0,
+                    self::TOP_PRODUCTS_DISPLAY_COUNT
+                );
+
+                foreach ($setProducts as &$p) {
+                    $supplier = $userModel->find($p['supplier_id']);
+                    if ($supplier) {
+                        $supplier['country'] = $countryModel->find($supplier['country_id']);
+                    }
+                    $p['supplier'] = $supplier;
+                    $p['category'] = $categoryModel->find($p['category_id']);
+                }
+                unset($p);
+
+                $productSets[] = $setProducts;
+                $usedProductIds = array_merge($usedProductIds, array_column($setProducts, 'id'));
             }
-            $data['topProducts'] = $topProducts;
+
+            $data['topProductSets'] = $productSets;
+            $data['topProductsIntervalSeconds'] = $topProductsIntervalSeconds;
 
             $featuredProducts = $productModel
                 ->where('status', 'active')
@@ -216,5 +371,29 @@ class Pages extends BaseController
         }
 
         return view('pages/' . $page, $data);
+    }
+
+    /**
+     * Keeps a ranked pool's #1 item always first, then shuffles the rest of
+     * the pool behind it -- for the homepage's Top Products/Top Suppliers
+     * sections, where the caller then does array_slice($pool, 0, N) to get
+     * the N displayed. A plain shuffle() of the whole pool was tried first
+     * and measured broken: it gives the genuine top-ranked item the same
+     * odds of being displayed as the pool's weakest qualifier, which defeats
+     * ranking by real popularity (view_count decayed by age) at all. This
+     * keeps rank #1 guaranteed while still rotating who fills the rest of
+     * the visible slots, for some discovery variety per page load.
+     */
+    private function anchorTopAndShuffleRest(array $rankedPool): array
+    {
+        if (count($rankedPool) <= 1) {
+            return $rankedPool;
+        }
+
+        $top = array_shift($rankedPool);
+        shuffle($rankedPool);
+        array_unshift($rankedPool, $top);
+
+        return $rankedPool;
     }
 }

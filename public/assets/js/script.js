@@ -101,7 +101,14 @@ function togglePassword() {
 }
  
 // Tel
-    document.querySelectorAll(".phone").forEach(input => {
+// :not(.lead-capture-phone) -- lead-capture-inline-form.php's phone field
+// keeps the .phone class for its existing CSS (e.g. .b2b-top-form .phone),
+// but assets/js/homepage-lead-forms.js owns its intlTelInput init and submit
+// handling instead (separate phone/phone_code fields, not a single E.164
+// value). Double-initializing the same input here would create a second
+// .iti widget and this file's own submit handler would overwrite the
+// already-correct local-digits value with the full international number.
+    document.querySelectorAll(".phone:not(.lead-capture-phone)").forEach(input => {
   const iti = window.intlTelInput(input, {
     initialCountry: "us",
     separateDialCode: true,

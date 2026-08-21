@@ -15,8 +15,13 @@ class ProductModel extends Model
         'supplier_id', 'category_id', 'name', 'slug', 'description', 'specifications',
         'main_image', 'gallery_images', 'min_order_quantity', 'min_order_unit',
         'price_range', 'supply_ability', 'delivery_time', 'packaging', 'port',
-        'payment_terms', 'certifications', 'is_featured', 'status'
+        'payment_terms', 'certifications', 'is_featured', 'featured_set', 'status'
     ];
+    // 'view_count' deliberately NOT in $allowedFields -- it's a system-managed
+    // popularity counter (see Product::detail(), Pages.php's Top Products
+    // ranking), not a form field. Keeping it out of mass assignment means an
+    // admin edit form can never accidentally zero it or a stray POST field
+    // can't inflate it; it's only ever touched via a raw atomic increment.
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';

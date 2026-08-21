@@ -101,6 +101,8 @@ class Product extends BaseController
             throw new \CodeIgniter\Exceptions\PageNotFoundException('Product not found');
         }
 
+        $this->trackView('products', (int) $product['id'], 'view_count', 'viewed_products');
+
         if (!empty($product['supplier']) && !empty($product['supplier']['country_id'])) {
             $product['supplier']['country'] = $this->countryModel->find($product['supplier']['country_id']);
         }

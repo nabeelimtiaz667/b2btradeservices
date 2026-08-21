@@ -44,10 +44,15 @@ class UserModel extends Model
         'last_device_type',
         'department',
         'is_featured',
+        'featured_set',
         'status',
         'reset_token',
         'reset_token_expires',
     ];
+    // 'profile_view_count' deliberately NOT in $allowedFields -- system-managed
+    // popularity counter (see Supplier::profile(), Pages.php's Top Suppliers
+    // ranking), same reasoning as ProductModel::$view_count: kept out of mass
+    // assignment, only ever touched via a raw atomic increment.
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

@@ -118,6 +118,7 @@ $routes->post('dashboard/agents/edit/(:num)', 'Dashboard::editAgent/$1');
 $routes->get('dashboard/agents/delete/(:num)', 'Dashboard::deleteAgent/$1');
 
 $routes->get('dashboard/suppliers', 'Dashboard::suppliers');
+$routes->post('dashboard/suppliers', 'Dashboard::suppliers');
 $routes->get('dashboard/suppliers/add', 'Dashboard::addSupplier');
 $routes->post('dashboard/suppliers/add', 'Dashboard::addSupplier');
 $routes->get('dashboard/suppliers/edit/(:num)', 'Dashboard::editSupplier/$1');
@@ -171,6 +172,8 @@ $routes->get('admin/settings/categories', 'AdminSettings::categories');
 $routes->post('admin/settings/categories', 'AdminSettings::categories');
 $routes->get('admin/settings/listings', 'AdminSettings::listings');
 $routes->post('admin/settings/listings', 'AdminSettings::listings');
+$routes->get('admin/settings/top-sections', 'AdminSettings::topSections');
+$routes->post('admin/settings/top-sections', 'AdminSettings::topSections');
 $routes->get('admin/settings/registration', 'AdminSettings::registration');
 $routes->post('admin/settings/registration', 'AdminSettings::registration');
 $routes->get('admin/settings/email', 'AdminSettings::email');

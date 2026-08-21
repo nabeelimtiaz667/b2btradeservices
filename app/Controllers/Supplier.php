@@ -87,6 +87,8 @@ class Supplier extends BaseController
             throw new \CodeIgniter\Exceptions\PageNotFoundException('Supplier not found');
         }
 
+        $this->trackView('users', (int) $supplier['id'], 'profile_view_count', 'viewed_supplier_profiles');
+
         $supplier['country'] = !empty($supplier['country_id']) ? $this->countryModel->find($supplier['country_id']) : null;
 
         $products = $this->productModel

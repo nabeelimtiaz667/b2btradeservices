@@ -90,14 +90,11 @@
                     <input type="text" name="selling_products" class="form-control" value="<?= isset($supplier) ? esc($supplier['selling_products'] ?? '') : old('selling_products') ?>" placeholder="e.g., Textiles, Garments, Leather Goods">
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <div class="form-check form-switch mt-2">
-                        <input class="form-check-input" type="checkbox" name="is_featured" value="1" id="isFeatured" <?= (isset($supplier) && !empty($supplier['is_featured'])) ? 'checked' : '' ?>>
-                        <label class="form-check-label" for="isFeatured">Featured Supplier <small class="text-muted">(Show in "Top Suppliers" on homepage)</small></label>
-                    </div>
-                </div>
-            </div>
+            <?php // Featured Supplier / Carousel Set now live on the Manage
+                  // Suppliers list page (a column there, matching how
+                  // products are featured from their Listings tab) instead
+                  // of here, so editing other fields can't accidentally
+                  // clobber a supplier's featured state. ?>
 
             <h5 class="mt-4 mb-3 pb-2 border-bottom">Company Introduction</h5>
             <div class="row">

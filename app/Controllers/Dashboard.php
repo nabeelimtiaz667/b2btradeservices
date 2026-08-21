@@ -56,6 +56,50 @@ class Dashboard extends BaseController
         return false;
     }
 
+    /**
+     * How many rotating sets the homepage's Top Suppliers carousel has --
+     * lets the Manage Suppliers list page offer a matching "which set"
+     * dropdown next to each row's Featured toggle. See
+     * AdminSettings::topSections().
+     */
+    private function getSupplierSetCount(): int
+    {
+        $settingModel = new SiteSettingModel();
+        return max(1, min(10, (int) $settingModel->getSetting('top_suppliers_set_count', 1)));
+    }
+
+    /**
+     * Mirrors Pages::TOP_SUPPLIERS_DISPLAY_COUNT -- a set can hold at most
+     * this many pinned suppliers (there's no per-set 1-pin cap any more,
+     * admin picks the set directly, but a set obviously can't hold more
+     * pins than it has display slots). Must stay in sync with that constant
+     * and with AdminSettings::TOP_SUPPLIERS_ITEMS_PER_SET.
+     */
+    private const TOP_SUPPLIERS_ITEMS_PER_SET = 2;
+
+    /**
+     * True if $setNumber has room for one more pinned supplier, i.e. fewer
+     * than TOP_SUPPLIERS_ITEMS_PER_SET are already pinned into it (only
+     * counting approved suppliers -- an inactive/pending one wouldn't
+     * actually render there, matching Pages::index()'s own filter).
+     * $excludeUserId lets an existing pin re-save into the same set without
+     * counting itself against its own room.
+     */
+    private function supplierSetHasRoom(int $setNumber, ?int $excludeUserId = null): bool
+    {
+        $builder = $this->userModel
+            ->where('user_type', 'supplier')
+            ->where('status', 'approved')
+            ->where('is_featured', 1)
+            ->where('featured_set', $setNumber);
+
+        if ($excludeUserId) {
+            $builder->where('id !=', $excludeUserId);
+        }
+
+        return $builder->countAllResults() < self::TOP_SUPPLIERS_ITEMS_PER_SET;
+    }
+
     public function index()
     {
         if (!$this->session->get('logged_in')) {
@@ -874,27 +918,113 @@ class Dashboard extends BaseController
         return redirect()->back()->with('success', 'User has been deleted successfully.');
     }
 
+    /**
+     * Columns the Manage Suppliers table can be sorted by. Everything except
+     * `country_name` is a real column on `users` (sorted in SQL); country
+     * needs a join since it's only stored as `country_id` here.
+     */
+    private const SUPPLIER_SORT_FIELDS = ['uid', 'company_name', 'email', 'country_name', 'membership_level', 'status', 'is_featured', 'created_at'];
+
     public function suppliers()
     {
         if (!$this->session->get('logged_in') || $this->session->get('user_type') !== 'admin') {
             return redirect()->to('/login');
         }
 
+        $sort = (string) $this->request->getGet('sort');
+        if (!in_array($sort, self::SUPPLIER_SORT_FIELDS, true)) {
+            $sort = 'created_at';
+        }
+        $dir = strtolower((string) $this->request->getGet('dir')) === 'asc' ? 'asc' : 'desc';
+        // Every redirect below reuses this so toggling a star or changing a
+        // set never resets the admin's current column sort.
+        $redirectUrl = '/dashboard/suppliers?sort=' . $sort . '&dir=' . $dir;
+
+        if ($this->request->getMethod() === 'POST') {
+            $action = $this->request->getPost('action');
+
+            if ($action === 'toggle_featured_supplier') {
+                $id = $this->request->getPost('id');
+                $supplier = $this->userModel->find($id);
+                if ($supplier) {
+                    $newVal = $supplier['is_featured'] ? 0 : 1;
+                    if ($newVal) {
+                        // Same auto-pick-first-open-set reasoning as
+                        // AdminSettings::listings()'s toggle_featured_product
+                        // -- hard-defaulting to set 1 would strand admins
+                        // once it fills, since the Set-N dropdown only shows
+                        // for already-featured rows.
+                        $preferredSet = (int) ($supplier['featured_set'] ?: 0);
+                        $targetSet = ($preferredSet >= 1 && $this->supplierSetHasRoom($preferredSet, (int) $id))
+                            ? $preferredSet
+                            : null;
+
+                        if ($targetSet === null) {
+                            $setCount = $this->getSupplierSetCount();
+                            for ($s = 1; $s <= $setCount; $s++) {
+                                if ($this->supplierSetHasRoom($s, (int) $id)) {
+                                    $targetSet = $s;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if ($targetSet === null) {
+                            $this->session->setFlashdata('error',
+                                'All ' . $setCount . ' carousel set(s) already have the maximum '
+                                . self::TOP_SUPPLIERS_ITEMS_PER_SET . ' pinned suppliers each. Free up a set '
+                                . 'first, or add more sets on the Top Sections tab.');
+                            return redirect()->to($redirectUrl);
+                        }
+
+                        $this->userModel->update($id, ['is_featured' => 1, 'featured_set' => $targetSet]);
+                    } else {
+                        $this->userModel->update($id, ['is_featured' => 0]);
+                    }
+                    $this->session->setFlashdata('success', 'Supplier featured status toggled.');
+                }
+            } elseif ($action === 'set_supplier_featured_set') {
+                $id = $this->request->getPost('id');
+                $setNum = (int) $this->request->getPost('featured_set');
+                if ($setNum >= 1 && $setNum <= 10) {
+                    if (!$this->supplierSetHasRoom($setNum, (int) $id)) {
+                        $this->session->setFlashdata('error',
+                            'Set ' . $setNum . ' already has the maximum ' . self::TOP_SUPPLIERS_ITEMS_PER_SET . ' pinned suppliers.');
+                        return redirect()->to($redirectUrl);
+                    }
+                    $this->userModel->update($id, ['featured_set' => $setNum]);
+                    $this->session->setFlashdata('success', 'Supplier carousel set updated.');
+                }
+            }
+
+            return redirect()->to($redirectUrl);
+        }
+
         $user = $this->userModel->find($this->session->get('user_id'));
-        $suppliers = $this->userModel
-            ->where('user_type', 'supplier')
-            ->orderBy('created_at', 'DESC')
-            ->paginate(25, 'supplier');
+
+        $query = $this->userModel->where('user_type', 'supplier');
+        if ($sort === 'country_name') {
+            $query->select('users.*, countries.name as country_name')
+                ->join('countries', 'countries.id = users.country_id', 'left')
+                ->orderBy('country_name', $dir);
+        } else {
+            $query->orderBy($sort, $dir);
+        }
+        $suppliers = $query->paginate(25, 'supplier');
 
         foreach ($suppliers as &$supplier) {
             $supplier['country'] = $this->countryModel->find($supplier['country_id']);
         }
+        unset($supplier);
 
         return view('dashboard/admin/suppliers', [
             'title' => 'Manage Suppliers',
             'user' => $user,
             'suppliers' => $suppliers,
             'pager' => $this->userModel->pager,
+            'sort' => $sort,
+            'dir' => $dir,
+            'supplierSetCount' => $this->getSupplierSetCount(),
         ]);
     }
 
@@ -926,7 +1056,6 @@ class Dashboard extends BaseController
                 'city' => $this->request->getPost('city'),
                 'membership_level' => $this->request->getPost('membership_level') ?: 'free',
                 'company_introduction' => $this->request->getPost('company_introduction'),
-                'is_featured' => $this->request->getPost('is_featured') ? 1 : 0,
                 'lead_stage' => 'new',
                 'lead_source' => 'admin_added',
                 'status' => $this->request->getPost('status') ?: 'approved',
@@ -1039,7 +1168,6 @@ class Dashboard extends BaseController
                 'city' => $this->request->getPost('city'),
                 'membership_level' => $this->request->getPost('membership_level') ?: 'free',
                 'company_introduction' => $this->request->getPost('company_introduction'),
-                'is_featured' => $this->request->getPost('is_featured') ? 1 : 0,
                 'status' => $this->request->getPost('status') ?: 'approved',
                 'updated_at' => date('Y-m-d H:i:s'),
             ];

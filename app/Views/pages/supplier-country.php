@@ -86,8 +86,8 @@
                                     </div>
                                     <h4>
                                         <?= esc($supplier['company_name'] ?? $supplier['name']) ?>
-                                        <?php if (isset($supplier['country']['name'])): ?>
-                                            <img src="<?= base_url('assets/images/flags/flag_' . str_replace(' ', '_', $supplier['country']['name']) . '.svg') ?>" width="20" onerror="this.style.display='none'">
+                                        <?php if (!empty($supplier['country']['flag'] ?? '')): ?>
+                                            <img src="<?= base_url('assets/images/flags/' . $supplier['country']['flag']) ?>" width="20" onerror="this.style.display='none'">
                                         <?php endif; ?>
                                     </h4>
                                     <p>Products: <?= esc($supplier['selling_products'] ?? 'Various') ?><br>

@@ -11,6 +11,7 @@
     <li class="nav-item"><a class="nav-link <?= $activeTab === 'moderation' ? 'active' : '' ?>" href="<?= base_url('admin/settings/moderation') ?>">Content Moderation</a></li>
     <li class="nav-item"><a class="nav-link <?= $activeTab === 'categories' ? 'active' : '' ?>" href="<?= base_url('admin/settings/categories') ?>">Categories</a></li>
     <li class="nav-item"><a class="nav-link <?= $activeTab === 'listings' ? 'active' : '' ?>" href="<?= base_url('admin/settings/listings') ?>">Listings</a></li>
+    <li class="nav-item"><a class="nav-link <?= $activeTab === 'top-sections' ? 'active' : '' ?>" href="<?= base_url('admin/settings/top-sections') ?>">Top Sections</a></li>
     <li class="nav-item"><a class="nav-link <?= $activeTab === 'registration' ? 'active' : '' ?>" href="<?= base_url('admin/settings/registration') ?>">Registration</a></li>
     <li class="nav-item"><a class="nav-link <?= $activeTab === 'email' ? 'active' : '' ?>" href="<?= base_url('admin/settings/email') ?>">Email</a></li>
 </ul>
@@ -66,17 +67,40 @@
                 <div class="mb-3">
                     <input type="text" class="form-control" id="productSearch" placeholder="Search products..." onkeyup="filterTable('productSearch', 'productsTable')">
                 </div>
+                <?php
+                    // Column-header sort links. A closure (not a named
+                    // function) so re-rendering this view within the same
+                    // request -- unlikely but not impossible -- can't hit a
+                    // "cannot redeclare" fatal. $sort/$dir come from
+                    // AdminSettings::listings(), already whitelisted there.
+                    $productSort = $sort ?? 'created_at';
+                    $productDir = $dir ?? 'desc';
+                    // Every row-action form below posts here too, with the
+                    // current sort carried in the query string -- without
+                    // this, any toggle/status-change/delete POST would lose
+                    // the admin's current column sort (the controller reads
+                    // sort/dir from GET, and a POST has none unless the
+                    // form's own action URL supplies it).
+                    $listingsActionUrl = base_url('admin/settings/listings') . '?sort=' . urlencode($productSort) . '&dir=' . urlencode($productDir);
+                    $productSortLink = function ($field, $label) use ($productSort, $productDir) {
+                        $nextDir = ($productSort === $field && $productDir === 'asc') ? 'desc' : 'asc';
+                        $arrow = $productSort === $field ? ($productDir === 'asc' ? '&#9650;' : '&#9660;') : '<span class="text-muted">&#8597;</span>';
+                        $url = base_url('admin/settings/listings') . '?sort=' . urlencode($field) . '&dir=' . urlencode($nextDir);
+                        return '<a href="' . esc($url, 'attr') . '" class="text-decoration-none text-dark d-inline-flex align-items-center gap-1">'
+                            . esc($label) . ' ' . $arrow . '</a>';
+                    };
+                ?>
                 <div class="table-responsive">
                     <table class="table table-custom" id="productsTable">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th><?= $productSortLink('id', 'ID') ?></th>
                                 <th>Image</th>
-                                <th>Product Name</th>
-                                <th>Supplier</th>
-                                <th>Category</th>
-                                <th>Status</th>
-                                <th>Featured</th>
+                                <th><?= $productSortLink('name', 'Product Name') ?></th>
+                                <th><?= $productSortLink('supplier_name', 'Supplier') ?></th>
+                                <th><?= $productSortLink('category_name', 'Category') ?></th>
+                                <th><?= $productSortLink('status', 'Status') ?></th>
+                                <th><?= $productSortLink('is_featured', 'Featured') ?></th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -96,7 +120,7 @@
                                         <td><?= esc($p['supplier_name']) ?></td>
                                         <td><?= esc($p['category_name']) ?></td>
                                         <td>
-                                            <form method="post" action="<?= base_url('admin/settings/listings') ?>" class="d-inline">
+                                            <form method="post" action="<?= esc($listingsActionUrl, 'attr') ?>" class="d-inline">
                                                 <?= csrf_field() ?>
                                                 <input type="hidden" name="action" value="update_product_status">
                                                 <input type="hidden" name="id" value="<?= $p['id'] ?>">
@@ -108,15 +132,29 @@
                                             </form>
                                         </td>
                                         <td>
-                                            <form method="post" action="<?= base_url('admin/settings/listings') ?>" class="d-inline">
-                                                <?= csrf_field() ?>
-                                                <input type="hidden" name="action" value="toggle_featured_product">
-                                                <input type="hidden" name="id" value="<?= $p['id'] ?>">
-                                                <button type="submit" class="btn btn-sm <?= $p['is_featured'] ? 'btn-warning' : 'btn-outline-secondary' ?>"><?= $p['is_featured'] ? '★' : '☆' ?></button>
-                                            </form>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <form method="post" action="<?= esc($listingsActionUrl, 'attr') ?>" class="d-inline">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="action" value="toggle_featured_product">
+                                                    <input type="hidden" name="id" value="<?= $p['id'] ?>">
+                                                    <button type="submit" class="btn btn-sm <?= $p['is_featured'] ? 'btn-warning' : 'btn-outline-secondary' ?>"><?= $p['is_featured'] ? '★' : '☆' ?></button>
+                                                </form>
+                                                <?php if ($p['is_featured']): ?>
+                                                <form method="post" action="<?= esc($listingsActionUrl, 'attr') ?>" class="d-inline">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="action" value="set_product_featured_set">
+                                                    <input type="hidden" name="id" value="<?= $p['id'] ?>">
+                                                    <select name="featured_set" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()" title="Which carousel set this product is pinned into (max 3 pinned products per set)">
+                                                        <?php for ($set = 1; $set <= $productSetCount; $set++): ?>
+                                                        <option value="<?= $set ?>" <?= (int) ($p['featured_set'] ?? 1) === $set ? 'selected' : '' ?>>Set <?= $set ?></option>
+                                                        <?php endfor; ?>
+                                                    </select>
+                                                </form>
+                                                <?php endif; ?>
+                                            </div>
                                         </td>
                                         <td>
-                                            <form method="post" action="<?= base_url('admin/settings/listings') ?>" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this product?')">
+                                            <form method="post" action="<?= esc($listingsActionUrl, 'attr') ?>" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this product?')">
                                                 <?= csrf_field() ?>
                                                 <input type="hidden" name="action" value="delete_product">
                                                 <input type="hidden" name="id" value="<?= $p['id'] ?>">
@@ -159,7 +197,7 @@
                                         <td><?= esc($inq['buyer_name']) ?></td>
                                         <td><?= esc($inq['category_name']) ?></td>
                                         <td>
-                                            <form method="post" action="<?= base_url('admin/settings/listings') ?>" class="d-inline">
+                                            <form method="post" action="<?= esc($listingsActionUrl, 'attr') ?>" class="d-inline">
                                                 <?= csrf_field() ?>
                                                 <input type="hidden" name="action" value="update_inquiry_status">
                                                 <input type="hidden" name="id" value="<?= $inq['id'] ?>">
@@ -170,7 +208,7 @@
                                             </form>
                                         </td>
                                         <td>
-                                            <form method="post" action="<?= base_url('admin/settings/listings') ?>" class="d-inline">
+                                            <form method="post" action="<?= esc($listingsActionUrl, 'attr') ?>" class="d-inline">
                                                 <?= csrf_field() ?>
                                                 <input type="hidden" name="action" value="toggle_featured_inquiry">
                                                 <input type="hidden" name="id" value="<?= $inq['id'] ?>">
@@ -178,7 +216,7 @@
                                             </form>
                                         </td>
                                         <td>
-                                            <form method="post" action="<?= base_url('admin/settings/listings') ?>" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this inquiry?')">
+                                            <form method="post" action="<?= esc($listingsActionUrl, 'attr') ?>" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this inquiry?')">
                                                 <?= csrf_field() ?>
                                                 <input type="hidden" name="action" value="delete_inquiry">
                                                 <input type="hidden" name="id" value="<?= $inq['id'] ?>">

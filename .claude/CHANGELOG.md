@@ -14,6 +14,701 @@ Entry format:
 
 ---
 
+## 2026-08-22 — Removed the dot indicators from the Top Products/Top Suppliers carousels
+
+**Files:** `app/Views/partials/footer.php`
+**Why:** owner asked for the bullet-point (dot) navigation to be removed
+from both homepage carousels.
+
+- `dots: $(this).find('.top-products-set').length > 1` /
+  `.top-supplier-set` -&gt; `dots: false` on both Slick init calls. Autoplay
+  is untouched, still conditional on more than one set existing.
+- **Verified live**: with only the default 1 set configured, confirmed
+  `dotsPresent` was already 0 before the change (nothing to see at the
+  current live config) -- temporarily set both `top_products_set_count`
+  and `top_suppliers_set_count` to 2 to actually exercise the multi-slide
+  case, confirmed 2 real slides rendered per carousel with zero
+  `.slick-dots` elements, and confirmed autoplay still advances
+  (`slickCurrentSlide()` moved 0 -&gt; 1 after 5s). Reverted the temporary
+  set-count config back to empty (default) afterward.
+- **Confirmed the homepage on mobile too** (375px viewport): both
+  carousels render with no dots and no horizontal overflow; Top Suppliers'
+  two cards correctly stack vertically on mobile (pre-existing responsive
+  CSS -- `.top-supplier-card { width: 100% }` under the mobile breakpoint,
+  not a bug, not something this carousel work should or does override).
+  Re-confirmed at a real desktop width (1280px, since the browser tool's
+  "desktop" preset reset to an unexpectedly narrow 258px rather than an
+  actual desktop size) that the previous day's side-by-side fix still
+  holds: both cards at identical `top`, different `left`.
+
+---
+
+## 2026-08-22 — Top Suppliers cards stacking vertically instead of side-by-side (regression from the carousel work)
+
+**Files:** `app/Views/pages/index.php`
+**Why:** owner reported the two Top Suppliers cards on the homepage were
+rendering one above the other instead of side-by-side, after the carousel
+change from 2026-08-21.
+
+- **Root cause, confirmed live in the browser**: `.row.top-supplier-set`
+  (the Bootstrap `.row` holding the 2 supplier cards) was a *direct* child
+  of `.top-supplier-carousel`, so Slick turned that exact element into its
+  slide -- and Slick's own `.slick-slide` CSS/inline styles (`display`,
+  `position`, etc.) landed straight on the same element as Bootstrap's
+  `.row { display: flex }`, overriding it. `getComputedStyle()` on the row
+  showed `display: block` instead of `flex`, which is why 48%-width block
+  children (`.top-supplier-card`) stacked instead of sitting side by side.
+  The Top Products section wasn't affected because `.top-products-set`
+  isn't a flex container to begin with -- its 3 boxes were always meant to
+  stack, so Slick claiming that element too caused no visible difference.
+- **Fix**: added a neutral `.top-supplier-slide` wrapper between the
+  carousel container and the `.row` -- Slick now claims the neutral wrapper
+  instead, leaving `.row`'s own `display: flex` untouched.
+  `footer.php`'s Slick init (`.find('.top-supplier-set').length`) needed no
+  change since `.find()` searches all descendants, not just direct
+  children.
+- **Verified live**: `getComputedStyle()` on `.row.top-supplier-set` now
+  reports `flex` again; both cards' bounding rects confirmed identical
+  `top` with different `left` (genuinely side-by-side, not just visually
+  close). Both carousels still `slick-initialized` afterward, dots/autoplay
+  behavior unchanged.
+
+---
+
+## 2026-08-21 — Sortable columns on Products/Manage Suppliers; supplier featuring moves off the edit form
+
+**Files:** `app/Controllers/AdminSettings.php`, `app/Controllers/Dashboard.php`,
+`app/Config/Routes.php`, `app/Views/admin/settings/listings.php`,
+`app/Views/dashboard/admin/suppliers.php`,
+`app/Views/dashboard/admin/supplier-form.php`
+**Why:** owner asked for sortable column headers (with an ascending/
+descending arrow indicator) on the Products table on the Listings tab,
+including the Featured column sending all featured rows to the top or
+bottom; and asked for supplier featuring to move off the supplier edit page
+onto the Manage Suppliers list page as its own column, mirroring exactly how
+products are already featured from their Listings tab, with the same
+sorting applied there too.
+
+- Every `<th>` except Image/Actions (products) and Actions (suppliers) is
+  now a link that toggles asc/desc on that column, with `▲`/`▼` shown on
+  the active column and `↕` on the rest. Built via a closure defined once
+  near the top of each view (not a named function -- avoids any "cannot
+  redeclare" risk if the view is ever rendered twice in one request), since
+  the same link-building logic repeats per column.
+- `AdminSettings::listings()` / `Dashboard::suppliers()` both read `?sort=`/`?dir=`
+  from the query string, whitelist against a `*_SORT_FIELDS` constant, and
+  apply it: real columns (`id`, `name`, `status`, `is_featured`,
+  `created_at`, `company_name`, `email`, `membership_level`, `uid`) sort in
+  SQL; `supplier_name`/`category_name` on the products table (attached
+  after fetch, no join) sort in PHP via `usort()`; `country_name` on the
+  suppliers table gets a real `LEFT JOIN countries` so it can still sort at
+  the SQL level and paginate correctly (confirmed CI4's pager already
+  preserves the full query string, including `sort`/`dir`, when building
+  page links -- `Pager::ensureGroup()` seeds each group's URI from
+  `current_url(true)` + `$_GET`, so no extra plumbing was needed there).
+  Every action's redirect (toggle, status change, delete, set-featured-set)
+  reuses the same `?sort=&dir=` so none of those resets the admin's current
+  sort.
+- **Supplier featuring moved off the edit form entirely**: removed the
+  "Featured Supplier" checkbox + "Carousel Set" dropdown from
+  `supplier-form.php` (and the validation/save logic in `addSupplier()`/
+  `editSupplier()` that backed it) -- editing a supplier's other fields can
+  no longer accidentally reset their featured state, which the old form
+  design risked (is_featured/featured_set were resaved on every edit
+  submit regardless of intent). Manage Suppliers gained a Featured column
+  with the identical ★/☆ toggle + "Set N" dropdown pattern already used on
+  the Products Listings tab, backed by new `toggle_featured_supplier` /
+  `set_supplier_featured_set` actions on a new `POST dashboard/suppliers`
+  route (there wasn't one before -- the list page was previously GET-only).
+  Reuses the existing `supplierSetHasRoom()`/`getSupplierSetCount()`
+  helpers and `TOP_SUPPLIERS_ITEMS_PER_SET` constant from the same-day cap
+  work, including the identical auto-pick-first-open-set behavior on
+  toggle-on and the real (not silent) over-assignment error.
+- **Verified**: full lint sweep across every touched file; unauthenticated
+  `curl` confirms both `dashboard/suppliers` and `admin/settings/listings`
+  still correctly redirect to `/login` (no route/controller-level fatals)
+  regardless of `?sort=`/`?dir=` values passed. A throwaway `spark` command
+  (deleted after use) confirmed the actual SQL: `company_name ASC` returns
+  a block of tied NULL-company_name rows first (expected MySQL NULL
+  ordering -- pre-existing data gap, several suppliers have no
+  `company_name` set, not a sort bug -- confirmed by direct-SQL cross-check
+  against the same rows), `is_featured DESC` correctly returns the 2
+  currently-featured suppliers before any unfeatured ones, and the
+  `country_name` join + pagination combination returns the right page size
+  and total count. The same command rendered both edited views with
+  fabricated data end-to-end through every new closure/column/form before
+  hitting the same pre-existing CLI-only `csrf_field()` limitation
+  documented earlier in this project's history (real HTTP requests aren't
+  affected) -- confirming no PHP errors anywhere in the new template code.
+  **Then click-through-tested with the owner's real admin session** once
+  the browser was reopened and logged into again -- and that pass caught a
+  real bug the CLI/render-only testing above couldn't have: every row-action
+  form's `action="..."` pointed at a bare URL with no query string, so any
+  toggle/status-change/delete POST reset the sort back to the default
+  (`created_at DESC`) instead of preserving whatever column the admin had
+  just sorted by. Confirmed live: sorted Products by Featured, submitted a
+  toggle, landed back on `?sort=created_at&dir=desc` instead of
+  `?sort=is_featured&dir=desc`. Fixed by adding a `$listingsActionUrl` /
+  `$suppliersActionUrl` (current sort baked into the query string) and
+  pointing all 7 / 2 row-action forms at it instead of the bare URL;
+  re-tested live and confirmed the sort now survives every action,
+  including a rejected one (the over-assignment error, which also correctly
+  reproduced live on both products and suppliers). Also confirmed live:
+  Product Name ASC actually alphabetizes; Featured DESC puts all 3 pinned
+  products / both pinned suppliers at the top; the `country_name` join sorts
+  correctly in both directions (`Vietnam...United States...` for DESC);
+  editing supplier 515's other fields through the edit form no longer resets
+  its `is_featured`/`featured_set` (confirmed unchanged in the DB after a
+  real "Update" click); the edit form itself has zero trace of the removed
+  checkbox/dropdown/label text. DB re-confirmed back to the exact 3/2-featured
+  baseline afterward -- no test mutation left behind.
+
+---
+
+## 2026-08-21 — Carousel sets drop the 1-pin-per-set cap; over-assignment now blocked with a real error
+
+**Files:** `app/Controllers/Pages.php`, `app/Controllers/AdminSettings.php`,
+`app/Controllers/Dashboard.php`, `app/Views/admin/settings/top-sections.php`,
+`app/Views/admin/settings/listings.php`,
+`app/Views/dashboard/admin/supplier-form.php`, `.claude/BLOCKERS.md` (#24, new)
+**Why:** owner asked to remove the earlier same-day "exactly 1 pin per set"
+cap -- a set should hold as many admin-pinned items as the admin assigns to
+it (up to its own display size), not force exactly one. Confirmed with the
+owner that the total-items-never-exceeds-`sets x items_per_set` guarantee
+already held structurally (each set is still sliced to its display count
+regardless of how many are pinned) and didn't need separate work.
+
+- Removed `Pages::TOP_PRODUCTS_PIN_CAP` / `TOP_SUPPLIERS_PIN_CAP` entirely --
+  the pinned-per-set query now just limits to the section's full display
+  count (3 / 2) as a defensive cap, not an enforced-to-exactly-1 one.
+- New server-side validation, since nothing upstream constrained pins-per-set
+  once the cap was removed: `AdminSettings::productSetHasRoom()` and
+  `Dashboard::supplierSetHasRoom()` (mirroring `Pages::TOP_PRODUCTS_DISPLAY_COUNT`
+  / `TOP_SUPPLIERS_DISPLAY_COUNT` via new sibling constants that must stay in
+  sync) count how many *active/approved* items are already pinned into a
+  given set and reject assigning past that -- enforced in
+  `AdminSettings::listings()`'s `toggle_featured_product` /
+  `set_product_featured_set` actions and in `Dashboard::addSupplier()` /
+  `editSupplier()`, all with a real flash-message error rather than silently
+  clamping or ignoring the request, per the owner's explicit ask.
+- Turning a product's ★ on used to hard-default to set 1; now it reuses the
+  product's last-known set if that still has room, otherwise auto-picks the
+  first set that does -- hard-defaulting to set 1 would've stranded admins
+  with no way to land a new pin anywhere once set 1 filled up, since a
+  product's "Set N" dropdown only appears *after* it's already featured.
+  Only errors ("All N carousel set(s) already have the maximum...") when
+  every configured set is genuinely full.
+- **Real data consequence surfaced and fixed, with the owner's explicit
+  sign-off**: all 24 originally-featured products / 25 featured suppliers
+  were still tagged `featured_set = 1` from the same-day migration backfill
+  (written before any cap existed). Against the new 3/2-per-set cap, set 1
+  was instantly "full" 8x over -- blocking any *new* pin into set 1 (existing
+  ones could still be unfeatured freely; nothing rendered wrong, since
+  `Pages::index()` already only pulls the 3/2 most recent of them). Owner
+  chose trimming over leaving it: kept only the 3 most-recently-created
+  featured products (57, 64, 83) and 2 most-recently-created featured
+  suppliers (465, 515) as `is_featured=1`/`featured_set=1`, unfeatured the
+  other 21 products / 23 suppliers. This exactly matches what was already
+  rendering under the prior single-set default, so nothing visibly changed
+  on the live site.
+- **Found and fixed a real, pre-existing bug while wiring the new error
+  messages, not introduced by this change**: `redirect()->...->withInput()->with('error',
+  ...)` silently drops the flash message in this environment --
+  confirmed via a temporary `log_message()` that the flash data *is* present
+  in session data during the same request it's set, but doesn't survive to
+  the next one when `withInput()` precedes `with()` in the chain. Dropping
+  `withInput()` (not needed by these two new checks anyway) fixed it
+  immediately, re-verified live. Filed as BLOCKERS #24 -- the same pattern
+  appears 65 times across 5 controllers including `Auth.php`'s login/register
+  error paths; only the 2 new call sites here were fixed and re-tested, the
+  rest are flagged, not confirmed broken or fixed.
+- **Verified live with the owner's real admin session** (same session from
+  the earlier click-through pass today): configured 2 product sets, filled
+  set 1 to its pre-existing 3/3 cap, confirmed toggling a 4th product
+  auto-landed in set 2 (not blocked), filled set 2 to 3/3, confirmed a 7th
+  product was correctly rejected with the "All 2 carousel set(s)..." message
+  actually rendering on screen. Confirmed the identical reject-with-visible-error
+  behavior on the supplier edit form (set 1 already at 2/2, tried adding a
+  3rd, got the real error, DB unchanged). Confirmed the homepage renders a
+  fully-pinned set correctly (3 pinned products in set 1, 3 more in set 2,
+  no dynamic fill needed for either). All test pins reverted afterward; DB
+  re-confirmed back to the newly-trimmed 3/2-featured baseline described
+  above, `homepage_carousel` settings cleared, view counts still 0.
+
+---
+
+## 2026-08-21 — Top Products/Top Suppliers become admin-configurable rotating carousels
+
+**Files:** `app/Database/Migrations/2026-08-21-000002_AddFeaturedSetForTopCarousels.php`
+(new), `app/Models/ProductModel.php`, `app/Models/UserModel.php`,
+`app/Controllers/Pages.php`, `app/Controllers/AdminSettings.php`,
+`app/Controllers/Dashboard.php`, `app/Config/Routes.php`,
+`app/Views/admin/settings/top-sections.php` (new),
+`app/Views/admin/settings/{general,seo,moderation,categories,listings,registration,email}.php`,
+`app/Views/dashboard/admin/supplier-form.php`, `app/Views/pages/index.php`,
+`app/Views/partials/footer.php`
+**Why:** owner asked to go further than a single pinned+dynamic set per
+section (shipped earlier today): multiple sets, each rotating into view on a
+timer, with the number of sets and the seconds-per-set both admin-configurable
+-- and each set still gets its own single admin-pinned item via `is_featured`.
+
+- New `products.featured_set` / `users.featured_set` columns (nullable
+  TINYINT, `after is_featured`) -- records *which* rotating set a pinned row
+  belongs to. Migration backfills `featured_set = 1` for every row that was
+  already `is_featured = 1`, so the 24 real featured products / 25 real
+  featured suppliers already in this DB keep behaving exactly as they did
+  under the single-pin-cap logic from earlier today, until an admin
+  reassigns them to other sets.
+- New `site_settings` group `homepage_carousel`: `top_products_set_count`,
+  `top_products_interval_seconds`, `top_suppliers_set_count`,
+  `top_suppliers_interval_seconds`. New admin tab
+  `AdminSettings::topSections()` (`admin/settings/top-sections`, added to the
+  nav-tabs bar shared across all 7 existing Site Settings views) -- bounds
+  clamped server-side (1-10 sets, 2-60 seconds) independent of client input,
+  and `Pages::index()` re-clamps again on read in case a row is ever edited
+  directly.
+- `Pages::index()`'s pin+fill logic (from earlier today) now loops
+  `set_count` times per section instead of running once: each iteration
+  pins the one `is_featured=1` row matching that set's `featured_set`
+  number, fills the rest via the existing hotness ranking, and excludes
+  every id already used in an earlier set (`whereNotIn`) so the same
+  product/supplier never appears twice across the whole carousel. Falls
+  back to the exact previously-verified single-set behavior when
+  `set_count` is 1 (the default when unconfigured).
+- Which product goes into which set: the "Featured" (★) column on
+  `admin/settings/listings` now shows a "Set N" dropdown next to the star
+  once a product is featured (`AdminSettings::listings()` gained a
+  `set_product_featured_set` action; turning a product featured with no set
+  chosen yet defaults to set 1 rather than leaving `featured_set` NULL,
+  which the pin query would never match). For suppliers, a "Carousel Set"
+  dropdown was added next to the existing "Featured Supplier" checkbox on
+  the supplier edit/add form (`Dashboard::addSupplier()` /
+  `editSupplier()`), reading the configured supplier set count via a new
+  `Dashboard::getSupplierSetCount()` helper.
+- `index.php`'s Top Products/Top Suppliers markup now renders every set
+  (one `.top-products-set` / `.row.top-supplier-set` per set) inside a
+  wrapping carousel container carrying `data-autoplay-speed` (seconds x
+  1000). `footer.php` gained a Slick Carousel init for
+  `.top-products-carousel` / `.top-supplier-carousel` (`.each()`, since the
+  two sections can have different intervals), matching this file's existing
+  slider-init pattern (`fade: true`, `pauseOnHover: true`, dots/autoplay
+  only enabled when more than one set exists so a single-set carousel
+  renders identically to before this change).
+- **Verified live, not just by reading the code**: model-layer-verified
+  first (via a throwaway `spark` command, deleted after use -- CLIRequest
+  can't simulate real POST branching through the controller, the same
+  documented limitation behind every other CLI-only verification in this
+  project) that `site_settings` saves/reads the new keys correctly and that
+  `featured_set` updates land as expected. Set `top_products_set_count=3` /
+  `top_suppliers_set_count=2`, pinned one extra product and one extra
+  supplier into set 2, and fetched the real homepage: confirmed exactly 3
+  product sets / 2 supplier sets rendered, the correct row pinned into each
+  set, no duplicate product/supplier across sets, and (via the browser
+  tool, reading Slick's own `slickCurrentSlide()`) that both carousels
+  actually auto-advance at their configured interval with no console
+  errors. All test mutations reverted
+  afterward and diffed id-for-id against the original 24/25 featured rows
+  (exact match, confirmed via `Compare-Object` after first catching and
+  fixing a mistaken revert of a product that turned out to have been
+  genuinely pre-featured); `homepage_carousel` settings rows deleted back to
+  empty (default 1 set / 5s applies until an admin configures it);
+  `SUM(view_count)`/`SUM(profile_view_count)` confirmed still 0.
+- **Then actually click-through-tested, admin forms included**: the owner
+  logged into the admin panel themselves in the browser tool (this
+  project's standing rule is that I never enter credentials myself, even
+  test ones offered directly -- an earlier session's password-hash
+  workaround for the same problem was the wrong call; the owner typing
+  their own login keystrokes sidesteps that cleanly, since everything after
+  is driving an already-authenticated session, not touching credentials).
+  With that session: saved real values on `admin/settings/top-sections`
+  through the actual form and confirmed they persisted; submitted an
+  out-of-range value (999 sets, 1 second) with the browser's own min/max
+  removed via JS first (HTML5 would've blocked the submit otherwise) and
+  confirmed the server clamped it to 10 / 2 independently of the client
+  constraint; found product 57's real table row, confirmed its Set dropdown
+  showed the configured 3 options with "Set 1" selected, changed it to
+  Set 2 through the real `set_product_featured_set` action and confirmed
+  the DB updated; opened supplier 515's real edit page, confirmed "Featured
+  Supplier" was checked and the Carousel Set dropdown showed 2 options,
+  changed it to Set 2, clicked the actual "Update" submit button, and
+  confirmed the save landed correctly through the full `editSupplier()`
+  path with every other field on the row (name, email, company, status,
+  membership) untouched. Reverted every value touched during this pass back
+  to its original state and re-confirmed the 24/25 featured-row counts,
+  `featured_set` distribution, and `homepage_carousel` row count all still
+  matched the already-verified clean baseline afterward.
+
+---
+
+## 2026-08-21 — Real popularity tracking for Top Products/Top Suppliers, replacing the manual is_featured gate
+
+**Files:** `app/Database/Migrations/2026-08-21-000001_AddViewCountsForTopRanking.php`
+(new), `app/Controllers/BaseController.php`, `app/Controllers/Product.php`,
+`app/Controllers/Supplier.php`, `app/Controllers/Pages.php`,
+`app/Models/ProductModel.php`, `app/Models/UserModel.php`
+**Why:** owner asked why Top Products/Top Suppliers had fixed sets that
+wouldn't naturally include new items, and asked for a mechanism that
+actually observes what's popular instead. Root cause: both sections were
+gated on `is_featured` -- a manual admin checkbox that defaults unchecked on
+every new product/supplier, so nothing new could ever appear without someone
+remembering to flag it by hand. The rotation fix from 2026-08-19 only
+addressed staleness *within* that already-curated set, not this.
+
+- New `products.view_count` / `users.profile_view_count` columns. Deliberately
+  left out of both models' `$allowedFields` — system-managed counters, not
+  form fields; only touched via one method.
+- New `BaseController::trackView()` — a shared helper (both `Product::detail()`
+  and `Supplier::profile()` need the identical pattern): atomic
+  `SET col = col + 1` via the raw query builder, not `Model::update()` — atomic
+  against concurrent viewers, and deliberately bypasses Model validation
+  entirely (`UserModel`'s email-uniqueness rule has no business running on a
+  view-count bump; see BLOCKERS #22 for why that rule is fragile to begin
+  with). Deduped per visitor session so refreshing the same page repeatedly
+  doesn't inflate the count.
+- `Pages.php`'s ranking replaced with a decayed-popularity "hotness" score —
+  `views / (days_since_created + 2)`, the same recency-decay shape sites like
+  Hacker News use for "hot" rankings — instead of `is_featured DESC,
+  created_at DESC`. A product/supplier added yesterday with a handful of
+  views can already outrank one from a year ago with the same raw view count
+  diluted thin over time, so new items get a real, fast path onto the
+  homepage instead of waiting on manual curation. `is_featured` remains a
+  secondary tiebreak (matters mainly right after this ships, before real
+  view counts accumulate). Suppliers additionally get a membership-tier
+  *multiplier* (platinum ×1.5 down to free ×1.0) in place of the old hard
+  `is_featured=1` filter — paying tiers keep a visibility edge, consistent
+  with how membership is weighted elsewhere on the site, without it being an
+  absolute gate that locks free-tier/new suppliers out.
+- **A real bug found and fixed mid-verification, not just at the code-review
+  stage**: the initial version kept the existing `shuffle()`-the-whole-pool
+  rotation approach from 2026-08-19 on top of the new ranking. Tested by
+  simulating a product as brand-new-with-views (hotness ~100x any real
+  competitor) and fetching the homepage 6 times fresh — it only appeared in
+  3 of 6. A uniform shuffle across an 8-item pool gives the genuine #1 item
+  the same 3-in-8 odds as the barely-qualifying 8th, which quietly defeats
+  the entire point of ranking by real popularity. Fixed with a new
+  `Pages::anchorTopAndShuffleRest()`: the #1-ranked item is always shown,
+  only the remaining display slot(s) rotate through the rest of the pool.
+  Re-tested the same way after the fix: present in 6 of 6 fetches, with the
+  other 2 slots still visibly rotating between fetches.
+- **Verified thoroughly, with real data, not just status codes**: confirmed
+  session-based view dedup directly (3 requests same session → +1, not +3;
+  a second session → +1 again, correctly separate) on both a product and a
+  supplier profile. Confirmed the hotness formula's actual effect by
+  temporarily setting a zero-view 208-day-old product to brand-new-with-2-
+  views and comparing its computed score (1.0) against a real 208-day-old
+  product with the same 2 views (0.0095) — a ~100x gap for identical
+  engagement, purely from age. Confirmed the homepage still renders sensibly
+  when every count is genuinely 0 (the actual state immediately after this
+  deploys) via the `is_featured`/`created_at` tiebreak. All temporary test
+  mutations (view counts, a `created_at` backdate) reverted afterward --
+  confirmed `SUM(view_count)` and `SUM(profile_view_count)` both back to 0
+  across the whole database before finishing.
+
+---
+
+## 2026-08-21 — Manual `is_featured` pinning restored on top of the hotness ranking
+
+**Files:** `app/Controllers/Pages.php`
+**Why:** owner asked to keep the old `is_featured` admin checkbox usable
+alongside the new popularity ranking from earlier today, rather than it going
+fully dynamic: check 0 items and a section is 100% ranked as before; check
+1 up to the section's display count (3 for Top Products, 2 for Top
+Suppliers) and those items are guaranteed slots, with whatever's left filled
+by the hotness ranking exactly as before.
+
+- Added `Pages::TOP_PRODUCTS_DISPLAY_COUNT` (3) / `TOP_SUPPLIERS_DISPLAY_COUNT`
+  (2) — the same numbers `index.php` already slices its pools to, now named
+  so the pin cap and the display cap can't silently drift apart.
+- Both `$featuredSuppliers` and `$topProducts` now build in two steps:
+  `is_featured=1` rows first (capped at the display count, `created_at DESC`
+  tiebreak if more than the cap are checked — no "when was this toggled on"
+  column exists, so created_at is the closest existing proxy, matching this
+  site's tiebreak convention elsewhere), then the remaining slots filled by
+  the existing hotness query with `whereNotIn('id', ...)` excluding whatever
+  was already pinned, still passed through `anchorTopAndShuffleRest()` so the
+  genuine top dynamic item isn't diluted by the fill-slot rotation.
+- `$featuredProducts` (the separate is_featured-gated "category groups"
+  section further down `index.php`, fed by `$productChunks`) is untouched —
+  unrelated to Top Products/Top Suppliers.
+- **Verified live, not just by reading the code**: the local DB already had
+  24 real featured products and 25 real featured suppliers (pre-existing
+  admin curation, more than either display cap) — confirmed the pinned
+  slots are exactly the most-recently-created among those, in the right
+  order, on the actual rendered homepage. Backed up every `is_featured` id,
+  temporarily cleared all of them to re-confirm the 0-pinned case still
+  matches the already-verified fully-dynamic behavior (anchor slot stable
+  across 4 fresh fetches, remaining slots rotating), then pinned exactly one
+  product and one supplier to confirm partial-pin fills the rest with no
+  duplicate ids. Restored every `is_featured` flag from the backup and
+  diffed the id sets before/after (exact match) rather than trusting the
+  row counts alone; `SUM(view_count)`/`SUM(profile_view_count)` confirmed
+  still 0 afterward.
+
+---
+
+## 2026-08-21 — `is_featured` pin cap tightened to a single slot per section
+
+**Files:** `app/Controllers/Pages.php`
+**Why:** owner asked to cap manual pinning to one item per section (1 of 3
+for Top Products, 1 of 2 for Top Suppliers) instead of allowing pins up to
+the full display count from the same-day pin+fill change above.
+
+- Added `TOP_PRODUCTS_PIN_CAP` / `TOP_SUPPLIERS_PIN_CAP` (both 1), separate
+  from the existing `TOP_*_DISPLAY_COUNT` constants — the pinned-query
+  `limit()` now uses the cap, the remaining-slots math still uses the full
+  display count, so 2 of 3 product slots / 1 of 2 supplier slots always stay
+  dynamic regardless of how many rows have `is_featured=1` set.
+- The `created_at DESC` tiebreak for "more than the cap are featured" still
+  applies, just against a cap of 1 instead of 3/2.
+- **Verified live**: local DB still has the 24/25 real featured rows from
+  earlier today (untouched, no test mutations needed this time) — confirmed
+  the homepage now pins exactly one product and one supplier (the most
+  recently created featured row in each case), with the other slots still
+  filled dynamically and still rotating/anchoring correctly across repeat
+  fetches.
+
+---
+
+## 2026-08-19 — Homepage "Top Products" now rotates instead of freezing on the same 3
+
+**Files:** `app/Controllers/Pages.php`
+**Why:** owner reported the homepage's Top Products/Top Suppliers section
+(`index.php:103-197`) as static, never updating.
+
+- Diagnosed by fetching the homepage 3 times fresh and diffing the rendered
+  output rather than just reading the query code: **Top Suppliers already
+  rotates correctly** (`shuffle($featuredSuppliers)` already existed and was
+  confirmed firing — 3 different fetches showed 3 different supplier pairs).
+  **Top Products genuinely never changed** — identical 3 items on all 3
+  fetches. No page caching involved (checked `Filters.php`'s `pagecache`
+  filter and `writable/cache/` directly — nothing cached the homepage route).
+- Root cause: the query (`is_featured DESC, created_at DESC`, limit 12) is
+  fully deterministic. With 24 featured products, the same newest 3 show on
+  every load until something newer gets marked featured — not a bug exactly,
+  but effectively static from a visitor's perspective, which is what was
+  reported.
+- Fix: applied the exact same pattern `$featuredSuppliers` already uses two
+  queries above it in the same method — `shuffle()` the fetched pool
+  (guarded by `count() > 3`, since the view only ever shows the first 3)
+  before assigning to `$data['topProducts']`. Also added a missing
+  `unset($p)` after the enrichment `foreach (&$p)`, matching the `unset($s)`/
+  `unset($cs)` hygiene the sibling loops in this same method already have.
+- **Verified the fix, not just the code change**: 5 fresh fetches after the
+  change showed 5 different sets of 3 products (previously identical every
+  time). Confirmed live in the browser too, scoped precisely to `.top-products`
+  (an initial broader check accidentally matched an unrelated
+  `.top-products-box`-classed section further down the page — re-scoped and
+  re-verified against just the actual homepage section in question): exactly
+  3 products, correct images, correct links. Re-confirmed Top Suppliers
+  still shuffles correctly alongside it, unaffected by this change.
+
+---
+
+## 2026-08-19 — Remaining 7 BLOCKERS #23 locations fixed; entry resolved and removed
+
+**Files:** `app/Views/pages/buyer-detail.php` (×2 locations),
+`app/Views/pages/product-detail.php`, `app/Views/pages/supplier-country.php`,
+`app/Views/pages/supplier-profile.php`, `app/Views/pages/supplier.php`
+(×2 locations), `.claude/BLOCKERS.md`
+**Why:** owner asked to finish the rest of BLOCKERS #23 after `/buyer` was
+fixed on its own — same second flag-naming-scheme bug, same fix, at the 7
+remaining locations.
+
+- Same one-line change at every location: replaced
+  `flag_' . str_replace(' ', '_', $x['country']['name']) . '.svg'` with
+  reading `$x['country']['flag']` directly — the country row was already
+  fully loaded via `$countryModel->find()` at every one of these call sites
+  (confirmed by checking `Buyer.php`, `Product.php`, `Supplier.php` before
+  touching each view), so this is a pure view-layer fix, no controller
+  changes needed anywhere.
+- **One `Edit` tool footgun worth recording**: attempted `replace_all` across
+  `supplier.php`'s two near-identical blocks; it silently matched and fixed
+  only one (differing indentation made the two occurrences not byte-identical)
+  while still reporting success for "all occurrences." Caught it by re-grepping
+  for the old pattern immediately afterward rather than trusting the tool's
+  own success message, found the second instance still broken, fixed it
+  individually.
+- **Corrected a factual error in BLOCKERS #23 itself** while closing it out:
+  that entry claimed `buyer-detail.php`'s two locations lacked the
+  `onerror="this.style.display='none'"` fallback other locations had: false,
+  both already had it, verified by reading the file directly before editing.
+- **Verified live on every affected page type**, not just re-reading the
+  diff: `/supplier` (44 flags), `/supplier-country/AE` (126 flags),
+  `/supplier/profile/{slug}`, `/product/detail/{id}` (had to find a product
+  whose supplier actually has a *valid* `country_id` — the first one tried
+  pointed at a non-existent country row, an unrelated pre-existing data
+  issue, not a bug in this fix), and `/buyer-inquiry/{slug}` (both the main
+  inquiry's flag and the related-inquiries list's flags) — zero broken images
+  on any of them. Also re-verified at the database level: every distinct
+  flag actually used by real `buyer_inquiries` (66) and approved supplier
+  `users` (31) rows resolves to a real file.
+- Confirmed zero remaining instances of the old
+  `flag_' . str_replace(...)` pattern anywhere in `app/Views/pages/`.
+  BLOCKERS #23 removed — all 8 locations now fixed, matching the entry's own
+  "remove only when genuinely resolved" convention.
+
+---
+
+## 2026-08-19 — `/buyer` page flags fixed too (first of the BLOCKERS #23 locations)
+
+**Files:** `app/Views/pages/buyer-main.php`
+**Why:** owner reported broken flags on `/buyer` (the "View All" destination
+from the just-fixed Latest Buy Offers section) — this is location #1 of the
+8 `flag_<Country_Name>.svg`-scheme locations logged in BLOCKERS #23.
+
+- Same fix pattern as the homepage: switched from the inline
+  `flag_' . str_replace(' ', '_', $name) . '.svg'` construction to reading
+  `$inquiry['country']['flag']` directly — no controller change needed,
+  `Buyer.php` already loads the full country row via `$countryModel->find()`,
+  `flag` was already present in the data, just unused by this one `<img>` tag.
+- **Verified beyond the two pages checked live**: queried every distinct
+  country referenced by any of the 470 `buyer_inquiries` rows (67 distinct),
+  not just what happened to be on the sampled pages, and confirmed every one
+  resolves to a real file. Also checked page 1 and page 5 live in the
+  browser — 50 flag images each, zero broken.
+- BLOCKERS #23 still has 7 remaining locations (buyer-detail ×2,
+  product-detail, supplier-country, supplier-profile, supplier ×2) — not
+  touched here, owner asked about `/buyer` specifically.
+
+---
+
+## 2026-08-19 — Latest Buy Offers: fixed broken country flags (case-sensitivity bug + 3 missing files)
+
+**Files:** `public/assets/images/flags/australia.svg` (renamed from
+`Australia.svg`), `public/assets/images/flags/greece.svg` (new),
+`public/assets/images/flags/rwanda.svg` (new),
+`public/assets/images/flags/slovenia.svg` (new), `.claude/BLOCKERS.md`
+**Why:** owner reported some country flags not rendering in the homepage's
+Latest Buy Offers section (`index.php:59-87`).
+
+- Root cause was two separate problems in the `countries.flag`-driven flag
+  system that section (and `Pages.php`) uses:
+  1. **Case-sensitivity bug, invisible locally, breaking on production**:
+     `countries.flag` stores `australia.svg` (lowercase, matching every
+     other row's convention), but the actual file on disk was
+     `Australia.svg`. Windows/NTFS resolves this fine (case-insensitive),
+     which is exactly why it went unnoticed here — a case-sensitive Linux
+     production filesystem would 404 it. Fixed by renaming the file to
+     lowercase (matching the DB and every other flag's naming convention),
+     not by changing the DB — the rename is the fix that actually removes
+     the trap, not just works around it.
+  2. **3 genuinely missing files**: `greece.svg`, `rwanda.svg`,
+     `slovenia.svg` referenced by `countries.flag` but never existed on disk
+     at all. Authored simple flat-shape SVGs matching the style already used
+     by several existing flags in this same directory (plain `rect`/`circle`/
+     `path` shapes, `viewBox="0 0 60 40"`) rather than sourcing from an
+     external CDN.
+  3. Left an orphaned, unreferenced `flag_Australia.svg` in place — turned
+     out NOT dead weight after all, see the entry below.
+- **Verified comprehensively, not just the reported cases**: wrote a script
+  checking all 122 distinct `countries.flag` values against the actual
+  directory listing, case-sensitively. Before: 3 missing + 1 case mismatch.
+  After: 0 missing, 0 case mismatches, for all 122. Confirmed all 4 fixed
+  files return HTTP 200 over real HTTP.
+- **Found a second, much larger, unrelated flag bug while verifying** — see
+  BLOCKERS #23. 8 locations across 6 other view files (buyer-detail,
+  buyer-main, product-detail, supplier-country, supplier-profile, supplier)
+  use a completely different, mostly-broken naming scheme
+  (`flag_<Country_Name>.svg`, computed inline, not from the DB column) —
+  77 of 122 countries have no matching file. Explicitly out of scope for
+  what was asked (the homepage section only) and a much bigger job, so
+  logged rather than fixed unprompted; that's also what `flag_Australia.svg`
+  turned out to be for — this second system's actual Australia file, not
+  orphaned clutter as it first appeared before finding this second convention.
+
+---
+
+## 2026-08-19 — Sitewide "Register Your Company" popup replaced too; fixed a real double-init bug found while wiring it up
+
+**Files:** `app/Views/partials/footer.php`, `app/Views/pages/index.php`,
+`public/assets/js/script.js`
+**Why:** owner asked for the third `b2b-top-form` (flagged, then deliberately
+left alone, in the previous entry) to be converted too. Also adopted the
+owner's own edit to `lead-capture-inline-form.php` adding a `$defaultRadio`
+param, and used it here (`buyer`, matching what the owner specified for this
+call site directly).
+
+- `footer.php`'s "Register Your Company" popup now uses the same
+  `lead-capture-inline-form.php` partial, `defaultRadio => 'buyer'` as
+  instructed. Heading, sub-heading, and close button untouched.
+- Since `footer.php` is sitewide (every public layout includes it), the form
+  it now contains needs `homepage-lead-forms.js` on every page, not just the
+  homepage. Moved the script include there instead of leaving it duplicated
+  in `index.php` (which would have double-bound every homepage form's submit
+  handler — removed that duplicate).
+- **Found and fixed a real bug while verifying this**, not caused by this
+  change but exposed by it: `script.js` already had its own **global**
+  `intlTelInput` initializer for every `.phone` input on the site, which
+  also overwrites the field's value with the full E.164 number
+  (`iti.getNumber()`) on submit. The new partial's phone input kept the
+  `.phone` class (needed for existing CSS like `.b2b-top-form .phone`),
+  so every lead-capture form was being double-initialized — two stacked
+  `.iti` widgets — and would have had its carefully-separated
+  `phone`/`phone_code` submission silently overwritten by `script.js`'s own
+  submit handler immediately after `homepage-lead-forms.js`'s handler ran.
+  Fixed with a minimal, scoped exclusion: `.phone:not(.lead-capture-phone)`
+  in `script.js` — every other `.phone` input on the site (register.php,
+  etc.) is completely unaffected, confirmed by testing the selector directly
+  against the live DOM.
+- **Verified past a stale-cache false alarm**: my first live check after the
+  fix still showed 2 `.iti` widgets per form — traced to the *browser*
+  serving a cached pre-fix copy of `script.js` for the `<script src>` tag
+  specifically (a direct `fetch(..., {cache:'no-store'})` of the same URL
+  correctly showed the new code). Confirmed the fix itself was correct two
+  ways: the `:not()` selector tested directly against the live DOM excluded
+  all 6 lead-capture phone inputs (0 matches), and a fully isolated
+  re-injection of both scripts with cache-busting query strings on a reset
+  copy of one form showed exactly 1 `.iti` widget. Then confirmed via a real
+  submission that `phone`/`phone_code` reached the database correctly split
+  (`5551313` / `+1`), not overwritten as a single E.164 string. Test lead
+  deleted afterward; sample-lead count confirmed still 7.
+
+---
+
+## 2026-08-19 — Homepage forms replaced with the popup step-1 form
+
+**Files:** `app/Views/pages/index.php`,
+`app/Views/partials/lead-capture-inline-form.php` (new),
+`public/assets/js/homepage-lead-forms.js` (new)
+**Why:** owner reported every form on the homepage was wrong/inconsistent —
+some posted straight to `/register` (full account creation with a password
+field), others to `/contact/submit` (a completely different "get a quote"
+flow) — and wanted all of them replaced with the actual T-29 popup's step-1
+form (type/name/email/phone/WhatsApp → `LeadCapture::capture()`).
+
+- New shared partial `partials/lead-capture-inline-form.php` — the same
+  fields as `lead-popup-modal.php`'s step 1, parameterized by `$idPrefix` so
+  multiple copies on one page don't collide on element ids. Included via
+  `<?= view(...) ?>`, the same nested-view pattern already used elsewhere in
+  this codebase (`agent-partner-form-modal`, `tradeshow-form-modal`).
+- Replaced the `<form>` contents at all 5 requested locations — both
+  `b2b-top-form` instances on the homepage itself (the banner form and the
+  BCM popup modal) and all 3 `multiple-quote-form` instances (buy-offers
+  section, `supplier-contact-form`, `success-stories-sec`) — leaving every
+  wrapper `<div>`/`<section>` and `<h2>`/`<h3>` heading text completely
+  untouched, per instruction.
+- **Found a 6th matching element while verifying**: `partials/footer.php`
+  has its own `b2b-top-form` ("Register Your Company" floating CTA + popup),
+  included sitewide via every public layout, not the homepage specifically.
+  Flagged it rather than assuming either way — owner said leave it, so it's
+  untouched and still posts to `/register` as before.
+- New `assets/js/homepage-lead-forms.js` wires every `.lead-capture-inline-form`
+  on the page independently: intlTelInput on the phone field, AJAX POST to
+  `LeadCapture::capture()`, swaps to a success message on `status: 'success'`
+  (mirroring the popup's own JS), inline error text otherwise. Included once
+  in `index.php`, not sitewide.
+- **Verified in the actual browser**: all 5 forms render with exactly the
+  right fields (no country/password left over from the old forms), unique
+  WhatsApp checkbox ids (no collisions), all 5 `intlTelInput` widgets
+  initialize without errors, all `data-action` attributes point at
+  `lead/capture`. Submitted one form for real — network tab confirmed the
+  POST and 200 response, the form visibly swapped to the success message,
+  and the resulting `leads` row was confirmed correct (right name/email/type/
+  status) before being deleted. Sample-lead count confirmed still 7
+  throughout.
+
+---
+
 ## 2026-08-19 — Popup Leads: Stage and Assigned Agent filters
 
 **Files:** `app/Models/LeadModel.php`, `app/Controllers/LeadManagement.php`,

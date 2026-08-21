@@ -14,6 +14,24 @@
     <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
 <?php endif; ?>
 
+<?php
+    // Column-header sort links, same pattern as admin/settings/listings.php.
+    // A closure, not a named function, to avoid any "cannot redeclare" risk
+    // if this view is ever rendered more than once in a request.
+    $supplierSort = $sort ?? 'created_at';
+    $supplierDir = $dir ?? 'desc';
+    // Every row-action form below posts here too, current sort in the query
+    // string -- without this, toggling/setting-featured would reset the
+    // admin's current column sort (same reasoning as listings.php).
+    $suppliersActionUrl = base_url('dashboard/suppliers') . '?sort=' . urlencode($supplierSort) . '&dir=' . urlencode($supplierDir);
+    $supplierSortLink = function ($field, $label) use ($supplierSort, $supplierDir) {
+        $nextDir = ($supplierSort === $field && $supplierDir === 'asc') ? 'desc' : 'asc';
+        $arrow = $supplierSort === $field ? ($supplierDir === 'asc' ? '&#9650;' : '&#9660;') : '<span class="text-muted">&#8597;</span>';
+        $url = base_url('dashboard/suppliers') . '?sort=' . urlencode($field) . '&dir=' . urlencode($nextDir);
+        return '<a href="' . esc($url, 'attr') . '" class="text-decoration-none text-dark d-inline-flex align-items-center gap-1">'
+            . esc($label) . ' ' . $arrow . '</a>';
+    };
+?>
 <div class="card card-custom">
     <div class="card-body">
         <?php if (!empty($suppliers)): ?>
@@ -21,12 +39,13 @@
             <table class="table table-custom">
                 <thead>
                     <tr>
-                        <th>UID</th>
-                        <th>Company Name</th>
-                        <th>Email</th>
-                        <th>Country</th>
-                        <th>Membership</th>
-                        <th>Status</th>
+                        <th><?= $supplierSortLink('uid', 'UID') ?></th>
+                        <th><?= $supplierSortLink('company_name', 'Company Name') ?></th>
+                        <th><?= $supplierSortLink('email', 'Email') ?></th>
+                        <th><?= $supplierSortLink('country_name', 'Country') ?></th>
+                        <th><?= $supplierSortLink('membership_level', 'Membership') ?></th>
+                        <th><?= $supplierSortLink('status', 'Status') ?></th>
+                        <th><?= $supplierSortLink('is_featured', 'Featured') ?></th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -46,6 +65,28 @@
                             <?php else: ?>
                                 <span class="badge badge-rejected"><?= ucfirst($s['status']) ?></span>
                             <?php endif; ?>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-1">
+                                <form method="post" action="<?= esc($suppliersActionUrl, 'attr') ?>" class="d-inline">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="action" value="toggle_featured_supplier">
+                                    <input type="hidden" name="id" value="<?= $s['id'] ?>">
+                                    <button type="submit" class="btn btn-sm <?= $s['is_featured'] ? 'btn-warning' : 'btn-outline-secondary' ?>"><?= $s['is_featured'] ? '★' : '☆' ?></button>
+                                </form>
+                                <?php if ($s['is_featured']): ?>
+                                <form method="post" action="<?= esc($suppliersActionUrl, 'attr') ?>" class="d-inline">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="action" value="set_supplier_featured_set">
+                                    <input type="hidden" name="id" value="<?= $s['id'] ?>">
+                                    <select name="featured_set" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()" title="Which carousel set this supplier is pinned into (max 2 pinned suppliers per set)">
+                                        <?php for ($set = 1; $set <= ($supplierSetCount ?? 1); $set++): ?>
+                                        <option value="<?= $set ?>" <?= (int) ($s['featured_set'] ?? 1) === $set ? 'selected' : '' ?>>Set <?= $set ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </form>
+                                <?php endif; ?>
+                            </div>
                         </td>
                         <td>
                             <a href="<?= base_url('dashboard/suppliers/edit/' . $s['id']) ?>" class="btn btn-sm btn-primary">Edit</a>

@@ -132,61 +132,7 @@ $orgJsonLd = [
         <button id="closePopup">X</button>
         <h2 class="text-center">Register Your Company</h2>
         <h3>Join the World's Fastest Growing B2B Network</h3>
-        <form action="<?= base_url('register') ?>" method="POST">
-            <?= csrf_field() ?>
-            <div class="filter-group">
-                <label class="radio-label">
-                    <input type="radio" name="role" value="supplier" checked onchange="toggleFields(this)">
-                    <span class="radio"></span>
-                    Supplier
-                </label>
-                <label class="radio-label">
-                    <input type="radio" name="role" value="buyer" onchange="toggleFields(this)">
-                    <span class="radio"></span>
-                    Buyer
-                </label>
-            </div>
-            <div class="form-input mt-3">
-                <input type="text" name="name" placeholder="Name*" required>
-            </div>
-            <div class="dual-input">
-                <div class="form-input">
-                    <input type="email" name="email" placeholder="Email*" required>
-                </div>
-                <div class="form-input password-input">
-                    <input type="password" name="password" class="password" placeholder="Password*" required>
-                    <i class="eye" onclick="togglePassword()">
-                        <svg style="fill: #DBDBDB" class="eye-icon" height="20" viewBox="0 0 24 24" width="20"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path clip-rule="evenodd"
-                                d="m12 4.5c-5 0-9.27 3.11-11 7.5 1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z">
-                            </path>
-                        </svg>
-                    </i>
-                </div>
-            </div>
-            <div class="form-input">
-                <input type="tel" name="phone" class="phone" placeholder="Phone number*" required>
-            </div>
-            <div class="whatsapp-checkbox">
-                <input type="checkbox" name="whatsapp" id="popup_whatsapp"><label for="popup_whatsapp">Whatsapp<img
-                        src="<?= base_url('assets/images/whatsapp-icon.svg') ?>" width="15px"></label>
-            </div>
-            <div class="form-input selling-field">
-                <input type="text" name="selling_products" placeholder="Selling Products*" required>
-            </div>
-            <div class="form-input buying-field" style="display:none;">
-                <input type="text" name="buying_products" placeholder="Buying Products*">
-            </div>
-            <div class="radio-join d-flex gap-2 align-items-start">
-                <input type="checkbox" name="OPT_IN" id="popup_OPT_IN" required><label for="popup_OPT_IN"><span
-                        style="color: #0F9EA5;">*</span>By joining, I agree to terms of use, privacy policy, IPR and
-                    agree to receive emails related to our services.</label>
-            </div>
-            <div class="submit-btn-gradient mt-3">
-                <button type="submit" class="gradeint-cta">Join Now</button>
-            </div>
-        </form>
+        <?= view('partials/lead-capture-inline-form', ['idPrefix' => 'footerregister', 'defaultRadio' => 'buyer']) ?>
     </div>
 </div>
 
@@ -232,6 +178,12 @@ document.getElementById("closePopup2").onclick = function() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.2.1/js/intlTelInput.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="<?= base_url('assets/js/script.js') ?>"></script>
+<?php // This partial's own "Register Your Company" popup (above) uses
+      // lead-capture-inline-form.php, so this script -- which wires every
+      // .lead-capture-inline-form on the page to LeadCapture::capture() --
+      // is needed on every page footer.php appears on, not just the
+      // homepage. Loaded here (once, sitewide) instead of per-page. ?>
+<script src="<?= base_url('assets/js/homepage-lead-forms.js') ?>"></script>
 
 <script>
 if ($('.banner-slider').length) {
@@ -275,6 +227,44 @@ if ($('.success-stories-slider').length) {
         slidesToScroll: 1,
         dots: true,
         arrows: false
+    });
+}
+// Top Products / Top Suppliers homepage carousels: one rotating set at a
+// time, admin-configurable count and per-set seconds (see
+// AdminSettings::topSections()). Each element carries its own
+// data-autoplay-speed since the two sections can have different intervals;
+// .each() rather than a single .slick() call handles that per-instance,
+// same as this file's other sliders otherwise share one config.
+if ($('.top-products-carousel').length) {
+    $('.top-products-carousel').each(function () {
+        $(this).slick({
+            autoplay: $(this).find('.top-products-set').length > 1,
+            autoplaySpeed: parseInt($(this).data('autoplay-speed'), 10) || 5000,
+            slidesToShow: 1,
+            slidesToScroll: 1,
+            dots: false,
+            arrows: false,
+            pauseOnHover: true,
+            fade: true,
+            cssEase: 'ease-in-out',
+            adaptiveHeight: true
+        });
+    });
+}
+if ($('.top-supplier-carousel').length) {
+    $('.top-supplier-carousel').each(function () {
+        $(this).slick({
+            autoplay: $(this).find('.top-supplier-set').length > 1,
+            autoplaySpeed: parseInt($(this).data('autoplay-speed'), 10) || 5000,
+            slidesToShow: 1,
+            slidesToScroll: 1,
+            dots: false,
+            arrows: false,
+            pauseOnHover: true,
+            fade: true,
+            cssEase: 'ease-in-out',
+            adaptiveHeight: true
+        });
     });
 }
 if ($('.top-supplier-logo-slider').length) {

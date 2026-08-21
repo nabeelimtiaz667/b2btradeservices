@@ -160,7 +160,9 @@
                     <?php endif; ?>
                     <?php if (!empty($product['supplier']['country']['name'] ?? '')): ?>
                     <p class="d-flex gap-3 mb-0"><?= esc($product['supplier']['country']['name'] ?? '') ?>
-                        <img src="<?= base_url('assets/images/flags/flag_' . str_replace(' ', '_', $product['supplier']['country']['name'] ?? '') . '.svg') ?>" width="20" onerror="this.style.display='none'">
+                        <?php if (!empty($product['supplier']['country']['flag'] ?? '')): ?>
+                        <img src="<?= base_url('assets/images/flags/' . $product['supplier']['country']['flag']) ?>" width="20" onerror="this.style.display='none'">
+                        <?php endif; ?>
                     </p>
                     <?php endif; ?>
                 </div>

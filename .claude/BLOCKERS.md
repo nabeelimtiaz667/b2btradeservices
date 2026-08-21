@@ -7,11 +7,51 @@ Severity: `CRITICAL` · `HIGH` · `MEDIUM` · `LOW`
 
 Resolved and removed: #1 (Aiven credential — rotated), #2 (`_database.php` —
 deleted), #3 (`app.zip` — deleted), #5 (app unverified — swept 2026-07-29),
-#14 (inquiry slugs — shipped to dev 2026-08-01, pending production deploy T-15).
+#14 (inquiry slugs — shipped to dev 2026-08-01, pending production deploy T-15),
+#23 (second flag-filename convention, all 8 locations fixed — 2026-08-19).
 
 **Still open despite the slug work:** #10 and #13, the "01 Jan, 1970" rendering
 bugs. They share the same `buyer_inquiries` table but are a separate defect —
 nothing in the slug change touched `inquiry_date`. Tasks T-5, T-6, T-12.
+
+---
+
+## #24 — `redirect()->...->withInput()->with('error', ...)` silently drops the flash message in this environment
+
+**Severity:** MEDIUM · **Raised:** 2026-08-21 · **Confirmed on 2 call sites, likely sitewide**
+
+Found while adding the Top Products/Top Suppliers carousel's per-set pin-limit
+validation to `Dashboard::addSupplier()`/`editSupplier()`. The new "Set N
+already has the maximum..." error correctly blocked the save (confirmed at
+the DB layer every time) but never appeared on screen.
+
+**Root cause, confirmed by isolation testing:** chaining `->withInput()`
+before `->with('error', ...)` on a `redirect()` response causes the flash
+message to not survive to the next request in this environment, even though
+`session()->getFlashdata()` confirms the value is present in session data
+*during the same request it was set* (verified via a temporary
+`log_message('debug', ...)` call, since removed). Dropping `->withInput()`
+and keeping just `->with('error', ...)` fixed it immediately -- confirmed
+live via the browser tool with a real admin session: the "Set 1 already has
+the maximum 2 pinned suppliers" error now renders correctly after the fix.
+
+**Scope:** `grep -rn "withInput()->with(" app/Controllers` finds 65 matches
+across 5 controllers (`Dashboard.php` 50, `Auth.php` 7, `LeadManagement.php`
+4, `LeadCapture.php` 3, `Contact.php` 1). Only the two new call sites in
+`Dashboard.php` were actually fixed and re-tested as part of this change --
+the other 63 (including `Auth.php`'s login/registration error paths, which
+would be a genuinely bad UX bug if affected) were **not individually
+verified**, just flagged by the same grep pattern. Given the isolation test
+showed the failure is specific to the `withInput()` + `with()` chain
+regardless of controller, they're likely to share this bug, but that's an
+inference, not confirmed per-instance.
+
+**Not fixed here** because fixing 65 call sites across unrelated controllers
+was out of scope for the carousel feature that surfaced this. Worth a
+dedicated pass: likely fix is dropping `->withInput()` where old-input
+repopulation isn't actually used by the corresponding view, or investigating
+why the two calls don't compose in this session driver/version and fixing it
+at the root instead of patching every call site.
 
 ---
 

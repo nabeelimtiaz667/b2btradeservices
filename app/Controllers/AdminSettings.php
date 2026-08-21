@@ -10,6 +10,15 @@ use App\Models\UserModel;
 
 class AdminSettings extends BaseController
 {
+    /**
+     * Mirrors Pages::TOP_PRODUCTS_DISPLAY_COUNT -- a carousel set can hold
+     * at most this many pinned products (there's no per-set 1-pin cap,
+     * admin picks the set directly, but a set can't hold more pins than it
+     * has display slots). Must stay in sync with that constant and with
+     * Dashboard::TOP_SUPPLIERS_ITEMS_PER_SET for the supplier side.
+     */
+    private const TOP_PRODUCTS_ITEMS_PER_SET = 3;
+
     protected $settingModel;
     protected $categoryModel;
     protected $productModel;
@@ -33,6 +42,28 @@ class AdminSettings extends BaseController
             return false;
         }
         return true;
+    }
+
+    /**
+     * True if $setNumber has room for one more pinned product, i.e. fewer
+     * than TOP_PRODUCTS_ITEMS_PER_SET are already pinned into it (only
+     * counting active products -- an inactive/pending one wouldn't actually
+     * render there, matching Pages::index()'s own filter). $excludeProductId
+     * lets an existing pin re-save into the same set without counting
+     * itself against its own room.
+     */
+    private function productSetHasRoom(int $setNumber, ?int $excludeProductId = null): bool
+    {
+        $builder = $this->productModel
+            ->where('status', 'active')
+            ->where('is_featured', 1)
+            ->where('featured_set', $setNumber);
+
+        if ($excludeProductId) {
+            $builder->where('id !=', $excludeProductId);
+        }
+
+        return $builder->countAllResults() < self::TOP_PRODUCTS_ITEMS_PER_SET;
     }
 
     public function index()
@@ -215,11 +246,29 @@ class AdminSettings extends BaseController
         ]);
     }
 
+    /**
+     * Columns the Listings tab's Products table can be sorted by. `id`,
+     * `name`, `status`, `is_featured`, `created_at` are real columns (sorted
+     * in SQL); `supplier_name`/`category_name` are attached after fetch (no
+     * join), so those are sorted in PHP after enrichment -- see listings().
+     */
+    private const PRODUCT_SORT_FIELDS = ['id', 'name', 'status', 'is_featured', 'created_at', 'supplier_name', 'category_name'];
+
     public function listings()
     {
         if (!$this->checkAdmin()) {
             return redirect()->to('/login');
         }
+
+        $sort = (string) $this->request->getGet('sort');
+        if (!in_array($sort, self::PRODUCT_SORT_FIELDS, true)) {
+            $sort = 'created_at';
+        }
+        $dir = strtolower((string) $this->request->getGet('dir')) === 'asc' ? 'asc' : 'desc';
+        // Every redirect below this point (both actions and the final
+        // fall-through) uses this so a sort/toggle/status-change never
+        // resets the admin's current column sort.
+        $redirectUrl = '/admin/settings/listings?sort=' . $sort . '&dir=' . $dir;
 
         if ($this->request->getMethod() === 'POST') {
             $action = $this->request->getPost('action');
@@ -232,7 +281,7 @@ class AdminSettings extends BaseController
                 // and the row would vanish from every listing.
                 if (!in_array($status, ['active', 'inactive', 'pending'], true)) {
                     $this->session->setFlashdata('error', 'Invalid product status.');
-                    return redirect()->back();
+                    return redirect()->to($redirectUrl);
                 }
                 $this->productModel->update($id, ['status' => $status]);
                 $this->session->setFlashdata('success', 'Product status updated.');
@@ -241,7 +290,7 @@ class AdminSettings extends BaseController
                 $status = $this->request->getPost('status');
                 if (!in_array($status, ['active', 'inactive', 'closed', 'pending', 'expired'], true)) {
                     $this->session->setFlashdata('error', 'Invalid inquiry status.');
-                    return redirect()->back();
+                    return redirect()->to($redirectUrl);
                 }
                 $this->inquiryModel->update($id, ['status' => $status]);
                 $this->session->setFlashdata('success', 'Inquiry status updated.');
@@ -258,8 +307,54 @@ class AdminSettings extends BaseController
                 $product = $this->productModel->find($id);
                 if ($product) {
                     $newVal = $product['is_featured'] ? 0 : 1;
-                    $this->productModel->update($id, ['is_featured' => $newVal]);
+                    if ($newVal) {
+                        // Reuse the product's last-known set if it still has
+                        // room; otherwise auto-pick the first set that does,
+                        // rather than hard-defaulting to set 1 -- a product
+                        // has no "Set N" dropdown until it's already
+                        // featured, so hard-defaulting to set 1 would strand
+                        // admins with no way to land a new pin anywhere once
+                        // set 1 fills up.
+                        $preferredSet = (int) ($product['featured_set'] ?: 0);
+                        $targetSet = ($preferredSet >= 1 && $this->productSetHasRoom($preferredSet, $id))
+                            ? $preferredSet
+                            : null;
+
+                        if ($targetSet === null) {
+                            $setCount = max(1, min(10, (int) $this->settingModel->getSetting('top_products_set_count', 1)));
+                            for ($s = 1; $s <= $setCount; $s++) {
+                                if ($this->productSetHasRoom($s, $id)) {
+                                    $targetSet = $s;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if ($targetSet === null) {
+                            $this->session->setFlashdata('error',
+                                'All ' . $setCount . ' carousel set(s) already have the maximum '
+                                . self::TOP_PRODUCTS_ITEMS_PER_SET . ' pinned products each. Free up a set '
+                                . 'first, or add more sets on the Top Sections tab.');
+                            return redirect()->to($redirectUrl);
+                        }
+
+                        $this->productModel->update($id, ['is_featured' => 1, 'featured_set' => $targetSet]);
+                    } else {
+                        $this->productModel->update($id, ['is_featured' => 0]);
+                    }
                     $this->session->setFlashdata('success', 'Product featured status toggled.');
+                }
+            } elseif ($action === 'set_product_featured_set') {
+                $id = $this->request->getPost('id');
+                $setNum = (int) $this->request->getPost('featured_set');
+                if ($setNum >= 1 && $setNum <= 10) {
+                    if (!$this->productSetHasRoom($setNum, $id)) {
+                        $this->session->setFlashdata('error',
+                            'Set ' . $setNum . ' already has the maximum ' . self::TOP_PRODUCTS_ITEMS_PER_SET . ' pinned products.');
+                        return redirect()->to($redirectUrl);
+                    }
+                    $this->productModel->update($id, ['featured_set' => $setNum]);
+                    $this->session->setFlashdata('success', 'Product carousel set updated.');
                 }
             } elseif ($action === 'toggle_featured_inquiry') {
                 $id = $this->request->getPost('id');
@@ -271,10 +366,19 @@ class AdminSettings extends BaseController
                 }
             }
 
-            return redirect()->to('/admin/settings/listings');
+            return redirect()->to($redirectUrl);
         }
 
-        $products = $this->productModel->orderBy('created_at', 'DESC')->findAll();
+        // supplier_name/category_name aren't real columns (no join), so a
+        // sort by either of those has to happen in PHP after enrichment
+        // below; everything else sorts in SQL directly.
+        $productNativeSortFields = ['id', 'name', 'status', 'is_featured', 'created_at'];
+        $productsQuery = $this->productModel;
+        $productsQuery = in_array($sort, $productNativeSortFields, true)
+            ? $productsQuery->orderBy($sort, $dir)
+            : $productsQuery->orderBy('created_at', 'DESC');
+        $products = $productsQuery->findAll();
+
         foreach ($products as &$p) {
             if (!empty($p['supplier_id'])) {
                 $supplier = $this->userModel->find($p['supplier_id']);
@@ -288,6 +392,14 @@ class AdminSettings extends BaseController
             } else {
                 $p['category_name'] = 'N/A';
             }
+        }
+        unset($p);
+
+        if (in_array($sort, ['supplier_name', 'category_name'], true)) {
+            usort($products, function ($a, $b) use ($sort, $dir) {
+                $cmp = strcasecmp($a[$sort], $b[$sort]);
+                return $dir === 'asc' ? $cmp : -$cmp;
+            });
         }
 
         $inquiries = $this->inquiryModel->orderBy('created_at', 'DESC')->findAll();
@@ -306,6 +418,7 @@ class AdminSettings extends BaseController
         }
 
         $user = $this->userModel->find($this->session->get('user_id'));
+        $productSetCount = max(1, min(10, (int) $this->settingModel->getSetting('top_products_set_count', 1)));
 
         return view('admin/settings/listings', [
             'title' => 'Listing Management - Admin',
@@ -313,6 +426,54 @@ class AdminSettings extends BaseController
             'products' => $products,
             'inquiries' => $inquiries,
             'activeTab' => 'listings',
+            'productSetCount' => $productSetCount,
+            'sort' => $sort,
+            'dir' => $dir,
+        ]);
+    }
+
+    /**
+     * Number of rotating sets and per-set display time (seconds) for the
+     * homepage's Top Products / Top Suppliers carousels. Which specific
+     * product/supplier is pinned into which set is set elsewhere (the
+     * "Featured" column on the Listings tab for products, the "Featured
+     * Supplier" checkbox on a supplier's edit page) -- this tab only
+     * controls how many sets exist and how fast they rotate. See
+     * Pages::index() for how a set count change reshapes the pools, and
+     * CHANGELOG 2026-08-21.
+     */
+    public function topSections()
+    {
+        if (!$this->checkAdmin()) {
+            return redirect()->to('/login');
+        }
+
+        if ($this->request->getMethod() === 'POST') {
+            $fields = [
+                'top_products_set_count' => ['min' => 1, 'max' => 10, 'default' => 1],
+                'top_products_interval_seconds' => ['min' => 2, 'max' => 60, 'default' => 5],
+                'top_suppliers_set_count' => ['min' => 1, 'max' => 10, 'default' => 1],
+                'top_suppliers_interval_seconds' => ['min' => 2, 'max' => 60, 'default' => 5],
+            ];
+
+            foreach ($fields as $key => $bounds) {
+                $value = (int) $this->request->getPost($key);
+                $value = max($bounds['min'], min($bounds['max'], $value ?: $bounds['default']));
+                $this->settingModel->setSetting($key, (string) $value, 'homepage_carousel');
+            }
+
+            $this->session->setFlashdata('success', 'Top Products/Top Suppliers carousel settings saved successfully.');
+            return redirect()->to('/admin/settings/top-sections');
+        }
+
+        $settings = $this->settingModel->getSettingsByGroup('homepage_carousel');
+        $user = $this->userModel->find($this->session->get('user_id'));
+
+        return view('admin/settings/top-sections', [
+            'title' => 'Top Products / Top Suppliers Carousel - Admin',
+            'user' => $user,
+            'settings' => $settings,
+            'activeTab' => 'top-sections',
         ]);
     }
 
