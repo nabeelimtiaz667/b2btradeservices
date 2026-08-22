@@ -19,25 +19,32 @@
                     <?php endif; ?>
                 </ul>
             </div>
+            <?php if (!empty($heroBannerSlides)): ?>
             <div class="banner-slider-sec">
                 <div class="banner-slider">
+                    <?php foreach ($heroBannerSlides as $slide): ?>
+                    <?php
+                        // Admin-entered links can be a relative site path
+                        // ("premium-services") or a full external URL --
+                        // only relative ones get base_url() applied.
+                        $slideHref = preg_match('#^https?://#i', $slide['link_url'])
+                            ? $slide['link_url']
+                            : base_url($slide['link_url']);
+                        // file_type=url slides use the stored value exactly
+                        // as the admin entered it; file_type=upload slides
+                        // resolve against uploads/hero-banner/.
+                        $slideSrc = $slide['file_type'] === 'url'
+                            ? $slide['image_filename']
+                            : base_url('uploads/hero-banner/' . $slide['image_filename']);
+                    ?>
                     <div>
-                        <a href="<?= base_url('premium-services') ?>"> <img
-                                src="<?= base_url('assets/images/web-ban01.webp') ?>" alt=""> </a>
+                        <a href="<?= esc($slideHref, 'attr') ?>"> <img
+                                src="<?= esc($slideSrc, 'attr') ?>" alt=""> </a>
                     </div>
-                    <div>
-                        <a href="<?= base_url('premium-services') ?>"> <img
-                                src="<?= base_url('assets/images/web-ban02.webp') ?>" alt=""> </a>
-                    </div>
-                    <div>
-                        <a href="<?= base_url('buyers') ?>"> <img src="<?= base_url('assets/images/web-ban03.webp') ?>"
-                                alt=""> </a>
-                    </div>
-                    <!--<div>-->
-                    <!--   <a href="<?= base_url('supplier/profile/satin-packages-limited') ?>"> <img src="<?= base_url('assets/images/web-ban04.webp') ?>" alt=""> </a>-->
-                    <!--</div>-->
+                    <?php endforeach; ?>
                 </div>
             </div>
+            <?php endif; ?>
             <div class="b2b-top-form">
                 <h2 class="h3">Register Quick Now! And get free Buyers/ Suppliers Leads</h2>
                 <?= view('partials/lead-capture-inline-form', ['idPrefix' => 'top', 'defaultRadio' => 'supplier']) ?>

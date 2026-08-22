@@ -8,6 +8,7 @@ use App\Models\UserModel;
 use App\Models\ProductModel;
 use App\Models\BuyerInquiryModel;
 use App\Models\SiteSettingModel;
+use App\Models\HeroBannerSlideModel;
 
 class Pages extends BaseController
 {
@@ -130,9 +131,11 @@ class Pages extends BaseController
             $productModel = new ProductModel();
             $inquiryModel = new BuyerInquiryModel();
             $settingModel = new SiteSettingModel();
+            $heroBannerModel = new HeroBannerSlideModel();
 
             $data['categories'] = $categoryModel->getActiveCategories();
             $data['countries'] = $countryModel->getActiveCountries();
+            $data['heroBannerSlides'] = $heroBannerModel->getActiveSlides();
 
             $topSuppliersSetCount = max(self::TOP_SET_COUNT_MIN, min(self::TOP_SET_COUNT_MAX,
                 (int) $settingModel->getSetting('top_suppliers_set_count', 1)));

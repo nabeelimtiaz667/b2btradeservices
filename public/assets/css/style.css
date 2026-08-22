@@ -570,13 +570,27 @@ margin: auto;
 .banner-slider-sec {
     width: 60%;
     padding-left: 20px;
+    /* Fixed shape so every slide displays at the same size regardless of
+       its uploaded image's exact dimensions -- admin uploads now only need
+       to be roughly this shape (see AdminSettings::heroBanners()), not an
+       exact pixel match, so the crop-to-fit below is what keeps the
+       homepage banner visually consistent. Ratio matches this site's
+       original banner images (1340x1020). */
+    aspect-ratio: 1340 / 1020;
 }
  .slick-slide{
     padding: 0px 10px;
 }
+.banner-slider-sec, .banner-slider, .banner-slider .slick-list, .banner-slider .slick-track,
+.banner-slider .slick-slide, .banner-slider .slick-slide > div, .banner-slider .slick-slide > div > a {
+    height: 100%;
+}
 .banner-slider img{
     width: 100%;
+    height: 100%;
     max-width: 670px;
+    object-fit: cover;
+    object-position: center center;
 }
 .banner-slider{
   width: 100%;

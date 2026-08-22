@@ -7,6 +7,7 @@ use App\Models\CategoryModel;
 use App\Models\ProductModel;
 use App\Models\BuyerInquiryModel;
 use App\Models\UserModel;
+use App\Models\HeroBannerSlideModel;
 
 class AdminSettings extends BaseController
 {
@@ -19,11 +20,32 @@ class AdminSettings extends BaseController
      */
     private const TOP_PRODUCTS_ITEMS_PER_SET = 3;
 
+    /**
+     * Loose shape/quality gate for hero banner uploads -- not an exact
+     * pixel match (the display side now crops to a fixed box via CSS
+     * object-fit, see .banner-slider-sec in style.css, so it doesn't need
+     * one). Aspect ratio just has to be roughly landscape-banner-shaped:
+     * the current live images sit at 1340/1020 ~= 1.31, so 1.2-1.6 gives
+     * real tolerance on either side while still hard-rejecting a mobile
+     * screenshot (portrait, ratio < 1) or a widescreen/16:9-shaped image
+     * (1.78+) -- either would look wrong cropped into this banner's shape.
+     * Minimum width/height is a pixelation floor, not a shape constraint:
+     * 1200x750 is the smallest image that can still cover the display box
+     * at 1.6 (the loosest allowed ratio) without upscaling.
+     */
+    private const HERO_BANNER_MIN_ASPECT_RATIO = 1.2;
+    private const HERO_BANNER_MAX_ASPECT_RATIO = 1.6;
+    private const HERO_BANNER_MIN_WIDTH = 1200;
+    private const HERO_BANNER_MIN_HEIGHT = 750;
+    private const HERO_BANNER_MAX_SIZE = 2 * 1024 * 1024;
+    private const HERO_BANNER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
     protected $settingModel;
     protected $categoryModel;
     protected $productModel;
     protected $inquiryModel;
     protected $userModel;
+    protected $heroBannerModel;
     protected $session;
 
     public function __construct()
@@ -33,6 +55,7 @@ class AdminSettings extends BaseController
         $this->productModel = new ProductModel();
         $this->inquiryModel = new BuyerInquiryModel();
         $this->userModel = new UserModel();
+        $this->heroBannerModel = new HeroBannerSlideModel();
         $this->session = session();
     }
 
@@ -475,6 +498,244 @@ class AdminSettings extends BaseController
             'settings' => $settings,
             'activeTab' => 'top-sections',
         ]);
+    }
+
+    /**
+     * Admin CRM for the homepage's hero banner (`.banner-slider` in
+     * index.php) -- add/edit/retire/restore/permanently-delete slides, no
+     * cap on how many can exist. "Active" slides are what actually renders
+     * on the homepage (Pages::index()); "history" is a retired shelf, not a
+     * real delete -- files on disk only get removed on permanent delete.
+     * See CHANGELOG 2026-08-22.
+     */
+    public function heroBanners()
+    {
+        if (!$this->checkAdmin()) {
+            return redirect()->to('/login');
+        }
+
+        $uploadPath = FCPATH . 'uploads/hero-banner';
+        if (!is_dir($uploadPath)) {
+            mkdir($uploadPath, 0777, true);
+        }
+
+        if ($this->request->getMethod() === 'POST') {
+            $action = $this->request->getPost('action');
+
+            if ($action === 'add') {
+                $linkUrl = trim((string) $this->request->getPost('link_url'));
+                if ($linkUrl === '') {
+                    $this->session->setFlashdata('error', 'A hero banner slide needs a link.');
+                    return redirect()->to('/admin/settings/hero-banners');
+                }
+
+                // Radio choice: exactly one of file-upload / image-URL is
+                // enabled client-side (the other is disabled, so browsers
+                // never submit it), but the server decides purely off
+                // input_type -- never trusts which POST fields happen to be
+                // present.
+                $inputType = $this->request->getPost('input_type') === 'url' ? 'url' : 'upload';
+
+                if ($inputType === 'url') {
+                    // Used exactly as submitted -- no trim/sanitizing/
+                    // reformatting, per explicit instruction.
+                    $imageValue = (string) $this->request->getPost('image_url');
+                    if ($imageValue === '') {
+                        $this->session->setFlashdata('error', 'Enter an image URL, or switch to uploading a file.');
+                        return redirect()->to('/admin/settings/hero-banners');
+                    }
+                } else {
+                    $file = $this->request->getFile('image');
+                    if (!$file || !$file->isValid()) {
+                        $this->session->setFlashdata('error', 'Choose an image file, or switch to using a URL.');
+                        return redirect()->to('/admin/settings/hero-banners');
+                    }
+                    $imageValue = $this->processHeroBannerUpload($file, $uploadPath);
+                    if ($imageValue === null) {
+                        return redirect()->to('/admin/settings/hero-banners');
+                    }
+                }
+
+                $maxOrder = (int) ($this->heroBannerModel->where('status', 'active')->selectMax('sort_order')->first()['sort_order'] ?? 0);
+
+                $this->heroBannerModel->insert([
+                    'image_filename' => $imageValue,
+                    'file_type' => $inputType,
+                    'link_url' => $linkUrl,
+                    'sort_order' => $maxOrder + 1,
+                    'status' => 'active',
+                ]);
+                $this->session->setFlashdata('success', 'Hero banner slide added.');
+            } elseif ($action === 'update') {
+                $id = (int) $this->request->getPost('id');
+                $slide = $this->heroBannerModel->find($id);
+                if (!$slide) {
+                    $this->session->setFlashdata('error', 'Slide not found.');
+                    return redirect()->to('/admin/settings/hero-banners');
+                }
+
+                $linkUrl = trim((string) $this->request->getPost('link_url'));
+                if ($linkUrl === '') {
+                    $this->session->setFlashdata('error', 'The link cannot be empty.');
+                    return redirect()->to('/admin/settings/hero-banners');
+                }
+
+                $update = ['link_url' => $linkUrl];
+                $inputType = $this->request->getPost('input_type');
+
+                if ($inputType === 'url') {
+                    $imageValue = (string) $this->request->getPost('image_url');
+                    if ($imageValue !== '') {
+                        $update['image_filename'] = $imageValue;
+                        $update['file_type'] = 'url';
+
+                        // Switching away from an uploaded file -- it's no
+                        // longer referenced by this row, clean it up.
+                        if ($slide['file_type'] === 'upload') {
+                            $oldPath = $uploadPath . '/' . $slide['image_filename'];
+                            if (is_file($oldPath)) {
+                                unlink($oldPath);
+                            }
+                        }
+                    }
+                    // Empty URL field with "url" selected: no image change,
+                    // same as leaving the file input empty under "upload".
+                } elseif ($inputType === 'upload') {
+                    $file = $this->request->getFile('image');
+                    if ($file && $file->isValid() && $file->getSize() > 0) {
+                        $filename = $this->processHeroBannerUpload($file, $uploadPath);
+                        if ($filename === null) {
+                            return redirect()->to('/admin/settings/hero-banners');
+                        }
+                        $update['image_filename'] = $filename;
+                        $update['file_type'] = 'upload';
+
+                        if ($slide['file_type'] === 'upload') {
+                            $oldPath = $uploadPath . '/' . $slide['image_filename'];
+                            if (is_file($oldPath)) {
+                                unlink($oldPath);
+                            }
+                        }
+                    }
+                }
+
+                $this->heroBannerModel->update($id, $update);
+                $this->session->setFlashdata('success', 'Hero banner slide updated.');
+            } elseif ($action === 'remove_to_history') {
+                $id = (int) $this->request->getPost('id');
+                $this->heroBannerModel->update($id, ['status' => 'history']);
+                $this->session->setFlashdata('success', 'Slide moved to history.');
+            } elseif ($action === 'restore') {
+                $id = (int) $this->request->getPost('id');
+                $maxOrder = (int) ($this->heroBannerModel->where('status', 'active')->selectMax('sort_order')->first()['sort_order'] ?? 0);
+                $this->heroBannerModel->update($id, ['status' => 'active', 'sort_order' => $maxOrder + 1]);
+                $this->session->setFlashdata('success', 'Slide restored to the active carousel.');
+            } elseif ($action === 'delete_permanent') {
+                $id = (int) $this->request->getPost('id');
+                $slide = $this->heroBannerModel->find($id);
+                if ($slide && $slide['status'] === 'history') {
+                    $path = $uploadPath . '/' . $slide['image_filename'];
+                    if (is_file($path)) {
+                        unlink($path);
+                    }
+                    $this->heroBannerModel->delete($id);
+                    $this->session->setFlashdata('success', 'Slide permanently deleted.');
+                } else {
+                    // Only history rows are eligible -- forces the
+                    // remove-then-delete two-step the admin UI presents,
+                    // rather than letting a crafted request skip straight
+                    // from active to gone.
+                    $this->session->setFlashdata('error', 'Only slides already in history can be permanently deleted.');
+                }
+            } elseif ($action === 'reorder') {
+                $orderParam = (string) $this->request->getPost('order');
+                $ids = array_filter(array_map('intval', explode(',', $orderParam)));
+
+                // Only ids that are actually currently-active slides get
+                // touched -- a crafted request can't use this to move a
+                // history row's sort_order around, or reference an id that
+                // doesn't exist.
+                $activeIds = array_column($this->heroBannerModel->where('status', 'active')->select('id')->findAll(), 'id');
+                $ids = array_values(array_intersect($ids, $activeIds));
+
+                foreach ($ids as $position => $id) {
+                    $this->heroBannerModel->update($id, ['sort_order' => $position + 1]);
+                }
+                $this->session->setFlashdata('success', 'Slide order updated.');
+            }
+
+            return redirect()->to('/admin/settings/hero-banners');
+        }
+
+        $user = $this->userModel->find($this->session->get('user_id'));
+
+        return view('admin/settings/hero-banners', [
+            'title' => 'Hero Banner - Admin',
+            'user' => $user,
+            'activeSlides' => $this->heroBannerModel->getActiveSlides(),
+            'historySlides' => $this->heroBannerModel->getHistorySlides(),
+            'activeTab' => 'hero-banners',
+            'minWidth' => self::HERO_BANNER_MIN_WIDTH,
+            'minHeight' => self::HERO_BANNER_MIN_HEIGHT,
+            'minAspectRatio' => self::HERO_BANNER_MIN_ASPECT_RATIO,
+            'maxAspectRatio' => self::HERO_BANNER_MAX_ASPECT_RATIO,
+            'maxFileSizeMb' => self::HERO_BANNER_MAX_SIZE / 1024 / 1024,
+        ]);
+    }
+
+    /**
+     * Validates an uploaded hero banner image (type, size, exact pixel
+     * dimensions -- the homepage carousel is a fixed size, so anything else
+     * would stretch/crop/misalign) and, if it passes, moves it into place
+     * under a freshly generated unique name. Returns the new filename, or
+     * null after setting a flash error if validation failed.
+     */
+    private function processHeroBannerUpload($file, string $uploadPath): ?string
+    {
+        if ($file->getSize() > self::HERO_BANNER_MAX_SIZE) {
+            $this->session->setFlashdata('error', 'Image must be under ' . (self::HERO_BANNER_MAX_SIZE / 1024 / 1024) . ' MB.');
+            return null;
+        }
+
+        if (!in_array($file->getMimeType(), self::HERO_BANNER_ALLOWED_TYPES, true)) {
+            $this->session->setFlashdata('error', 'Image must be a JPG, PNG, WebP, or GIF.');
+            return null;
+        }
+
+        $dimensions = @getimagesize($file->getRealPath());
+        if (!$dimensions) {
+            $this->session->setFlashdata('error', 'Could not read this image -- the file may be corrupt.');
+            return null;
+        }
+        [$width, $height] = $dimensions;
+
+        if ($width < self::HERO_BANNER_MIN_WIDTH || $height < self::HERO_BANNER_MIN_HEIGHT) {
+            $this->session->setFlashdata('error',
+                'Image is too low-resolution and would look pixelated -- needs to be at least '
+                . self::HERO_BANNER_MIN_WIDTH . '×' . self::HERO_BANNER_MIN_HEIGHT . 'px (got '
+                . $width . '×' . $height . 'px).');
+            return null;
+        }
+
+        $ratio = $width / $height;
+        if ($ratio < self::HERO_BANNER_MIN_ASPECT_RATIO || $ratio > self::HERO_BANNER_MAX_ASPECT_RATIO) {
+            $this->session->setFlashdata('error',
+                'Image shape isn\'t right for a banner -- it looks like a '
+                . ($ratio < 1 ? 'mobile screenshot (portrait)' : ($ratio > self::HERO_BANNER_MAX_ASPECT_RATIO ? 'widescreen image' : 'near-square image'))
+                . '. Needs a landscape ratio roughly between ' . self::HERO_BANNER_MIN_ASPECT_RATIO . ':1 and '
+                . self::HERO_BANNER_MAX_ASPECT_RATIO . ':1 (got ' . round($ratio, 2) . ':1).');
+            return null;
+        }
+
+        // Timestamp + random suffix, not CI4's getRandomName() -- unique
+        // either way, but this keeps upload time visible in the filename
+        // for anyone browsing the uploads directory directly.
+        $extension = $file->getExtension() ?: pathinfo($file->getClientName(), PATHINFO_EXTENSION);
+        $filename = 'hero_' . gmdate('YmdHis') . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
+
+        $file->move($uploadPath, $filename);
+
+        return $filename;
     }
 
     public function registration()

@@ -174,6 +174,8 @@ $routes->get('admin/settings/listings', 'AdminSettings::listings');
 $routes->post('admin/settings/listings', 'AdminSettings::listings');
 $routes->get('admin/settings/top-sections', 'AdminSettings::topSections');
 $routes->post('admin/settings/top-sections', 'AdminSettings::topSections');
+$routes->get('admin/settings/hero-banners', 'AdminSettings::heroBanners');
+$routes->post('admin/settings/hero-banners', 'AdminSettings::heroBanners');
 $routes->get('admin/settings/registration', 'AdminSettings::registration');
 $routes->post('admin/settings/registration', 'AdminSettings::registration');
 $routes->get('admin/settings/email', 'AdminSettings::email');

@@ -14,6 +14,258 @@ Entry format:
 
 ---
 
+## 2026-08-22 — Hero banner slides can now use a direct image URL instead of an upload
+
+**Files:** `app/Database/Migrations/2026-08-22-000002_AddFileTypeToHeroBannerSlides.php`
+(new), `app/Models/HeroBannerSlideModel.php`, `app/Controllers/AdminSettings.php`,
+`app/Views/admin/settings/hero-banners.php`, `app/Views/pages/index.php`
+**Why:** owner asked for a second image-source option next to the file
+upload -- a plain image URL, placed just below the upload field -- with a
+radio toggle so exactly one of the two is ever active/submitted, backed by
+a `file_type` enum (`upload`/`url`) on the table. URL values are used
+completely as typed, with no trimming or reformatting.
+
+- New `hero_banner_slides.file_type` ENUM(`upload`,`url`) DEFAULT `upload`
+  (own migration, not editing the table-creation one from earlier today --
+  it's already a real committed migration, editing it after the fact would
+  break anyone who already ran it). `DEFAULT 'upload'` on `ADD COLUMN`
+  backfills the 3 existing real rows correctly with no extra step.
+  `image_filename` is reused for both cases rather than adding a separate
+  URL column -- every place that reads it already has to branch on
+  `file_type` to resolve it (`uploads/hero-banner/{value}` vs. `{value}`
+  verbatim), so a second column would just be another thing to keep in
+  sync for no real benefit.
+- Add/Edit forms: a radio pair (`input_type` = `upload`/`url`) directly
+  above/below the file input and a new URL text input, right under the
+  existing upload field as asked. `heroToggleInputType()` disables
+  whichever input isn't selected -- disabled form fields are excluded from
+  submission entirely, so the server only ever receives the active choice,
+  never both. The edit form's radios/disabled-state default to
+  the slide's current `file_type` so re-opening Edit shows what's actually
+  stored, not always "upload."
+- Server-side, `add`/`update` both decide purely off the posted
+  `input_type` value (never off which fields happen to be present) --
+  `url`: the raw `image_url` POST value is stored with zero processing
+  (no `trim()`, no `esc()`/reformatting at write time -- output escaping
+  still happens at render time via `esc(..., 'attr')`, which is a display-
+  safety step, not a stored-value change). Only checked for non-empty, not
+  validated as a well-formed URL, matching "use it directly, no trimming
+  or formatting." `upload`: unchanged existing validation (aspect ratio,
+  min resolution, 2MB cap, unique generated filename). Switching a slide
+  from `upload` to `url` (or to a new upload) deletes the now-unreferenced
+  old uploaded file from disk; switching away from `url` has nothing to
+  clean up on disk.
+- Every place that renders a slide's image (`admin/settings/hero-banners.php`'s
+  active/history thumbnails, `index.php`'s homepage loop) now branches on
+  `file_type` for the `src`, instead of always assuming an upload path.
+- **Verified**: full lint sweep. A throwaway `spark` command (deleted after
+  use) inserted a `url`-type test slide with a deliberately messy value
+  (spaces, `&`, `?`, query params) and confirmed the stored
+  `image_filename` matched the submitted string exactly (no trim/encode
+  applied before storage). Rendered both `pages/index` and
+  `admin/settings/hero-banners` with that slide mixed in among real
+  `upload`-type ones -- both rendered every new radio/disabled/branching
+  bit of markup correctly (confirmed via the rendered HTML: the URL slide's
+  `<img src>` used the raw URL directly with no `uploads/hero-banner/`
+  prefix, HTML-attribute-escaped for safety only) before hitting the same
+  pre-existing CLI-only `csrf_field()` limitation documented earlier in
+  this project. Test row deleted afterward. Along the way, noticed the 3
+  real seeded slides' `sort_order` had drifted (2/1/3 instead of 1/2/3)
+  from earlier testing sessions -- fixed and reconfirmed the homepage
+  renders them back in the correct 1/2/3 order. No live admin-session
+  click-through of the actual radio/upload/URL interaction this pass (no
+  session available) -- worth a hands-on check next time.
+
+---
+
+## 2026-08-22 — Hero banner uploads: exact-pixel match relaxed to aspect ratio + min resolution + 2MB cap
+
+**Files:** `app/Controllers/AdminSettings.php`, `app/Views/admin/settings/hero-banners.php`,
+`public/assets/css/style.css`
+**Why:** owner asked to loosen the exact-1340×1020px requirement to an
+aspect-ratio range instead (not strict, but must reject anything shaped
+like a mobile screenshot or a widescreen/16:9 image), add a minimum
+resolution floor so low-quality uploads can't pixelate, and cap file size
+at 2MB (down from the 3MB I'd picked arbitrarily when this was still an
+exact-size check).
+
+- Replaced `HERO_BANNER_REQUIRED_WIDTH`/`HEIGHT` with
+  `HERO_BANNER_MIN_ASPECT_RATIO` (1.2) / `MAX_ASPECT_RATIO` (1.6) --
+  centered on the current live images' real ratio (1340/1020 = 1.31),
+  wide enough to be "not very strict," but firmly excludes both named
+  cases: portrait/mobile (ratio &lt; 1) and 16:9 widescreen (1.78) sit well
+  outside the band. `HERO_BANNER_MIN_WIDTH`/`MIN_HEIGHT` (1200×750) is a
+  separate, non-conflicting pixelation floor -- chosen so it's still
+  satisfiable at the loosest allowed ratio (1200/1.6 = 750, exactly the
+  height floor) rather than fighting the ratio bounds. `HERO_BANNER_MAX_SIZE`
+  now 2MB.
+- `processHeroBannerUpload()` now checks resolution floor first, then
+  aspect ratio, each with a specific rejection message (states whether the
+  image looked like a portrait/mobile shot, a widescreen image, or just
+  under-resolution, plus the actual vs. required numbers) rather than one
+  generic "wrong size" error.
+- **Checked whether uniform display size was already handled, per the
+  owner's explicit "leave it as it is if already taken care of" --
+  it wasn't**: `.banner-slider img` had no `object-fit`/fixed height, only
+  `width:100%`, so it relied entirely on every upload being pixel-identical
+  to look consistent. Since uploads can now vary in both resolution and
+  ratio (within the allowed band), added a fixed-`aspect-ratio` box on
+  `.banner-slider-sec` (matching the same 1340/1020 ratio the live images
+  already use, so nothing shifts visually today) cascading `height: 100%`
+  down through Slick's wrapper elements (`.slick-list`, `.slick-track`,
+  `.slick-slide`) to the image, which gets `object-fit: cover` -- every
+  slide now displays at the exact same size and crops to fill it,
+  regardless of its source image's exact dimensions.
+- **Verified**: full lint sweep. A throwaway `spark` command (deleted after
+  use) ran the exact validation logic against 10 synthetic width/height
+  cases -- the current live 1340×1020 image, a mobile portrait shot, a
+  16:9 widescreen image, a square image, both exact ratio boundaries
+  (1.2 and 1.6, both correctly accepted), and both just-outside-boundary
+  cases -- all 10 matched their expected accept/reject outcome. Live in the
+  browser (no admin session available this pass, so this part only): confirmed
+  the homepage's `.banner-slider-sec` box computes to exactly the 1340/1020
+  ratio with `object-fit: cover` active, on both desktop and mobile (375px,
+  ratio held, no horizontal overflow) -- since the real images already
+  match that ratio exactly, this is a zero-visual-change confirmation, not
+  yet a live test of an actual differently-shaped upload cropping
+  correctly (would need a real admin session to upload one).
+
+---
+
+## 2026-08-22 — Drag-and-drop reordering for active hero banner slides
+
+**Files:** `app/Controllers/AdminSettings.php`, `app/Views/admin/settings/hero-banners.php`
+**Why:** owner asked for drag-and-drop reordering of the hero banner slides,
+active slides only (history explicitly excluded -- reordering a shelf of
+retired slides has no meaning).
+
+- Native HTML5 drag-and-drop (`draggable`, `dragstart`/`dragover`/`dragend`)
+  on the active-slides table rows -- no new JS library pulled in for this;
+  this codebase has jQuery + Slick already loaded but nothing sortable-list
+  shaped, and adding a dependency for one drag list wasn't worth it. Each
+  visible row has a paired hidden edit row immediately after it (from the
+  existing inline-edit feature); dragging moves both as a unit so the edit
+  form's Cancel button (which assumes that adjacency) keeps working
+  regardless of order.
+- Deliberately **not AJAX**: dragging only reorders the DOM instantly
+  (visual feedback, "Order" column renumbers live) and enables a "Save
+  Order" button; nothing persists until that's clicked, which POSTs a
+  comma-separated id list through a normal full-page form submit -- the
+  same pattern every other action on this page already uses. Avoids this
+  project's CSRF-token-per-request lifecycle (confirmed painful earlier
+  this project when `withInput()->with()` silently dropped flash data --
+  see the 2026-08-21 carousel-cap entry) for a feature where instant
+  auto-save wasn't asked for.
+- New `reorder` action: splits the posted id list, intersects it against
+  the currently-*active* slide ids (drops anything bogus or belonging to a
+  history-status row -- a crafted request can't use this to touch history
+  rows' ordering), then reassigns `sort_order` sequentially in the
+  submitted order.
+- **Verified**: full lint sweep. A throwaway `spark` command (deleted after
+  use) exercised the exact reorder logic directly against the model --
+  reversed the real 3-slide order, mixed in a bogus id 999, confirmed the
+  active-id intersection dropped it and only reordered the 3 real slides
+  (`3,2,1` with `sort_order` correctly reassigned `1,2,3`), then restored
+  the original `1,2,3` order and confirmed it stuck. Live browser
+  click-through of the actual drag gesture wasn't done this pass -- the
+  browser session had closed and re-authenticating isn't something done
+  without the owner present; worth a quick drag-and-drop-by-hand check
+  next time they're in the admin panel.
+
+---
+
+## 2026-08-22 — Admin CRM for the homepage hero banner (was 3 hardcoded images)
+
+**Files:** `app/Database/Migrations/2026-08-22-000001_CreateHeroBannerSlidesTable.php`
+(new), `app/Models/HeroBannerSlideModel.php` (new),
+`app/Controllers/AdminSettings.php`, `app/Controllers/Pages.php`,
+`app/Config/Routes.php`, `app/Views/admin/settings/hero-banners.php` (new),
+`app/Views/admin/settings/{general,seo,moderation,categories,listings,top-sections,registration,email}.php`,
+`app/Views/pages/index.php`
+**Why:** owner asked for the top homepage banner (`.banner-slider`, 3
+hardcoded `<img>` slides linking to `premium-services`/`premium-services`/`buyers`)
+to become admin-manageable: any number of slides, each with its own image +
+link, uploads validated against the current images' exact dimensions,
+retired slides going to a restorable/permanently-deletable history shelf
+instead of being deleted outright, and confirmation prompts on every
+destructive or edit action.
+
+- New `hero_banner_slides` table (`image_filename`, `link_url`,
+  `sort_order`, `status` enum `active`/`history`, timestamps) -- a plain
+  status column, not CI4's `useSoftDeletes`, since there's no existing
+  soft-delete pattern anywhere in this codebase and "history" here is a
+  distinct product concept (browsable, restorable) rather than a
+  deleted-but-recoverable audit trail.
+- The migration itself does the one-time move: copies the 3 real,
+  already-live images (`web-ban01/02/03.webp`, all confirmed exactly
+  1340×1020px) from `assets/images/` into a new `uploads/hero-banner/`
+  directory (matching this codebase's existing `uploads/{entity}` upload
+  convention, e.g. `uploads/suppliers`), keeping their original filenames
+  as-is (they predate the new "unique generated name" rule, which only
+  applies to slides uploaded through the admin form from here on), and
+  seeds the 3 matching rows with their real links and order. Copy-only,
+  never move/delete -- safe to re-run, and the original files under
+  `assets/images/` are untouched (nothing else referenced them, but no
+  reason to delete something not asked for).
+- New `AdminSettings::heroBanners()` (`admin/settings/hero-banners`, new
+  tab added to the shared nav-tabs bar across all 8 other Site Settings
+  views): `add` / `update` / `remove_to_history` / `restore` /
+  `delete_permanent` actions, no cap on slide count. Every new/replacement
+  upload runs through `processHeroBannerUpload()`: MIME whitelist, 3MB max,
+  and a hard `getimagesize()` check against the exact 1340×1020px of the
+  current live images -- anything else is rejected before it touches disk,
+  with the actual vs. required dimensions shown in the error. New filenames
+  are `hero_{UTC timestamp}_{random hex}.{ext}` (the owner's own suggested
+  scheme: timestamp plus another constraint) rather than this codebase's
+  usual `getRandomName()`, so upload time stays visible to anyone browsing
+  the directory directly. Editing an existing slide's image deletes the old
+  file only after the new one is confirmed valid and moved into place.
+  `delete_permanent` is only honored on rows already in `status = history`
+  (checked server-side, not just hidden in the UI) -- forces the
+  remove-then-delete two-step the UI presents rather than letting a crafted
+  request skip straight from active to permanently gone.
+- `remove_to_history`, `update` (edit save), and `delete_permanent` each
+  carry `onsubmit="return confirm(...)"` with a specific message per action,
+  exactly as asked; `restore` deliberately has none (reversible, non-
+  destructive). Edit is an inline toggle-row (`showHeroEditForm()`/
+  `hideHeroEditForm()`), same JS pattern already used by
+  `admin/settings/categories.php`.
+- `Pages::index()` now fetches active slides via
+  `HeroBannerSlideModel::getActiveSlides()` (ordered by `sort_order`);
+  `index.php`'s hardcoded 3-slide markup replaced with a loop. Slide links
+  can be a relative site path (`premium-services`, matching the existing
+  ones) or a full external URL -- only relative ones get `base_url()`
+  applied. If every slide is ever moved to history, the whole
+  `.banner-slider-sec` block doesn't render at all (rather than
+  initializing Slick on an empty container).
+- **Verified end-to-end with the owner's real admin session**, file uploads
+  included (constructed real `File`/`DataTransfer` objects in-browser via
+  `fetch()` + canvas, since there's no way to drive a native OS file picker
+  through this tooling): added a slide with a correctly-sized real image --
+  confirmed it landed in the table with a `hero_<timestamp>_<hex>.webp`
+  name and the physical file appeared in `uploads/hero-banner/`; attempted
+  a 500×400 image -- confirmed the exact "Image must be exactly
+  1340×1020px (got 500×400px)" error, and confirmed neither a DB row nor a
+  stray file was created; moved a slide to history and restored it back
+  (confirmed `status` and a freshly-computed `sort_order` each time); edited
+  a slide's link only (image filename unchanged) and separately replaced
+  its image (confirmed the new file appeared and the old one was deleted
+  from disk); moved it to history and permanently deleted it (confirmed
+  both the row and the file were gone); confirmed all three required
+  `confirm()` prompts are actually present in the rendered HTML
+  (`onsubmit` attributes read directly from the DOM) and that `restore`
+  correctly has none; confirmed the server-side guard by submitting a
+  crafted `delete_permanent` request directly against an *active* slide
+  (id 1) -- correctly rejected with "Only slides already in history can be
+  permanently deleted," row untouched. Confirmed the homepage renders the 3
+  real slides dynamically from the DB (not the old hardcoded markup) on
+  both desktop and mobile (375px), Slick still initializes correctly. DB
+  and `uploads/hero-banner/` re-confirmed back to exactly the 3 original
+  seeded rows/files after every test slide created during this pass was
+  cleaned up.
+
+---
+
 ## 2026-08-22 — Removed the dot indicators from the Top Products/Top Suppliers carousels
 
 **Files:** `app/Views/partials/footer.php`
