@@ -464,8 +464,7 @@ regardless of how many are pinned) and didn't need separate work.
   rendering under the prior single-set default, so nothing visibly changed
   on the live site.
 - **Found and fixed a real, pre-existing bug while wiring the new error
-  messages, not introduced by this change**: `redirect()->...->withInput()->with('error',
-  ...)` silently drops the flash message in this environment --
+  messages, not introduced by this change**: `redirect()->...->withInput()->with('error', ...)` silently drops the flash message in this environment --
   confirmed via a temporary `log_message()` that the flash data *is* present
   in session data during the same request it's set, but doesn't survive to
   the next one when `withInput()` precedes `with()` in the chain. Dropping
@@ -619,8 +618,7 @@ addressed staleness *within* that already-curated set, not this.
   doesn't inflate the count.
 - `Pages.php`'s ranking replaced with a decayed-popularity "hotness" score —
   `views / (days_since_created + 2)`, the same recency-decay shape sites like
-  Hacker News use for "hot" rankings — instead of `is_featured DESC,
-  created_at DESC`. A product/supplier added yesterday with a handful of
+  Hacker News use for "hot" rankings — instead of `is_featured DESC, created_at DESC`. A product/supplier added yesterday with a handful of
   views can already outrank one from a year ago with the same raw view count
   diluted thin over time, so new items get a real, fast path onto the
   homepage instead of waiting on manual curation. `is_featured` remains a
@@ -721,7 +719,7 @@ the full display count from the same-day pin+fill change above.
 
 ---
 
-## 2026-08-19 — Homepage "Top Products" now rotates instead of freezing on the same 3
+## 2026-08-21 — Homepage "Top Products" now rotates instead of freezing on the same 3
 
 **Files:** `app/Controllers/Pages.php`
 **Why:** owner reported the homepage's Top Products/Top Suppliers section
@@ -756,7 +754,7 @@ the full display count from the same-day pin+fill change above.
 
 ---
 
-## 2026-08-19 — Remaining 7 BLOCKERS #23 locations fixed; entry resolved and removed
+## 2026-08-21 — Remaining 7 BLOCKERS #23 locations fixed; entry resolved and removed
 
 **Files:** `app/Views/pages/buyer-detail.php` (×2 locations),
 `app/Views/pages/product-detail.php`, `app/Views/pages/supplier-country.php`,
@@ -801,7 +799,7 @@ remaining locations.
 
 ---
 
-## 2026-08-19 — `/buyer` page flags fixed too (first of the BLOCKERS #23 locations)
+## 2026-08-21 — `/buyer` page flags fixed too (first of the BLOCKERS #23 locations)
 
 **Files:** `app/Views/pages/buyer-main.php`
 **Why:** owner reported broken flags on `/buyer` (the "View All" destination
@@ -824,7 +822,7 @@ from the just-fixed Latest Buy Offers section) — this is location #1 of the
 
 ---
 
-## 2026-08-19 — Latest Buy Offers: fixed broken country flags (case-sensitivity bug + 3 missing files)
+## 2026-08-21 — Latest Buy Offers: fixed broken country flags (case-sensitivity bug + 3 missing files)
 
 **Files:** `public/assets/images/flags/australia.svg` (renamed from
 `Australia.svg`), `public/assets/images/flags/greece.svg` (new),
@@ -870,7 +868,7 @@ Latest Buy Offers section (`index.php:59-87`).
 
 ---
 
-## 2026-08-19 — Sitewide "Register Your Company" popup replaced too; fixed a real double-init bug found while wiring it up
+## 2026-08-21 — Sitewide "Register Your Company" popup replaced too; fixed a real double-init bug found while wiring it up
 
 **Files:** `app/Views/partials/footer.php`, `app/Views/pages/index.php`,
 `public/assets/js/script.js`
@@ -917,7 +915,7 @@ call site directly).
 
 ---
 
-## 2026-08-19 — Homepage forms replaced with the popup step-1 form
+## 2026-08-21 — Homepage forms replaced with the popup step-1 form
 
 **Files:** `app/Views/pages/index.php`,
 `app/Views/partials/lead-capture-inline-form.php` (new),
@@ -1030,8 +1028,7 @@ the existing leads view, and Agent/Stage editable through the existing
   persistent samples): `LeadModel::update()` persists both new fields
   correctly; `PopupLeadNoteModel`'s insert/latest-note/with-agent-join all
   match `LeadNoteModel`'s shape; the AJAX note endpoint's underlying model
-  operation and its unauthenticated-request response (`{"success":false,
-  "message":"Unauthorized"}`, matching the existing `ajaxAddNote()` pattern
+  operation and its unauthenticated-request response (`{"success":false, "message":"Unauthorized"}`, matching the existing `ajaxAddNote()` pattern
   exactly) both confirmed; the three new template cells render correctly
   via isolated eval (same technique used for earlier verifications this
   session, still needed since the CLI harness can't execute
@@ -1492,8 +1489,7 @@ see; the query-string form is never canonical.
   `search_slug_decode()` (same lossy `url_title()` transform already used for
   inquiry/product/category slugs — reused rather than reinvented, so the whole
   site slugifies consistently), `parse_search_path()` (turns
-  `"steel/country/us"` into `['keyword' => 'steel', 'filters' => ['country' =>
-  'us']]`, with a filter-only URL like `/buyer/search/country/us` parsing
+  `"steel/country/us"` into `['keyword' => 'steel', 'filters' => ['country' => 'us']]`, with a filter-only URL like `/buyer/search/country/us` parsing
   correctly because the first segment is checked against the known filter
   keys before being treated as a keyword), and `build_search_path()` (the
   inverse, used to build the 301 target).
@@ -1513,8 +1509,7 @@ see; the query-string form is never canonical.
 
 First implementation used `public function search($pathParams = null)` with
 the route `buyer/search/(:any) -> Buyer::search/$1`. Testing filters revealed
-category/country were silently being ignored — `/buyer/search/steel/category/
-metals-minerals` returned unfiltered results. Root cause: **CodeIgniter
+category/country were silently being ignored — `/buyer/search/steel/category/ metals-minerals` returned unfiltered results. Root cause: **CodeIgniter
 re-splits an `(:any)` route capture on `/` before binding a real controller
 method's parameters** -- confirmed by a side-by-side test where an identical
 route pattern bound to a closure received the full string intact, while the
@@ -1566,15 +1561,16 @@ all, and a mechanism that picks up new entries weekly. Closes T-19; makes T-18
 
 **Structure** — `/sitemap.xml` is an index pointing at:
 
-| Sitemap | Contents | Priority | URLs now |
-|---|---|---|---|
-| `sitemap-categories.xml` | `/supplier-category/{slug}` | 0.9 | 22 |
-| `sitemap-locations.xml` | `/supplier-country/{code}` | 0.9 | 122 |
-| `sitemap-static.xml` | static + listing pages | 0.8 (1.0 home, 0.3 policies) | 22 |
-| `sitemap-rfqs-{n}.xml` | `/buyer-inquiry/{slug}` | 0.7 | 470 |
-| `sitemap-suppliers-{n}.xml` | `/supplier/profile/{slug}` | 0.7 | 152 |
+| Sitemap                       | Contents                      | Priority                     | URLs now |
+| ----------------------------- | ----------------------------- | ---------------------------- | -------- |
+| `sitemap-categories.xml`    | `/supplier-category/{slug}` | 0.9                          | 22       |
+| `sitemap-locations.xml`     | `/supplier-country/{code}`  | 0.9                          | 122      |
+| `sitemap-static.xml`        | static + listing pages        | 0.8 (1.0 home, 0.3 policies) | 22       |
+| `sitemap-rfqs-{n}.xml`      | `/buyer-inquiry/{slug}`     | 0.7                          | 470      |
+| `sitemap-suppliers-{n}.xml` | `/supplier/profile/{slug}`  | 0.7                          | 152      |
 
 **How "weekly" works — two separate things, deliberately:**
+
 - `<changefreq>weekly</changefreq>` tells crawlers how often to return.
 - Output is cached for 7 days, then rebuilt from the live database, so new
   inquiries and suppliers appear with no manual step. **No cron**, chosen
@@ -1626,8 +1622,7 @@ icons only, no text.
   already existed (Facebook/Instagram icon markup, correct assets
   `fb-icon.svg`/`insta-icon.svg` already present) but was `d-none` with
   placeholder `href="#"` — clearly scaffolded in advance and never wired up.
-  Filled in the two real URLs, removed `d-none`, added `target="_blank"
-  rel="noopener noreferrer"` and `aria-label`s since the icons carry no
+  Filled in the two real URLs, removed `d-none`, added `target="_blank" rel="noopener noreferrer"` and `aria-label`s since the icons carry no
   visible text.
 - **SEO — added what "as SEO" actually means here:** a site-wide
   `Organization` JSON-LD block with `sameAs` pointing at both profiles. This
@@ -1705,8 +1700,7 @@ preserved. Backups of both files in `C:\xampp\db_backups\`.
 
 ### Per-page changes
 
-- **contact** — H1 was third in the document (`h2 Office Location`, `h3
-  Address`, then `h1 Contact Us`). Promoted the first heading instead:
+- **contact** — H1 was third in the document (`h2 Office Location`, `h3 Address`, then `h1 Contact Us`). Promoted the first heading instead:
   "Office Location" → `h1.h2`, "Address" → `h2.h3`, "Contact Us" → `h2.h3`.
   *Trade-off worth flagging:* "Office Location" is a weaker page-topic match
   than "Contact Us", but it is the page's actual first heading and moving DOM
@@ -1765,8 +1759,7 @@ visual text in a `<p class="slide-heading">`, so the carousel still shows the
 company name overlaid on every slide (unchanged visually) while the page has
 exactly one H1. CSS selectors in `style.css` (3 locations: base rule, a later
 override, and a `max-width: 575.5px` responsive rule) broadened from
-`.supplier-profile-slider h1` to also match `.supplier-profile-slider
-.slide-heading`, so the demoted slides keep identical styling.
+`.supplier-profile-slider h1` to also match `.supplier-profile-slider .slide-heading`, so the demoted slides keep identical styling.
 
 **Also checked, whole site:** grepped every page view for a heading tag
 appearing inside a `foreach`/`while` loop (the pattern that caused this) —
@@ -1856,8 +1849,7 @@ all (see the 2026-08-05 XSS entry above). Now that the layout correctly
 escapes the whole title string once, these two double-escaped:
 `Building &amp; Construction` was rendering as `Building &amp;amp; Construction`.
 Fixed at the source — removed both premature `esc()` calls, since escaping now
-happens exactly once, at render time, in the layout. Verified: `Electronics &
-Electrical` now renders as `&amp;` exactly once, confirmed against raw
+happens exactly once, at render time, in the layout. Verified: `Electronics & Electrical` now renders as `&amp;` exactly once, confirmed against raw
 response bytes. Grepped all controllers for the same `= esc(...)`-into-title
 pattern; these were the only two.
 
@@ -1919,6 +1911,7 @@ since it was found via the same file and the fix is the same `esc()` pattern
 already used elsewhere on this page.
 
 **JSON-LD block:**
+
 - Added to `buyer-detail.php`, right after `$this->section('content')` opens.
   Built as a PHP array and passed through `json_encode()` with
   `JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT` — **not** raw
@@ -1940,6 +1933,7 @@ already used elsewhere on this page.
   `"`, etc.), stays as exactly one `<script>` tag, and does not execute.
 
 **XSS found and fixed (not part of the original ask, but found while testing it):**
+
 - That same adversarial title exposed a real, exploitable stored XSS: every
   layout's `<title>` tag interpolated `$title` with **no escaping at all** —
   `<title><?= ($title ?? 'Home') . ' | ' . ... ?></title>`. The payload's
@@ -2150,6 +2144,7 @@ UNIQUE; `status` ENUM widened to include `inactive`.
 and bare `/buyer-inquiry/{id}`.
 
 **Verified**
+
 - 470/470 slugs, all distinct, zero nulls, zero bad characters, max length 125
 - **Zero URL churn** — every backfilled slug byte-identical to what the old
   render-time expression produced; 0 unexpected diffs across all 470 rows
@@ -2259,6 +2254,7 @@ they are now redundant duplicates of the same PII and can be deleted.
 **Why:** Close BLOCKERS #5 — the app was unverified beyond the homepage.
 
 **Static**
+
 - `php -l` across all **168** PHP files under `app/` — zero syntax errors
 - **136/136** non-closure route handlers resolve to real controller methods (the
   other 2 of 138 are closures)
@@ -2268,6 +2264,7 @@ they are now redundant duplicates of the same PII and can be deleted.
 - `php spark routes` runs — framework boots cleanly on CLI
 
 **HTTP** — all 97 GET routes, 9 destructive ones deliberately skipped
+
 - 37 × `200` public pages
 - 45 × `302` — every dashboard/admin route redirects to `/login` unauthenticated;
   no route leaked a 200
@@ -2278,6 +2275,7 @@ they are now redundant duplicates of the same PII and can be deleted.
   15/15 buyer inquiry pages
 
 **Defects found** — all logged in BLOCKERS.md, none fixed
+
 - #7 CSRF disabled site-wide; proven by a token-less POST being accepted
 - #8 nine destructive actions exposed as GET
 - #9 `AuthFilter` applied to no route; auth is per-method and opt-in
@@ -2293,6 +2291,7 @@ Removed with an exact-id delete; count verified back at 61.
 data. Tracked as T-11. Email sending also untested.
 
 **Environment notes (not defects)**
+
 - The `CRITICAL fwrite errno=22` entries in the log are a Windows artifact of piping
   `spark` output through Git Bash (`system/CLI/InputOutput.php:78`), not an app fault
 - App timezone is UTC while Windows local time is ahead — log filenames are
