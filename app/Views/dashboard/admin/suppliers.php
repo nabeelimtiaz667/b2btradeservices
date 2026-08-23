@@ -32,6 +32,23 @@
             . esc($label) . ' ' . $arrow . '</a>';
     };
 ?>
+<div class="card card-custom mb-3">
+    <div class="card-body py-2">
+        <form method="post" action="<?= esc($suppliersActionUrl, 'attr') ?>" class="d-flex align-items-center gap-2 mb-0">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="toggle_show_starred_as_featured">
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" name="enabled" value="1" id="showStarredAsFeatured"
+                    <?= !empty($showStarredAsFeatured) ? 'checked' : '' ?> onchange="this.form.submit()">
+                <label class="form-check-label" for="showStarredAsFeatured">Show Starred Supplier as Featured</label>
+            </div>
+            <span class="text-muted small">When on, suppliers you've starred (&#9733;) below appear in the homepage's
+                "Featured Suppliers" section. Any slots they don't fill are still shown the same way as before --
+                by premium (platinum/gold) suppliers.</span>
+        </form>
+    </div>
+</div>
+
 <div class="card card-custom">
     <div class="card-body">
         <?php if (!empty($suppliers)): ?>
@@ -67,26 +84,12 @@
                             <?php endif; ?>
                         </td>
                         <td>
-                            <div class="d-flex align-items-center gap-1">
-                                <form method="post" action="<?= esc($suppliersActionUrl, 'attr') ?>" class="d-inline">
-                                    <?= csrf_field() ?>
-                                    <input type="hidden" name="action" value="toggle_featured_supplier">
-                                    <input type="hidden" name="id" value="<?= $s['id'] ?>">
-                                    <button type="submit" class="btn btn-sm <?= $s['is_featured'] ? 'btn-warning' : 'btn-outline-secondary' ?>"><?= $s['is_featured'] ? '★' : '☆' ?></button>
-                                </form>
-                                <?php if ($s['is_featured']): ?>
-                                <form method="post" action="<?= esc($suppliersActionUrl, 'attr') ?>" class="d-inline">
-                                    <?= csrf_field() ?>
-                                    <input type="hidden" name="action" value="set_supplier_featured_set">
-                                    <input type="hidden" name="id" value="<?= $s['id'] ?>">
-                                    <select name="featured_set" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()" title="Which carousel set this supplier is pinned into (max 2 pinned suppliers per set)">
-                                        <?php for ($set = 1; $set <= ($supplierSetCount ?? 1); $set++): ?>
-                                        <option value="<?= $set ?>" <?= (int) ($s['featured_set'] ?? 1) === $set ? 'selected' : '' ?>>Set <?= $set ?></option>
-                                        <?php endfor; ?>
-                                    </select>
-                                </form>
-                                <?php endif; ?>
-                            </div>
+                            <form method="post" action="<?= esc($suppliersActionUrl, 'attr') ?>" class="d-inline">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="action" value="toggle_featured_supplier">
+                                <input type="hidden" name="id" value="<?= $s['id'] ?>">
+                                <button type="submit" class="btn btn-sm <?= $s['is_featured'] ? 'btn-warning' : 'btn-outline-secondary' ?>"><?= $s['is_featured'] ? '★' : '☆' ?></button>
+                            </form>
                         </td>
                         <td>
                             <a href="<?= base_url('dashboard/suppliers/edit/' . $s['id']) ?>" class="btn btn-sm btn-primary">Edit</a>

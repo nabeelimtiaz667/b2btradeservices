@@ -12,15 +12,6 @@ use App\Models\HeroBannerSlideModel;
 class AdminSettings extends BaseController
 {
     /**
-     * Mirrors Pages::TOP_PRODUCTS_DISPLAY_COUNT -- a carousel set can hold
-     * at most this many pinned products (there's no per-set 1-pin cap,
-     * admin picks the set directly, but a set can't hold more pins than it
-     * has display slots). Must stay in sync with that constant and with
-     * Dashboard::TOP_SUPPLIERS_ITEMS_PER_SET for the supplier side.
-     */
-    private const TOP_PRODUCTS_ITEMS_PER_SET = 3;
-
-    /**
      * Loose shape/quality gate for hero banner uploads -- not an exact
      * pixel match (the display side now crops to a fixed box via CSS
      * object-fit, see .banner-slider-sec in style.css, so it doesn't need
@@ -67,27 +58,6 @@ class AdminSettings extends BaseController
         return true;
     }
 
-    /**
-     * True if $setNumber has room for one more pinned product, i.e. fewer
-     * than TOP_PRODUCTS_ITEMS_PER_SET are already pinned into it (only
-     * counting active products -- an inactive/pending one wouldn't actually
-     * render there, matching Pages::index()'s own filter). $excludeProductId
-     * lets an existing pin re-save into the same set without counting
-     * itself against its own room.
-     */
-    private function productSetHasRoom(int $setNumber, ?int $excludeProductId = null): bool
-    {
-        $builder = $this->productModel
-            ->where('status', 'active')
-            ->where('is_featured', 1)
-            ->where('featured_set', $setNumber);
-
-        if ($excludeProductId) {
-            $builder->where('id !=', $excludeProductId);
-        }
-
-        return $builder->countAllResults() < self::TOP_PRODUCTS_ITEMS_PER_SET;
-    }
 
     public function index()
     {
@@ -326,58 +296,17 @@ class AdminSettings extends BaseController
                 $this->inquiryModel->delete($id);
                 $this->session->setFlashdata('success', 'Inquiry deleted.');
             } elseif ($action === 'toggle_featured_product') {
+                // Plain flag toggle -- no more "which carousel set" to
+                // assign (Top Products no longer pins from is_featured as
+                // of 2026-08-23). This flag still drives the separate
+                // Featured Products section further down the homepage and
+                // the featured-first ordering in product search/listing.
                 $id = $this->request->getPost('id');
                 $product = $this->productModel->find($id);
                 if ($product) {
                     $newVal = $product['is_featured'] ? 0 : 1;
-                    if ($newVal) {
-                        // Reuse the product's last-known set if it still has
-                        // room; otherwise auto-pick the first set that does,
-                        // rather than hard-defaulting to set 1 -- a product
-                        // has no "Set N" dropdown until it's already
-                        // featured, so hard-defaulting to set 1 would strand
-                        // admins with no way to land a new pin anywhere once
-                        // set 1 fills up.
-                        $preferredSet = (int) ($product['featured_set'] ?: 0);
-                        $targetSet = ($preferredSet >= 1 && $this->productSetHasRoom($preferredSet, $id))
-                            ? $preferredSet
-                            : null;
-
-                        if ($targetSet === null) {
-                            $setCount = max(1, min(10, (int) $this->settingModel->getSetting('top_products_set_count', 1)));
-                            for ($s = 1; $s <= $setCount; $s++) {
-                                if ($this->productSetHasRoom($s, $id)) {
-                                    $targetSet = $s;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if ($targetSet === null) {
-                            $this->session->setFlashdata('error',
-                                'All ' . $setCount . ' carousel set(s) already have the maximum '
-                                . self::TOP_PRODUCTS_ITEMS_PER_SET . ' pinned products each. Free up a set '
-                                . 'first, or add more sets on the Top Sections tab.');
-                            return redirect()->to($redirectUrl);
-                        }
-
-                        $this->productModel->update($id, ['is_featured' => 1, 'featured_set' => $targetSet]);
-                    } else {
-                        $this->productModel->update($id, ['is_featured' => 0]);
-                    }
+                    $this->productModel->update($id, ['is_featured' => $newVal]);
                     $this->session->setFlashdata('success', 'Product featured status toggled.');
-                }
-            } elseif ($action === 'set_product_featured_set') {
-                $id = $this->request->getPost('id');
-                $setNum = (int) $this->request->getPost('featured_set');
-                if ($setNum >= 1 && $setNum <= 10) {
-                    if (!$this->productSetHasRoom($setNum, $id)) {
-                        $this->session->setFlashdata('error',
-                            'Set ' . $setNum . ' already has the maximum ' . self::TOP_PRODUCTS_ITEMS_PER_SET . ' pinned products.');
-                        return redirect()->to($redirectUrl);
-                    }
-                    $this->productModel->update($id, ['featured_set' => $setNum]);
-                    $this->session->setFlashdata('success', 'Product carousel set updated.');
                 }
             } elseif ($action === 'toggle_featured_inquiry') {
                 $id = $this->request->getPost('id');
@@ -441,7 +370,6 @@ class AdminSettings extends BaseController
         }
 
         $user = $this->userModel->find($this->session->get('user_id'));
-        $productSetCount = max(1, min(10, (int) $this->settingModel->getSetting('top_products_set_count', 1)));
 
         return view('admin/settings/listings', [
             'title' => 'Listing Management - Admin',
@@ -449,7 +377,6 @@ class AdminSettings extends BaseController
             'products' => $products,
             'inquiries' => $inquiries,
             'activeTab' => 'listings',
-            'productSetCount' => $productSetCount,
             'sort' => $sort,
             'dir' => $dir,
         ]);
@@ -457,13 +384,10 @@ class AdminSettings extends BaseController
 
     /**
      * Number of rotating sets and per-set display time (seconds) for the
-     * homepage's Top Products / Top Suppliers carousels. Which specific
-     * product/supplier is pinned into which set is set elsewhere (the
-     * "Featured" column on the Listings tab for products, the "Featured
-     * Supplier" checkbox on a supplier's edit page) -- this tab only
-     * controls how many sets exist and how fast they rotate. See
-     * Pages::index() for how a set count change reshapes the pools, and
-     * CHANGELOG 2026-08-21.
+     * homepage's Top Products / Top Suppliers carousels. Both are fully
+     * automatic rankings (no manual pinning, see Pages::index()) -- this
+     * tab only controls how many sets exist and how fast they rotate. See
+     * CHANGELOG 2026-08-21, and 2026-08-23 for the pinning removal.
      */
     public function topSections()
     {

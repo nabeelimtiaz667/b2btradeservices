@@ -15,8 +15,13 @@ class ProductModel extends Model
         'supplier_id', 'category_id', 'name', 'slug', 'description', 'specifications',
         'main_image', 'gallery_images', 'min_order_quantity', 'min_order_unit',
         'price_range', 'supply_ability', 'delivery_time', 'packaging', 'port',
-        'payment_terms', 'certifications', 'is_featured', 'featured_set', 'status'
+        'payment_terms', 'certifications', 'is_featured', 'status'
     ];
+    // 'featured_set' deliberately NOT in $allowedFields -- it drove manual
+    // pinning into a specific Top Products carousel set, removed 2026-08-23
+    // (Top Products is now fully automatic). Column stays in the DB
+    // (harmless, unused) rather than dropping it; nothing should write to
+    // it anymore.
     // 'view_count' deliberately NOT in $allowedFields -- it's a system-managed
     // popularity counter (see Product::detail(), Pages.php's Top Products
     // ranking), not a form field. Keeping it out of mass assignment means an

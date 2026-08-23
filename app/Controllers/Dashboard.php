@@ -56,49 +56,6 @@ class Dashboard extends BaseController
         return false;
     }
 
-    /**
-     * How many rotating sets the homepage's Top Suppliers carousel has --
-     * lets the Manage Suppliers list page offer a matching "which set"
-     * dropdown next to each row's Featured toggle. See
-     * AdminSettings::topSections().
-     */
-    private function getSupplierSetCount(): int
-    {
-        $settingModel = new SiteSettingModel();
-        return max(1, min(10, (int) $settingModel->getSetting('top_suppliers_set_count', 1)));
-    }
-
-    /**
-     * Mirrors Pages::TOP_SUPPLIERS_DISPLAY_COUNT -- a set can hold at most
-     * this many pinned suppliers (there's no per-set 1-pin cap any more,
-     * admin picks the set directly, but a set obviously can't hold more
-     * pins than it has display slots). Must stay in sync with that constant
-     * and with AdminSettings::TOP_SUPPLIERS_ITEMS_PER_SET.
-     */
-    private const TOP_SUPPLIERS_ITEMS_PER_SET = 2;
-
-    /**
-     * True if $setNumber has room for one more pinned supplier, i.e. fewer
-     * than TOP_SUPPLIERS_ITEMS_PER_SET are already pinned into it (only
-     * counting approved suppliers -- an inactive/pending one wouldn't
-     * actually render there, matching Pages::index()'s own filter).
-     * $excludeUserId lets an existing pin re-save into the same set without
-     * counting itself against its own room.
-     */
-    private function supplierSetHasRoom(int $setNumber, ?int $excludeUserId = null): bool
-    {
-        $builder = $this->userModel
-            ->where('user_type', 'supplier')
-            ->where('status', 'approved')
-            ->where('is_featured', 1)
-            ->where('featured_set', $setNumber);
-
-        if ($excludeUserId) {
-            $builder->where('id !=', $excludeUserId);
-        }
-
-        return $builder->countAllResults() < self::TOP_SUPPLIERS_ITEMS_PER_SET;
-    }
 
     public function index()
     {
@@ -940,61 +897,28 @@ class Dashboard extends BaseController
         // set never resets the admin's current column sort.
         $redirectUrl = '/dashboard/suppliers?sort=' . $sort . '&dir=' . $dir;
 
+        $settingModel = new SiteSettingModel();
+
         if ($this->request->getMethod() === 'POST') {
             $action = $this->request->getPost('action');
 
             if ($action === 'toggle_featured_supplier') {
+                // Plain flag toggle -- no "which carousel set" to assign
+                // (Top Suppliers no longer pins from is_featured as of
+                // 2026-08-23). Whether this flag does anything on the
+                // homepage's separate "Featured Suppliers" section depends
+                // on the "Show Starred Supplier as Featured" setting below.
                 $id = $this->request->getPost('id');
                 $supplier = $this->userModel->find($id);
                 if ($supplier) {
                     $newVal = $supplier['is_featured'] ? 0 : 1;
-                    if ($newVal) {
-                        // Same auto-pick-first-open-set reasoning as
-                        // AdminSettings::listings()'s toggle_featured_product
-                        // -- hard-defaulting to set 1 would strand admins
-                        // once it fills, since the Set-N dropdown only shows
-                        // for already-featured rows.
-                        $preferredSet = (int) ($supplier['featured_set'] ?: 0);
-                        $targetSet = ($preferredSet >= 1 && $this->supplierSetHasRoom($preferredSet, (int) $id))
-                            ? $preferredSet
-                            : null;
-
-                        if ($targetSet === null) {
-                            $setCount = $this->getSupplierSetCount();
-                            for ($s = 1; $s <= $setCount; $s++) {
-                                if ($this->supplierSetHasRoom($s, (int) $id)) {
-                                    $targetSet = $s;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if ($targetSet === null) {
-                            $this->session->setFlashdata('error',
-                                'All ' . $setCount . ' carousel set(s) already have the maximum '
-                                . self::TOP_SUPPLIERS_ITEMS_PER_SET . ' pinned suppliers each. Free up a set '
-                                . 'first, or add more sets on the Top Sections tab.');
-                            return redirect()->to($redirectUrl);
-                        }
-
-                        $this->userModel->update($id, ['is_featured' => 1, 'featured_set' => $targetSet]);
-                    } else {
-                        $this->userModel->update($id, ['is_featured' => 0]);
-                    }
+                    $this->userModel->update($id, ['is_featured' => $newVal]);
                     $this->session->setFlashdata('success', 'Supplier featured status toggled.');
                 }
-            } elseif ($action === 'set_supplier_featured_set') {
-                $id = $this->request->getPost('id');
-                $setNum = (int) $this->request->getPost('featured_set');
-                if ($setNum >= 1 && $setNum <= 10) {
-                    if (!$this->supplierSetHasRoom($setNum, (int) $id)) {
-                        $this->session->setFlashdata('error',
-                            'Set ' . $setNum . ' already has the maximum ' . self::TOP_SUPPLIERS_ITEMS_PER_SET . ' pinned suppliers.');
-                        return redirect()->to($redirectUrl);
-                    }
-                    $this->userModel->update($id, ['featured_set' => $setNum]);
-                    $this->session->setFlashdata('success', 'Supplier carousel set updated.');
-                }
+            } elseif ($action === 'toggle_show_starred_as_featured') {
+                $newVal = $this->request->getPost('enabled') ? '1' : '0';
+                $settingModel->setSetting('show_starred_suppliers_as_featured', $newVal, 'supplier_display');
+                $this->session->setFlashdata('success', 'Featured Suppliers display setting updated.');
             }
 
             return redirect()->to($redirectUrl);
@@ -1024,7 +948,7 @@ class Dashboard extends BaseController
             'pager' => $this->userModel->pager,
             'sort' => $sort,
             'dir' => $dir,
-            'supplierSetCount' => $this->getSupplierSetCount(),
+            'showStarredAsFeatured' => $settingModel->getSetting('show_starred_suppliers_as_featured', '0') === '1',
         ]);
     }
 

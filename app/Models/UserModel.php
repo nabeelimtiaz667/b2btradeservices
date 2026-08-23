@@ -44,11 +44,15 @@ class UserModel extends Model
         'last_device_type',
         'department',
         'is_featured',
-        'featured_set',
         'status',
         'reset_token',
         'reset_token_expires',
     ];
+    // 'featured_set' deliberately NOT in $allowedFields -- drove manual
+    // pinning into a specific Top Suppliers carousel set, removed
+    // 2026-08-23 (Top Suppliers is now fully automatic). Column stays in
+    // the DB (harmless, unused) rather than dropping it; nothing should
+    // write to it anymore.
     // 'profile_view_count' deliberately NOT in $allowedFields -- system-managed
     // popularity counter (see Supplier::profile(), Pages.php's Top Suppliers
     // ranking), same reasoning as ProductModel::$view_count: kept out of mass

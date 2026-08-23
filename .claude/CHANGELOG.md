@@ -14,6 +14,147 @@ Entry format:
 
 ---
 
+## 2026-08-23 — Starred suppliers now guaranteed first, not just added to the shuffle
+
+**Files:** `app/Controllers/Pages.php`
+**Why:** the "Show Starred Supplier as Featured" setting shipped earlier
+today just appended starred suppliers into the same pool that gets
+shuffled as a whole -- so a starred supplier could easily not appear on a
+given homepage load, competing on equal footing with every premium member
+for the visible slots. Owner asked to confirm whether starred suppliers
+are guaranteed to show first, and to make it so if not.
+
+- `$categorySuppliers` is now built as two separate pieces instead of one
+  shuffled pool: starred suppliers (own internal shuffle, so their
+  *relative* order still varies, but they're always included) placed
+  first, then premium (platinum/gold) suppliers -- excluding anyone
+  already counted as starred -- shuffled among themselves to fill
+  whatever's left, exactly as before. `array_merge()` keeps that order
+  going into the same per-category chunking as always, so starred
+  suppliers land in the front chunk(s) (and therefore the first category
+  group(s) shown) every time, not wherever a random shuffle happened to
+  put them.
+- **Verified live**: turned the setting on through the real admin
+  checkbox, reloaded the homepage 3 times -- both currently-starred
+  suppliers (Anhui CareNest, PML Trading) occupied the first two slots of
+  the very first category group on every single load, with only their
+  relative order between each other changing and the third slot rotating
+  among premium suppliers. Turned the setting back off and confirmed it
+  reverted cleanly to the prior baseline.
+
+---
+
+## 2026-08-23 — "Show Starred Supplier as Featured" — makes the now-inert supplier ★ toggle mean something again
+
+**Files:** `app/Controllers/Dashboard.php`, `app/Controllers/Pages.php`,
+`app/Views/dashboard/admin/suppliers.php`
+**Why:** the same-day pin-removal work (entry above) left the supplier ★
+toggle on Manage Suppliers with no effect anywhere on the site -- the
+homepage's "Featured Suppliers" section runs purely on membership tier
+(platinum/gold). Owner asked for a checkbox to opt into having starred
+suppliers show there too, without removing or replacing the existing
+premium-tier behavior -- it should only ever *add* to the pool, and
+whatever a starred supplier doesn't cover keeps being filled by premium
+members exactly as before.
+
+- New site setting `show_starred_suppliers_as_featured` (site_settings
+  group `supplier_display`, off by default -- so existing behavior is
+  unchanged until an admin opts in). New checkbox "Show Starred Supplier as
+  Featured" in its own small card above the Manage Suppliers table,
+  auto-submits on change (same instant-toggle pattern as the status
+  dropdowns elsewhere in this admin), new `toggle_show_starred_as_featured`
+  POST action in `Dashboard::suppliers()`.
+- `Pages::index()`'s `$categorySuppliers` query (the pool behind the
+  Featured Suppliers section) is unchanged when the setting is off. When
+  on, it additionally fetches every `is_featured=1` approved supplier and
+  appends any not already in the premium-tier pool (dedup by id -- a
+  supplier who's both starred and platinum/gold isn't added twice). The
+  combined pool then goes through the exact same `shuffle()` + per-category
+  chunking as before, so starred suppliers mix into the existing random
+  rotation rather than getting a separate/guaranteed slot -- consistent
+  with there being no "pinning" concept anywhere on this homepage anymore
+  after today's earlier change.
+- **Verified live via the real admin UI**, not just the DB: confirmed both
+  currently-starred suppliers (465 "Anhui CareNest", 515 "PML Trading" --
+  both `membership_level = free`, so absent from the section under the
+  old/default behavior, confirmed first) were completely absent from the
+  homepage with the setting off; clicked the checkbox for real, confirmed
+  the setting value persisted (`1`) and the checkbox stayed checked on
+  reload; confirmed both starred suppliers now appear on the homepage
+  across repeated loads (each showed up in a different fetch, consistent
+  with the pool being shuffled per-request same as before); clicked the
+  checkbox off again, confirmed the setting reverted to `0` and both
+  starred suppliers disappeared from the homepage again, back to the exact
+  original baseline.
+
+---
+
+## 2026-08-23 — Top Products/Top Suppliers no longer take manual pins from `is_featured`
+
+**Files:** `app/Controllers/Pages.php`, `app/Controllers/AdminSettings.php`,
+`app/Controllers/Dashboard.php`, `app/Models/ProductModel.php`,
+`app/Models/UserModel.php`, `app/Views/admin/settings/listings.php`,
+`app/Views/admin/settings/top-sections.php`,
+`app/Views/dashboard/admin/suppliers.php`
+**Why:** while investigating why this dev DB's "Featured Products" homepage
+section (a separate, further-down section fed by the same `is_featured`
+flag) looked sparse, owner asked to fully decouple Top Products/Top
+Suppliers from `is_featured` -- those two sections should be 100%
+automatic ranking from here on, with none of the earlier same-day pin/
+per-set-cap machinery. The rotation itself (multiple sets, configurable
+count/timing) stays exactly as it was.
+
+- `Pages::index()`: both carousels' per-set loops no longer run a pinned-
+  row query at all -- every slot in every set now comes from the hotness-
+  ranked dynamic query (same ranking formula as before), still excluding
+  ids already used in an earlier set so nothing repeats across the
+  rotation. Also dropped the `is_featured DESC` tiebreak from the ranking
+  order itself, for a clean, full decoupling rather than a lingering soft
+  influence.
+- `AdminSettings.php` / `Dashboard.php`: removed `productSetHasRoom()`/
+  `supplierSetHasRoom()`, the `TOP_PRODUCTS_ITEMS_PER_SET`/
+  `TOP_SUPPLIERS_ITEMS_PER_SET` constants, the `set_product_featured_set`/
+  `set_supplier_featured_set` actions, and the auto-pick-first-open-set
+  logic in both toggle actions. `toggle_featured_product`/
+  `toggle_featured_supplier` are back to a plain `is_featured` flip, no
+  `featured_set` touched at all.
+- Admin UI: the "Set N" dropdown that appeared next to the ★ toggle on both
+  the Products Listings tab and Manage Suppliers is gone -- just the plain
+  star again. `admin/settings/top-sections`'s help text rewritten to stop
+  describing a pinning mechanism that no longer exists.
+- `featured_set` removed from both `ProductModel`/`UserModel`
+  `$allowedFields` (nothing should write to it anymore) but the column
+  itself stays in the database rather than being dropped -- harmless
+  unused data, and this project treats dropping real columns as
+  meaningfully riskier than leaving one inert (see BLOCKERS #17). The
+  migration that added it (2026-08-21) is left untouched, per this
+  project's convention of never editing a migration after it's a real
+  committed one.
+- **Worth knowing**: nothing else in the codebase reads a *supplier's*
+  `is_featured` flag any more -- the homepage's other "Featured Suppliers"
+  section (further down the page) is driven by membership tier
+  (platinum/gold), not this flag, which was already true before this
+  change (see the conversation immediately prior). The ★ toggle on Manage
+  Suppliers is kept exactly as instructed ("the rest stays as it is"), but
+  it's now effectively inert -- toggling it doesn't currently change
+  anything visible anywhere on the site. Products are different: a
+  product's `is_featured` still drives the separate Featured Products
+  section and the featured-first tiebreak in product search/listing, so
+  that toggle remains meaningful.
+- **Verified live**: full lint sweep. Confirmed both carousels still
+  render, `slick-initialized`, with different products/suppliers than the
+  previously-pinned ones (57/64/83, 465/515) showing up -- direct evidence
+  pinning no longer forces anything. Confirmed zero `select[name=featured_set]`
+  elements remain on either admin list page (124 product ★ buttons, 25
+  supplier ★ buttons, all still present and working). Toggled a real
+  supplier's star on through the actual UI, confirmed `is_featured=1` with
+  `featured_set` untouched (`NULL`), then toggled back and reconfirmed the
+  database back to the exact 3-featured-product/2-featured-supplier
+  baseline. Confirmed the Top Sections admin page renders its updated,
+  accurate help text.
+
+---
+
 ## 2026-08-23 — Latest Buy Offers carousel: corrected to 3 slides of 8 (not 3 items per slide)
 
 **Files:** `app/Controllers/Pages.php`

@@ -133,26 +133,12 @@
                                             </form>
                                         </td>
                                         <td>
-                                            <div class="d-flex align-items-center gap-1">
-                                                <form method="post" action="<?= esc($listingsActionUrl, 'attr') ?>" class="d-inline">
-                                                    <?= csrf_field() ?>
-                                                    <input type="hidden" name="action" value="toggle_featured_product">
-                                                    <input type="hidden" name="id" value="<?= $p['id'] ?>">
-                                                    <button type="submit" class="btn btn-sm <?= $p['is_featured'] ? 'btn-warning' : 'btn-outline-secondary' ?>"><?= $p['is_featured'] ? '★' : '☆' ?></button>
-                                                </form>
-                                                <?php if ($p['is_featured']): ?>
-                                                <form method="post" action="<?= esc($listingsActionUrl, 'attr') ?>" class="d-inline">
-                                                    <?= csrf_field() ?>
-                                                    <input type="hidden" name="action" value="set_product_featured_set">
-                                                    <input type="hidden" name="id" value="<?= $p['id'] ?>">
-                                                    <select name="featured_set" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()" title="Which carousel set this product is pinned into (max 3 pinned products per set)">
-                                                        <?php for ($set = 1; $set <= $productSetCount; $set++): ?>
-                                                        <option value="<?= $set ?>" <?= (int) ($p['featured_set'] ?? 1) === $set ? 'selected' : '' ?>>Set <?= $set ?></option>
-                                                        <?php endfor; ?>
-                                                    </select>
-                                                </form>
-                                                <?php endif; ?>
-                                            </div>
+                                            <form method="post" action="<?= esc($listingsActionUrl, 'attr') ?>" class="d-inline">
+                                                <?= csrf_field() ?>
+                                                <input type="hidden" name="action" value="toggle_featured_product">
+                                                <input type="hidden" name="id" value="<?= $p['id'] ?>">
+                                                <button type="submit" class="btn btn-sm <?= $p['is_featured'] ? 'btn-warning' : 'btn-outline-secondary' ?>"><?= $p['is_featured'] ? '★' : '☆' ?></button>
+                                            </form>
                                         </td>
                                         <td>
                                             <form method="post" action="<?= esc($listingsActionUrl, 'attr') ?>" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this product?')">
