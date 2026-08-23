@@ -163,16 +163,28 @@ a shared branch.
 ## #10 — Gitignore uploads, keep the CodeIgniter framework source
 **Date:** 2026-07-29 · **Status:** Active
 
-`public/uploads/` (~54 MB) and `blog/wp-content/uploads/` (~41 MB) are excluded.
-`system/` (CodeIgniter framework, ~3.4 MB) is committed.
+`public/uploads/` (~54 MB), `public/assets/images/` (~20 MB), and
+`blog/wp-content/uploads/` (~41 MB) are excluded. `system/` (CodeIgniter
+framework, ~3.4 MB) is committed. `public/assets/css/` and `public/assets/js/`
+are **not** excluded — only `assets/images/` is, not all of `assets/`.
 
 **Why:** Uploads are user-generated content, replaceable from production, and the
-bulk of the repo size. The framework source was already vendored in the import and
-committing it keeps the checkout self-contained.
+bulk of the repo size. `assets/images/` was folded into the same ignore block for
+the same reason — static image assets, also large, also not something a diff-based
+workflow needs to track byte-for-byte. The framework source was already vendored
+in the import and committing it keeps the checkout self-contained.
 
-**Consequence:** A fresh clone has no product or supplier images and will show
-broken media until they are copied across. Reverse by deleting the uploads block
-in `.gitignore`.
+**Consequence:** A fresh clone has no product, supplier, or flag images and will
+show broken media until they are copied across. Reverse by deleting the uploads
+block in `.gitignore`.
+
+**Consequence discovered in production, 2026-08-23 (see BLOCKERS #25):** any
+change under `public/assets/images/` — new files, renames, edits — is invisible
+to `git status`/`git diff`, so a deploy process driven off git output silently
+skips it. This bit a real deploy: 4 flag SVG files fixed on 2026-08-21
+(CHANGELOG) never made it to production because they weren't recognized as
+"changed" by any git-based check, and the missing flags went unnoticed until
+the owner traced it back by hand.
 
 ---
 

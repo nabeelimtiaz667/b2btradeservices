@@ -48,7 +48,8 @@ b2btradeservices/
 │   ├── Filters/ Helpers/ Libraries/ Language/
 ├── public/                 Web root / front controller
 │   ├── index.php           Front controller
-│   ├── assets/             CSS, JS, images (~20 MB)
+│   ├── assets/css/ js/     Tracked in git
+│   ├── assets/images/      Product/flag/banner images (~20 MB, gitignored — see DECISIONS #10)
 │   └── uploads/            User-uploaded media (~54 MB, gitignored)
 ├── blog/                   WordPress install (gitignored — see DECISIONS #7)
 ├── system/                 CodeIgniter framework source (vendored, tracked)

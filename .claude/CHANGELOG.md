@@ -14,6 +14,55 @@ Entry format:
 
 ---
 
+## 2026-08-23 — Edit form's upload/URL radio toggle was completely non-functional
+
+**Files:** `app/Views/admin/settings/hero-banners.php`
+**Why:** owner reported that on a slide's Edit row, clicking the other radio
+(upload vs. URL) never enabled the corresponding field -- it always stayed
+disabled, unlike the Add form where the same toggle worked correctly.
+
+- **Root cause**: an element-id ordering mismatch introduced when the radio
+  toggle was built. `heroToggleInputType(prefix)` constructs ids as
+  `prefix + 'TypeUpload'` etc. For the Add form (`prefix = 'add'`) that
+  correctly resolves to `addTypeUpload`, matching the actual element id. For
+  each Edit row the ids were written the other way around --
+  `id="editTypeUpload<?= $slide['id'] ?>"` (e.g. `editTypeUpload42`) --
+  while the `onchange` handler still passed `prefix = 'edit42'`, so the
+  function looked for `edit42TypeUpload`, which didn't exist.
+  `getElementById()` returned `null`, and calling `.checked` on that threw
+  immediately -- silently, since nothing displays a JS console error to an
+  admin -- before the function ever reached the line that would have
+  re-enabled the field. Fixed by reordering the Edit row's ids to
+  `edit{id}TypeUpload`/`ImageFile`/`TypeUrl`/`ImageUrl`, matching the
+  pattern the Add form already used correctly.
+- **Checked the old-file cleanup this bug was blocking from ever being
+  tested**, per the owner's explicit ask: `AdminSettings::heroBanners()`'s
+  `update` action already deletes the previous uploaded file whenever a
+  slide's image actually changes -- switching from an upload to a URL,
+  switching from one upload to another -- and correctly does *not* attempt
+  a delete when the previous value was a URL (nothing on disk to remove) or
+  when nothing about the image changed at all. The logic itself was already
+  correct; it just could never be reached from the Edit form until this fix,
+  since the URL field being stuck disabled meant a submitted `image_url`
+  value was never possible in edit mode. Users replacing an image
+  repeatedly will not accumulate orphaned files in `uploads/hero-banner/`.
+- **Verified**: full lint sweep. Direct source-level confirmation (the same
+  method that found the bug) that every Edit row's ids now match what
+  `heroToggleInputType()` looks up -- `id="edit42TypeUpload"` etc., the old
+  mismatched `id="editTypeUpload42"` pattern gone. A throwaway `spark`
+  command (deleted after use) replicated the cleanup logic against real
+  throwaway files on disk for all three scenarios: upload &rarr; URL (old
+  file deleted), URL &rarr; upload (correctly skips delete, nothing was on
+  disk), upload &rarr; new upload (previous file deleted) -- all three
+  correct, confirmed via `is_file()` before/after each. Could not exercise
+  the actual browser toggle click through this pass (`csrf_field()`'s
+  documented CLI-only limitation blocks rendering this view outside real
+  HTTP, and no live admin session was available), so this is source-level
+  and logic-level verification, not a click-through confirmation --
+  worth a quick check next time you're in the admin panel.
+
+---
+
 ## 2026-08-22 — Hero banner slides can now use a direct image URL instead of an upload
 
 **Files:** `app/Database/Migrations/2026-08-22-000002_AddFileTypeToHeroBannerSlides.php`

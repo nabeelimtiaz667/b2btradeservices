@@ -107,21 +107,21 @@
                                 <input type="hidden" name="id" value="<?= $slide['id'] ?>">
                                 <div class="col-md-4">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="input_type" value="upload" id="editTypeUpload<?= $slide['id'] ?>"
+                                        <input class="form-check-input" type="radio" name="input_type" value="upload" id="edit<?= $slide['id'] ?>TypeUpload"
                                             <?= $slide['file_type'] === 'upload' ? 'checked' : '' ?>
                                             onchange="heroToggleInputType('edit<?= $slide['id'] ?>')">
-                                        <label class="form-check-label" for="editTypeUpload<?= $slide['id'] ?>">Replace with a file (optional, min <?= $minWidth ?>&times;<?= $minHeight ?>px)</label>
+                                        <label class="form-check-label" for="edit<?= $slide['id'] ?>TypeUpload">Replace with a file (optional, min <?= $minWidth ?>&times;<?= $minHeight ?>px)</label>
                                     </div>
-                                    <input type="file" name="image" id="editImageFile<?= $slide['id'] ?>" class="form-control mt-1" accept="image/jpeg,image/png,image/webp,image/gif"
+                                    <input type="file" name="image" id="edit<?= $slide['id'] ?>ImageFile" class="form-control mt-1" accept="image/jpeg,image/png,image/webp,image/gif"
                                         <?= $slide['file_type'] === 'url' ? 'disabled' : '' ?>>
 
                                     <div class="form-check mt-2">
-                                        <input class="form-check-input" type="radio" name="input_type" value="url" id="editTypeUrl<?= $slide['id'] ?>"
+                                        <input class="form-check-input" type="radio" name="input_type" value="url" id="edit<?= $slide['id'] ?>TypeUrl"
                                             <?= $slide['file_type'] === 'url' ? 'checked' : '' ?>
                                             onchange="heroToggleInputType('edit<?= $slide['id'] ?>')">
-                                        <label class="form-check-label" for="editTypeUrl<?= $slide['id'] ?>">Replace with a URL instead</label>
+                                        <label class="form-check-label" for="edit<?= $slide['id'] ?>TypeUrl">Replace with a URL instead</label>
                                     </div>
-                                    <input type="text" name="image_url" id="editImageUrl<?= $slide['id'] ?>" class="form-control mt-1"
+                                    <input type="text" name="image_url" id="edit<?= $slide['id'] ?>ImageUrl" class="form-control mt-1"
                                         placeholder="https://..." value="<?= $slide['file_type'] === 'url' ? esc($slide['image_filename']) : '' ?>"
                                         <?= $slide['file_type'] === 'upload' ? 'disabled' : '' ?>>
                                 </div>

@@ -16,6 +16,43 @@ nothing in the slug change touched `inquiry_date`. Tasks T-5, T-6, T-12.
 
 ---
 
+## #25 — `public/assets/images/` is gitignored -- deploy lists built from `git status` silently omit any change there
+
+**Severity:** HIGH · **Raised:** 2026-08-23 · **Open — process risk, not a code bug**
+
+Owner reported it directly: the 2026-08-21 country-flag fix (CHANGELOG same
+date) added/renamed 4 real files under `public/assets/images/flags/`, but
+they never reached production. Root cause: `public/assets/images/` is
+gitignored (`.gitignore:68`, alongside `public/uploads/` — see DECISIONS
+#10, now updated with this consequence). Every "files to deploy" list given
+throughout this engagement has been built off `git status`/`git diff`, which
+is blind to anything under that path by design — the files simply never
+appeared as "changed," so they were never called out for manual copy. The
+owner traced the missing flags back by hand and uploaded them manually;
+not a code defect, no fix to ship. **Confirmed live 2026-08-23** — owner
+zipped `public/assets/images/flags/` locally and extracted it over the
+existing folder via the cPanel file manager; all 4 files (australia,
+greece, rwanda, slovenia) verified showing correctly on production.
+
+**Standing risk, not a one-time incident:** any future change that touches
+`public/assets/images/` (new flag/banner/product images, a rename, an edit)
+will have the identical blind spot. `public/assets/css/` and
+`public/assets/js/` are **not** affected — only `assets/images/` is
+gitignored, not all of `assets/`. `public/uploads/` has the same gap, but is
+lower-risk in practice since it's populated by user uploads and by
+migrations that copy their own source files at `php spark migrate` time
+(e.g. the 2026-08-22 hero banner migration) rather than by hand.
+
+**Not closing this one** — it can't be "fixed" in code, only mitigated by
+discipline: any future deploy-file list must explicitly check touched paths
+against `.gitignore`, not just run `git status`, and separately flag
+anything under `assets/images/` (or `uploads/`) as "copy this by hand, git
+will not show it as changed." Removing it from `.gitignore` instead would
+undo the original size-saving reason for DECISIONS #10 and isn't proposed
+here.
+
+---
+
 ## #24 — `redirect()->...->withInput()->with('error', ...)` silently drops the flash message in this environment
 
 **Severity:** MEDIUM · **Raised:** 2026-08-21 · **Confirmed on 2 call sites, likely sitewide**
