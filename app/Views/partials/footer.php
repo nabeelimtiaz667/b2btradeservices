@@ -267,6 +267,22 @@ if ($('.top-supplier-carousel').length) {
         });
     });
 }
+if ($('.latest-buy-offer-carousel').length) {
+    $('.latest-buy-offer-carousel').each(function () {
+        $(this).slick({
+            autoplay: $(this).find('.latest-buy-offer-set').length > 1,
+            autoplaySpeed: parseInt($(this).data('autoplay-speed'), 10) || 5000,
+            slidesToShow: 1,
+            slidesToScroll: 1,
+            dots: false,
+            arrows: false,
+            pauseOnHover: true,
+            fade: true,
+            cssEase: 'ease-in-out',
+            adaptiveHeight: true
+        });
+    });
+}
 if ($('.top-supplier-logo-slider').length) {
     $('.top-supplier-logo-slider').slick({
         autoplay: true,

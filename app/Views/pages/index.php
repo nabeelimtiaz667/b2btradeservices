@@ -63,35 +63,42 @@
                     <a href="<?= base_url('buyer') ?>" class="view-all-link d-flex align-items-center gap-2"> View All
                         <img src="<?= base_url('assets/images/arrow-right.svg') ?>"></a>
                 </div>
-                <?php if (isset($latestInquiries) && !empty($latestInquiries)): ?>
-                <?php foreach (array_slice($latestInquiries, 0, 8) as $inq): ?>
-                <a href="<?= inquiry_url($inq) ?>" class="text-decoration-none text-dark buy-offer-link">
-                    <div class="latest-buy-offer-row mt-4">
-                        <div class="d-flex gap-3 align-items-center">
-                            <?php if (!empty($inq['country_flag'])): ?>
-                            <img src="<?= base_url('assets/images/flags/' . $inq['country_flag']) ?>" alt=""
-                                style="width: 30px; height: 20px; object-fit: cover; border-radius: 3px; border: 1px solid #eee;">
-                            <?php elseif (!empty($inq['attachment'])): ?>
-                            <img src="<?= base_url('uploads/inquiries/' . $inq['attachment']) ?>" alt="Reference"
-                                style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;">
-                            <?php else: ?>
-                            <div
-                                style="width: 30px; height: 20px; background: #f0f0f0; border-radius: 3px; display: flex; align-items: center; justify-content: center;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="#999"
-                                    viewBox="0 0 16 16">
-                                    <path
-                                        d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l6.154 2.462 6.154-2.462L8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6z" />
-                                </svg>
+                <?php if (!empty($latestBuyOfferSets)): ?>
+                <div class="latest-buy-offer-carousel"
+                    data-autoplay-speed="<?= (int) (($latestBuyOffersIntervalSeconds ?? 5) * 1000) ?>">
+                    <?php foreach ($latestBuyOfferSets as $offerSet): ?>
+                    <div class="latest-buy-offer-set">
+                        <?php foreach ($offerSet as $inq): ?>
+                        <a href="<?= inquiry_url($inq) ?>" class="text-decoration-none text-dark buy-offer-link">
+                            <div class="latest-buy-offer-row mt-4">
+                                <div class="d-flex gap-3 align-items-center">
+                                    <?php if (!empty($inq['country_flag'])): ?>
+                                    <img src="<?= base_url('assets/images/flags/' . $inq['country_flag']) ?>" alt=""
+                                        style="width: 30px; height: 20px; object-fit: cover; border-radius: 3px; border: 1px solid #eee;">
+                                    <?php elseif (!empty($inq['attachment'])): ?>
+                                    <img src="<?= base_url('uploads/inquiries/' . $inq['attachment']) ?>" alt="Reference"
+                                        style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;">
+                                    <?php else: ?>
+                                    <div
+                                        style="width: 30px; height: 20px; background: #f0f0f0; border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="#999"
+                                            viewBox="0 0 16 16">
+                                            <path
+                                                d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l6.154 2.462 6.154-2.462L8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6z" />
+                                        </svg>
+                                    </div>
+                                    <?php endif; ?>
+                                    <span><?= esc($inq['title'] ?? $inq['product_name'] ?? 'Buy Offer') ?></span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 date-latest"><?= date('M d, Y', strtotime($inq['inquiry_date'])) ?></p>
+                                </div>
                             </div>
-                            <?php endif; ?>
-                            <span><?= esc($inq['title'] ?? $inq['product_name'] ?? 'Buy Offer') ?></span>
-                        </div>
-                        <div>
-                            <p class="mb-0 date-latest"><?= date('M d, Y', strtotime($inq['inquiry_date'])) ?></p>
-                        </div>
+                        </a>
+                        <?php endforeach; ?>
                     </div>
-                </a>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </div>
                 <?php else: ?>
                 <p class="text-muted mt-3">No buy offers yet.</p>
                 <?php endif; ?>

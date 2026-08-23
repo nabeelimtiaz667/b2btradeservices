@@ -31,6 +31,20 @@ class Pages extends BaseController
     private const TOP_INTERVAL_SECONDS_MAX = 60;
 
     /**
+     * Latest Buy Offers carousel: no admin panel for this one (unlike Top
+     * Products/Suppliers) -- just rotate through 3 slides covering the most
+     * recent inquiries. PER_SET is the original single-list size (unchanged
+     * from before this was a carousel at all) -- only the number of
+     * rotating slides is new, not how many offers show at once. POOL_SIZE
+     * is PER_SET x 3 slides; if fewer offers exist than that, the pool --
+     * and the carousel -- is just however many actually exist.
+     */
+    private const LATEST_BUY_OFFERS_PER_SET = 8;
+    private const LATEST_BUY_OFFERS_SET_COUNT = 3;
+    private const LATEST_BUY_OFFERS_POOL_SIZE = self::LATEST_BUY_OFFERS_PER_SET * self::LATEST_BUY_OFFERS_SET_COUNT;
+    private const LATEST_BUY_OFFERS_INTERVAL_SECONDS = 5;
+
+    /**
      * Per-page title and meta description for every static page this
      * controller serves. Replaces the old ucfirst(str_replace('-', ' ', $page))
      * title, which only capitalized the first letter of the whole slug (e.g.
@@ -347,7 +361,12 @@ class Pages extends BaseController
             }
             $data['featuredProducts'] = $featuredProducts;
 
-            $latestInquiries = $inquiryModel->orderBy('inquiry_date', 'DESC')->getActiveInquiries(8);
+            // Rotating carousel, no admin config for this one -- just the
+            // most recent inquiries, chunked into fixed-size slides in
+            // recency order (not shuffled: unlike Top Products/Suppliers
+            // there's no ranking ambiguity to break ties on, "latest" is
+            // already a total order).
+            $latestInquiries = $inquiryModel->orderBy('inquiry_date', 'DESC')->getActiveInquiries(self::LATEST_BUY_OFFERS_POOL_SIZE);
 
             foreach ($latestInquiries as &$inq) {
                 if (!empty($inq['country_id'])) {
@@ -358,7 +377,10 @@ class Pages extends BaseController
                     }
                 }
             }
-            $data['latestInquiries'] = $latestInquiries;
+            unset($inq);
+
+            $data['latestBuyOfferSets'] = array_chunk($latestInquiries, self::LATEST_BUY_OFFERS_PER_SET);
+            $data['latestBuyOffersIntervalSeconds'] = self::LATEST_BUY_OFFERS_INTERVAL_SECONDS;
 
             $data['supplierCount'] = $userModel
                 ->where('user_type', 'supplier')

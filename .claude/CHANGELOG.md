@@ -14,6 +14,66 @@ Entry format:
 
 ---
 
+## 2026-08-23 — Latest Buy Offers carousel: corrected to 3 slides of 8 (not 3 items per slide)
+
+**Files:** `app/Controllers/Pages.php`
+**Why:** the entry right below this one misread "3 slides rotating" as "3
+items per slide" -- owner clarified: the container size (8 offers at once,
+unchanged from before this was ever a carousel) was never meant to change,
+only the number of rotating groups was new, and that number is 3.
+
+- `LATEST_BUY_OFFERS_PER_SET` reverted `3` &rarr; `8` (the original,
+  untouched list size). New `LATEST_BUY_OFFERS_SET_COUNT = 3` makes the
+  "3 slides" explicit and named rather than implied by a pool-size number;
+  `LATEST_BUY_OFFERS_POOL_SIZE` is now derived from the other two
+  (`PER_SET * SET_COUNT` = 24) instead of a separately-chosen `30`, so the
+  three numbers can't drift out of sync with each other again.
+- No other file needed to change -- `index.php`'s carousel markup and
+  `footer.php`'s Slick init were already generic over however many items
+  land in each `.latest-buy-offer-set`; only the constants controlling that
+  count were wrong.
+- **Verified live**: homepage now renders exactly 3 slides, each with 8
+  rows (24 real inquiries total, matching `PER_SET * SET_COUNT`), carousel
+  still `slick-initialized` and auto-advancing.
+
+---
+
+## 2026-08-23 — Latest Buy Offers becomes a rotating carousel, no admin panel
+
+**Files:** `app/Controllers/Pages.php`, `app/Views/pages/index.php`,
+`app/Views/partials/footer.php`
+**Why:** owner asked for the homepage's Latest Buy Offers section to rotate
+through 3-item slides covering all the latest offers, instead of one static
+list -- explicitly no admin page for this one, just a homepage carousel.
+
+- `Pages::index()` now pulls a pool of the 30 most recent active inquiries
+  (`LATEST_BUY_OFFERS_POOL_SIZE`, 10 slides' worth) instead of capping at 8,
+  and `array_chunk()`s them into fixed 3-per-slide groups
+  (`LATEST_BUY_OFFERS_PER_SET`) in recency order. No shuffling -- unlike Top
+  Products/Suppliers there's no ranking-tie ambiguity to break; "latest" is
+  already a strict order, so slide 1 is always the 3 newest, slide 2 the
+  next 3, and so on.
+- `index.php`: same per-row markup as before (flag/attachment icon, title,
+  date), just wrapped a level deeper into `.latest-buy-offer-set` groups
+  inside a `.latest-buy-offer-carousel` container -- Slick turns each set
+  into a slide. No neutral-wrapper trick needed here (unlike the Top
+  Suppliers fix from 2026-08-22): `.latest-buy-offer-row` carries its own
+  `display:flex`, but the *set* wrapper Slick actually claims has no layout
+  rules of its own to clobber.
+- `footer.php` gained a matching Slick init (`fade`, `autoplay`, `dots:
+  false`, `arrows: false`, `adaptiveHeight`) -- same config already used
+  for the Top Products/Suppliers carousels, kept consistent rather than
+  introducing a different rotation style for this one section.
+- **Verified live**: confirmed 10 real slides (30 real inquiries) built and
+  Slick-initialized, `slickCurrentSlide()` advancing on its own (2 &rarr; 3
+  observed 5s apart) with no dots/arrows rendered; confirmed
+  `.latest-buy-offer-row`'s `display:flex`/`justify-content:space-between`
+  computed styles are untouched and the currently-visible slide always
+  contains exactly 3 rows; confirmed no horizontal overflow and the
+  carousel still initializes correctly at 375px mobile width.
+
+---
+
 ## 2026-08-23 — Edit form's upload/URL radio toggle was completely non-functional
 
 **Files:** `app/Views/admin/settings/hero-banners.php`
