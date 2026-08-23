@@ -340,6 +340,61 @@ class LeadManagement extends BaseController
         return redirect()->to('/leads/popup')->with('success', 'Popup lead deleted.');
     }
 
+    /**
+     * AJAX inline agent/stage update from the popup-leads table row, so an
+     * admin doesn't have to open the full edit form (which stays untouched)
+     * just to reassign an agent or move a stage. Same status guard as
+     * editPopupLead() -- an account_registered lead is a backstop against a
+     * direct request bypassing the UI-level disable on that row.
+     */
+    public function updatePopupLeadInline()
+    {
+        $redirect = $this->checkAccess();
+        if ($redirect) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized']);
+        }
+
+        $leadId = $this->request->getPost('lead_id');
+        $lead = $this->leadModel->find($leadId);
+        if (!$lead) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Lead not found']);
+        }
+
+        if ($lead['status'] === 'account_registered') {
+            return $this->response->setJSON(['success' => false, 'message' => "Registered leads can't be edited here."]);
+        }
+
+        $update = [];
+
+        if ($this->request->getPost('assigned_agent_id') !== null) {
+            $agentId = $this->request->getPost('assigned_agent_id') ?: null;
+            if ($agentId !== null) {
+                $agent = $this->userModel->find($agentId);
+                if (!$agent || !in_array($agent['user_type'], ['agent', 'admin'], true)) {
+                    return $this->response->setJSON(['success' => false, 'message' => 'Invalid agent.']);
+                }
+            }
+            $update['assigned_agent_id'] = $agentId;
+        }
+
+        if ($this->request->getPost('lead_stage') !== null) {
+            $leadStage = $this->request->getPost('lead_stage');
+            $stageOptions = array_keys($this->userModel->getLeadStages());
+            if (!in_array($leadStage, $stageOptions, true)) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Invalid stage.']);
+            }
+            $update['lead_stage'] = $leadStage;
+        }
+
+        if (empty($update)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Nothing to update']);
+        }
+
+        $this->leadModel->update($leadId, $update);
+
+        return $this->response->setJSON(['success' => true, 'message' => 'Updated']);
+    }
+
     public function mySupplierLeads()
     {
         $redirect = $this->checkAccess();

@@ -14,6 +14,14 @@ Entry format:
 
 ---
 
+## 2026-08-23 — Popup Leads: inline agent/stage edit from the table row
+**Files:** `app/Controllers/LeadManagement.php`, `app/Config/Routes.php`, `app/Views/dashboard/admin/popup-leads.php`
+**Why:** admin didn't want to open the full edit form just to reassign an agent or move a stage — same pattern as the existing inline note-save.
+- Replaced the static Agent/Stage badges in the Popup Leads table with `<select>` dropdowns that POST via fetch to a new `LeadManagement::updatePopupLeadInline()` action (route: `leads/popup/update-inline`) on `change`, one field at a time.
+- Dropdowns are disabled for `account_registered` rows, same lock as the existing Edit button; the controller action re-checks that status server-side as a backstop.
+- The full edit form (`popup-lead-edit.php`) is untouched — still the only place to edit name/phone/email/status/whatsapp.
+- Verified live: changed an agent via the dropdown, confirmed the AJAX request returned `{"success":true}`, reloaded the page and confirmed the new value persisted from the DB; reset it back to unassigned the same way.
+
 ## 2026-08-23 — Starred suppliers now guaranteed first, not just added to the shuffle
 
 **Files:** `app/Controllers/Pages.php`

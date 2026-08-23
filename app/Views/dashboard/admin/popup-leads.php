@@ -243,19 +243,25 @@ foreach (($agents ?? []) as $a) {
                             <?php endif; ?>
                         </td>
                         <td style="font-size:11px; white-space:nowrap;">
+                            <?php $isLocked = $lead['status'] === 'account_registered'; ?>
                             <?php
-                                $assignedAgentId = $lead['assigned_agent_id'] ?? null;
-                                $agentName = $assignedAgentId ? ($agentLookup[$assignedAgentId] ?? null) : null;
+                                $currentAgentId = $lead['assigned_agent_id'] ?? null;
+                                $currentAgentTitle = $currentAgentId ? ($agentLookup[$currentAgentId] ?? '— Unassigned —') : '— Unassigned —';
                             ?>
-                            <?php if ($agentName): ?>
-                                <span style="color:var(--primary-teal); font-weight:500;"><?= esc($agentName) ?></span>
-                            <?php else: ?>
-                                <span style="color:#ccc;">—</span>
-                            <?php endif; ?>
+                            <select class="form-select form-select-sm popup-inline-field" data-lead-id="<?= $lead['id'] ?>" data-field="assigned_agent_id" style="font-size:11px; min-width:130px;" title="<?= esc($currentAgentTitle, 'attr') ?>" <?= $isLocked ? 'disabled' : '' ?>>
+                                <option value="">— Unassigned —</option>
+                                <?php foreach (($agents ?? []) as $agent): ?>
+                                <option value="<?= $agent['id'] ?>" <?= (int) ($lead['assigned_agent_id'] ?? 0) === (int) $agent['id'] ? 'selected' : '' ?>><?= esc($agent['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </td>
-                        <td>
+                        <td style="min-width:150px;">
                             <?php $stage = $stageInfo[$lead['lead_stage'] ?? 'new'] ?? ['New', '#0d6efd']; ?>
-                            <span class="badge" style="background:<?= $stage[1] ?>20; color:<?= $stage[1] ?>; border:1px solid <?= $stage[1] ?>; font-size:10px; padding:4px 8px;"><?= $stage[0] ?></span>
+                            <select class="form-select form-select-sm popup-inline-field" data-lead-id="<?= $lead['id'] ?>" data-field="lead_stage" style="font-size:11px; color:<?= $stage[1] ?>;" title="<?= esc($stage[0], 'attr') ?>" <?= $isLocked ? 'disabled' : '' ?>>
+                                <?php foreach (($lead_stages ?? []) as $key => $label): ?>
+                                <option value="<?= $key ?>" <?= ($lead['lead_stage'] ?? 'new') === $key ? 'selected' : '' ?>><?= $label ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </td>
                         <td style="min-width:160px;">
                             <?php $lastNote = ($latest_notes ?? [])[$lead['id']] ?? ''; ?>
@@ -330,6 +336,33 @@ foreach (($agents ?? []) as $a) {
 </div>
 
 <script>
+document.querySelectorAll('.popup-inline-field').forEach(function(select) {
+    select.addEventListener('change', function() {
+        this.title = this.options[this.selectedIndex].text;
+        const leadId = this.dataset.leadId;
+        const field = this.dataset.field;
+        const value = this.value;
+        const el = this;
+        el.disabled = true;
+        fetch('<?= base_url("leads/popup/update-inline") ?>', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest'},
+            body: 'lead_id=' + encodeURIComponent(leadId) + '&' + encodeURIComponent(field) + '=' + encodeURIComponent(value)
+        })
+        .then(r => r.json())
+        .then(data => {
+            el.disabled = false;
+            if (!data.success) {
+                alert(data.message || 'Failed to update');
+            }
+        })
+        .catch(function() {
+            el.disabled = false;
+            alert('Network error');
+        });
+    });
+});
+
 document.querySelectorAll('.popup-save-note-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
         const leadId = this.dataset.leadId;
