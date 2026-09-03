@@ -36,6 +36,10 @@
             </form>
         </div>
 
+        <?php if (isset($resultsTotal)): ?>
+            <p class="text-muted mb-3">Showing <?= count($products ?? []) ?> results out of <?= $resultsTotal ?></p>
+        <?php endif; ?>
+
         <div class="row">
             <?php if (isset($products) && count($products) > 0): ?>
                 <?php foreach ($products as $product): ?>
@@ -46,7 +50,7 @@
                                 <?php if (!empty($product['category'])): ?>
                                     <p class="supplier-list-info"><?= esc($product['category']['name']) ?></p>
                                 <?php endif; ?>
-                                <h2 class="h4"><?= esc($product['name']) ?></h2>
+                                <h2 class="h4"><?= !empty($searchKeyword) ? highlight_keyword($product['name'], $searchKeyword) : esc($product['name']) ?></h2>
                                 <?php if (!empty($product['supplier'])): ?>
                                     <p class="text-muted small mb-1">
                                         By: <a href="<?= base_url('supplier/profile/' . esc($product['supplier']['slug'] ?? '')) ?>"><?= esc($product['supplier']['company_name'] ?? 'N/A') ?></a>
@@ -54,6 +58,14 @@
                                 <?php endif; ?>
                                 <p class="mb-1"><strong>Price:</strong> <?= esc($product['price_range'] ?? 'Contact for price') ?></p>
                                 <p class="mb-2"><strong>MOQ:</strong> <?= esc($product['min_order_quantity'] ?? 'N/A') ?> <?= esc($product['min_order_unit'] ?? '') ?></p>
+                                <?php if (!empty($searchKeyword)):
+                                    $hiddenMatches = count_keyword_occurrences($product['description'] ?? '', $searchKeyword)
+                                        + count_keyword_occurrences($product['specifications'] ?? '', $searchKeyword);
+                                    if ($hiddenMatches > 0): ?>
+                                        <p class="small mb-2" style="background:#bfff4fd9; padding:4px 8px; border-radius:4px;">
+                                            "<?= esc($searchKeyword) ?>" appeared <?= $hiddenMatches ?> more time<?= $hiddenMatches > 1 ? 's' : '' ?> in this record.
+                                        </p>
+                                <?php endif; endif; ?>
                                 <a class="bg-dark-btn" href="<?= base_url('product/detail/' . $product['id']) ?>">View Details</a>
                             </div>
                         </div>
@@ -67,6 +79,15 @@
                 </div>
             <?php endif; ?>
         </div>
+        <?php if (isset($searchPager)): ?>
+            <div class="d-flex justify-content-center mt-4">
+                <?= $this->include('partials/search-pager') ?>
+            </div>
+        <?php elseif (isset($pager)): ?>
+            <div class="d-flex justify-content-center mt-4">
+                <?= $pager->links('product', 'default_full') ?>
+            </div>
+        <?php endif; ?>
     </div>
 </section>
 

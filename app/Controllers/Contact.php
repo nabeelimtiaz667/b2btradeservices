@@ -3,7 +3,6 @@
 namespace App\Controllers;
 
 use App\Models\ContactSubmissionModel;
-use App\Models\SiteSettingModel;
 use App\Models\UserModel;
 
 class Contact extends BaseController
@@ -60,34 +59,6 @@ class Contact extends BaseController
         $userModel->skipValidation(true)->insert($leadData);
     }
 
-    protected function checkRestrictedKeywords($text)
-    {
-        $settingModel = new SiteSettingModel();
-        $textLower = strtolower($text);
-
-        $keywords = $settingModel->getSetting('restricted_keywords', '');
-        if (!empty($keywords)) {
-            $keywordList = array_map('trim', array_filter(preg_split('/[,\n]+/', strtolower($keywords))));
-            foreach ($keywordList as $kw) {
-                if (!empty($kw) && strpos($textLower, $kw) !== false) {
-                    return $kw;
-                }
-            }
-        }
-
-        $profanityEnabled = $settingModel->getSetting('profanity_filter', '0');
-        if ($profanityEnabled === '1') {
-            $profanityList = ['damn', 'hell', 'crap', 'stupid', 'idiot', 'fool', 'scam', 'fraud', 'fake', 'spam', 'porn', 'xxx', 'casino', 'gambling', 'drugs', 'narcotic', 'cocaine', 'heroin', 'marijuana', 'counterfeit', 'pirated', 'illegal', 'terrorist', 'weapon', 'explosive', 'smuggle', 'trafficking', 'money laundering'];
-            foreach ($profanityList as $word) {
-                if (preg_match('/\b' . preg_quote($word, '/') . '\b/i', $text)) {
-                    return $word;
-                }
-            }
-        }
-
-        return false;
-    }
-
     public function submit()
     {
         if ($this->request->getMethod() !== 'POST') {
@@ -115,7 +86,7 @@ class Contact extends BaseController
         }
 
         $contentToCheck = $data['name'] . ' ' . $data['company'] . ' ' . $data['industry'] . ' ' . $data['message'];
-        $restrictedWord = $this->checkRestrictedKeywords($contentToCheck);
+        $restrictedWord = check_restricted_keywords($contentToCheck);
         if ($restrictedWord !== false) {
             return redirect()->back()->withInput()->with('error', 'Your submission contains a restricted keyword: "' . $restrictedWord . '". Please revise and try again.');
         }
@@ -214,7 +185,7 @@ class Contact extends BaseController
         }
 
         $contentToCheck = $data['name'] . ' ' . $data['company'] . ' ' . $data['industry'] . ' ' . $data['message'];
-        $restrictedWord = $this->checkRestrictedKeywords($contentToCheck);
+        $restrictedWord = check_restricted_keywords($contentToCheck);
         if ($restrictedWord !== false) {
             return $this->response->setJSON(['status' => 'error', 'message' => 'Your submission contains a restricted keyword: "' . $restrictedWord . '". Please revise and try again.']);
         }

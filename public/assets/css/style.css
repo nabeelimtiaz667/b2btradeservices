@@ -4468,3 +4468,9 @@ ul.checkbox-ul-new li{
 .sticky-search-bar .searchbar-input{
     height: 40px !important;
 }
+
+mark {
+    background-color: #bfff4fd9;
+    color: inherit;
+    padding: 0 1px;
+}

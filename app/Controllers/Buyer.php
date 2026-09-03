@@ -59,6 +59,7 @@ class Buyer extends BaseController
             'canonical' => canonical_self_url(),
             'inquiries' => $inquiries,
             'pager' => $pager,
+            'resultsTotal' => $pager->getTotal('buyer'),
             'categories' => $this->categoryModel->getActiveCategories(),
             'countries' => $this->countryModel->getActiveCountries(),
             'featuredSuppliers' => $this->getFeaturedSuppliers(),
@@ -221,7 +222,7 @@ class Buyer extends BaseController
         // regardless of how many segments the URL has.
         $pathParams = $segments === [] ? null : implode('/', $segments);
 
-        $knownKeys = ['category', 'country', 'date'];
+        $knownKeys = ['category', 'country', 'date', 'page'];
 
         if ($pathParams === null && service('request')->getUri()->getQuery() !== '') {
             $filters = [];
@@ -289,12 +290,42 @@ class Buyer extends BaseController
             $builder->where('DATE(created_at) >=', $date);
         }
 
-        $inquiries = $builder->orderBy('inquiry_date', 'DESC')->findAll();
+        $perPage = 50;
+        $total = $builder->countAllResults(false);
+        $totalPages = max(1, (int) ceil($total / $perPage));
+        $rawPage = $filters['page'] ?? null;
+        $page = min(max(1, (int) ($rawPage ?? 1)), $totalPages);
+
+        // See the matching check in Product::search() -- redirects an
+        // invalid or out-of-range page/... segment to the URL for the actual
+        // page being rendered instead of silently rendering it under the
+        // wrong one.
+        if ($rawPage !== null && $rawPage !== (string) $page) {
+            $canonicalFilters = [
+                'category' => $filters['category'] ?? null,
+                'country' => $filters['country'] ?? null,
+                'date' => $filters['date'] ?? null,
+            ];
+            $canonicalFilters['page'] = $page > 1 ? (string) $page : null;
+            $clean = build_search_path($keyword, $canonicalFilters);
+
+            return redirect()->to(base_url('buyer/search' . ($clean !== '' ? '/' . $clean : '')), 301);
+        }
+
+        $inquiries = $builder
+            ->orderBy('inquiry_date', 'DESC')
+            ->findAll($perPage, ($page - 1) * $perPage);
 
         foreach ($inquiries as &$inquiry) {
             $inquiry['category'] = $this->categoryModel->find($inquiry['category_id']);
             $inquiry['country'] = $this->countryModel->find($inquiry['country_id']);
         }
+
+        $searchPager = build_search_pager('buyer/search', $keyword, [
+            'category' => $filters['category'] ?? null,
+            'country' => $filters['country'] ?? null,
+            'date' => $filters['date'] ?? null,
+        ], $page, $totalPages);
 
         $data = [
             'title' => $keyword ? 'Search Results for "' . $keyword . '" - Buyer Inquiries' : 'Search Buyer Inquiries',
@@ -303,6 +334,8 @@ class Buyer extends BaseController
                 : 'Search buyer inquiries and RFQs on B2B Trade Services by keyword, category, or country.',
             'canonical' => current_url(),
             'inquiries' => $inquiries,
+            'searchPager' => $searchPager,
+            'resultsTotal' => $total,
             'categories' => $this->categoryModel->getActiveCategories(),
             'countries' => $this->countryModel->getActiveCountries(),
             'featuredSuppliers' => $this->getFeaturedSuppliers(),

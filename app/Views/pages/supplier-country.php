@@ -63,6 +63,9 @@
                 </div>
             </div>
             <div class="supplier-product-list">
+                <?php if (isset($resultsTotal)): ?>
+                    <p class="text-muted mb-3">Showing <?= count($suppliers ?? []) ?> results out of <?= $resultsTotal ?></p>
+                <?php endif; ?>
                 <div class="row">
                     <?php if (isset($suppliers) && count($suppliers) > 0): ?>
                         <?php foreach ($suppliers as $supplier): ?>

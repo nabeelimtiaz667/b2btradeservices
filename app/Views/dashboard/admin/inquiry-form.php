@@ -152,6 +152,8 @@
                     <label class="form-label">Status</label>
                     <select name="status" class="form-control">
                         <option value="active" <?= (isset($inquiry) && ($inquiry['status'] ?? '') == 'active') ? 'selected' : '' ?>>Active</option>
+                        <option value="pending" <?= (isset($inquiry) && ($inquiry['status'] ?? '') == 'pending') ? 'selected' : '' ?>>Pending</option>
+                        <option value="inactive" <?= (isset($inquiry) && ($inquiry['status'] ?? '') == 'inactive') ? 'selected' : '' ?>>Inactive</option>
                         <option value="closed" <?= (isset($inquiry) && ($inquiry['status'] ?? '') == 'closed') ? 'selected' : '' ?>>Closed</option>
                         <option value="expired" <?= (isset($inquiry) && ($inquiry['status'] ?? '') == 'expired') ? 'selected' : '' ?>>Expired</option>
                     </select>

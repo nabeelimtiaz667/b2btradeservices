@@ -53,6 +53,7 @@ class Supplier extends BaseController
             'canonical' => base_url('supplier') . ($query !== '' ? '?' . $query : ''),
             'suppliers' => $suppliers,
             'pager' => $this->userModel->pager,
+            'resultsTotal' => $this->userModel->pager->getTotal('supplier'),
             'categories' => $this->categoryModel->getActiveCategories(),
             'countries' => $this->countryModel->getActiveCountries(),
         ];
@@ -214,6 +215,7 @@ class Supplier extends BaseController
             'category' => $category,
             'suppliers' => $suppliers,
             'pager' => $this->userModel->pager,
+            'resultsTotal' => $this->userModel->pager->getTotal('supplier'),
             'categories' => $this->categoryModel->getActiveCategories(),
             'countries' => $this->countryModel->getActiveCountries(),
         ];
@@ -258,6 +260,7 @@ class Supplier extends BaseController
             'country' => $country,
             'suppliers' => $suppliers,
             'pager' => $this->userModel->pager,
+            'resultsTotal' => $this->userModel->pager->getTotal('supplier'),
             'categories' => $this->categoryModel->getActiveCategories(),
             'countries' => $this->countryModel->getActiveCountries(),
         ];
@@ -276,7 +279,7 @@ class Supplier extends BaseController
         // binding to a real controller method's parameters.
         $pathParams = $segments === [] ? null : implode('/', $segments);
 
-        $knownKeys = ['country', 'membership'];
+        $knownKeys = ['country', 'membership', 'page'];
 
         if ($pathParams === null && service('request')->getUri()->getQuery() !== '') {
             $filters = [];
@@ -329,7 +332,31 @@ class Supplier extends BaseController
             $builder->where('membership_level', $membership);
         }
 
-        $suppliers = $builder->orderBy('membership_level', 'DESC')->orderBy('created_at', 'DESC')->findAll();
+        $perPage = 12;
+        $total = $builder->countAllResults(false);
+        $totalPages = max(1, (int) ceil($total / $perPage));
+        $rawPage = $filters['page'] ?? null;
+        $page = min(max(1, (int) ($rawPage ?? 1)), $totalPages);
+
+        // See the matching check in Product::search() -- redirects an
+        // invalid or out-of-range page/... segment to the URL for the actual
+        // page being rendered instead of silently rendering it under the
+        // wrong one.
+        if ($rawPage !== null && $rawPage !== (string) $page) {
+            $canonicalFilters = [
+                'country' => $filters['country'] ?? null,
+                'membership' => $filters['membership'] ?? null,
+            ];
+            $canonicalFilters['page'] = $page > 1 ? (string) $page : null;
+            $clean = build_search_path($keyword, $canonicalFilters);
+
+            return redirect()->to(base_url('supplier/search' . ($clean !== '' ? '/' . $clean : '')), 301);
+        }
+
+        $suppliers = $builder
+            ->orderBy('membership_level', 'DESC')
+            ->orderBy('created_at', 'DESC')
+            ->findAll($perPage, ($page - 1) * $perPage);
 
         foreach ($suppliers as &$supplier) {
             $supplier['country'] = !empty($supplier['country_id']) ? $this->countryModel->find($supplier['country_id']) : null;
@@ -340,6 +367,11 @@ class Supplier extends BaseController
                 ->findAll();
         }
 
+        $searchPager = build_search_pager('supplier/search', $keyword, [
+            'country' => $filters['country'] ?? null,
+            'membership' => $filters['membership'] ?? null,
+        ], $page, $totalPages);
+
         $data = [
             'title' => $keyword ? 'Search Results for "' . $keyword . '" - Suppliers' : 'Search Suppliers',
             'metaDescription' => $keyword
@@ -347,6 +379,8 @@ class Supplier extends BaseController
                 : 'Search verified suppliers and manufacturers on B2B Trade Services by keyword, country, or membership.',
             'canonical' => current_url(),
             'suppliers' => $suppliers,
+            'searchPager' => $searchPager,
+            'resultsTotal' => $total,
             'categories' => $this->categoryModel->getActiveCategories(),
             'countries' => $this->countryModel->getActiveCountries(),
             'searchKeyword' => $keyword,

@@ -63,6 +63,9 @@
         <div class="mb-5">
             <h2 class="text-center custom-h3 h3">Search Results for "<?= esc($searchKeyword) ?>"</h2>
             <div class="supplier-product-list">
+                <?php if (isset($resultsTotal)): ?>
+                    <p class="text-muted mb-0">Showing <?= count($suppliers ?? []) ?> results out of <?= $resultsTotal ?></p>
+                <?php endif; ?>
                 <div class="row mt-4">
                     <?php if (isset($suppliers) && count($suppliers) > 0): ?>
                         <?php foreach ($suppliers as $supplier): ?>
@@ -85,13 +88,22 @@
                                         <?php endif; ?>
                                     </div>
                                     <h3 class="h4">
-                                        <?= esc($supplier['company_name'] ?? $supplier['name']) ?>
+                                        <?php $usedCompanyName = !empty($supplier['company_name']); ?>
+                                        <?= highlight_keyword($usedCompanyName ? $supplier['company_name'] : $supplier['name'], $searchKeyword) ?>
                                         <?php if (!empty($supplier['country']['flag'] ?? '')): ?>
                                             <img src="<?= base_url('assets/images/flags/' . $supplier['country']['flag']) ?>" width="20" onerror="this.style.display='none'">
                                         <?php endif; ?>
                                     </h3>
-                                    <p>Products: <?= esc($supplier['selling_products'] ?? 'Various') ?><br>
+                                    <p>Products: <?= !empty($supplier['selling_products']) ? highlight_keyword($supplier['selling_products'], $searchKeyword) : 'Various' ?><br>
                                     Country: <?= isset($supplier['country']['name']) ? esc($supplier['country']['name']) : 'N/A' ?></p>
+                                    <?php
+                                        $hiddenMatches = $usedCompanyName ? count_keyword_occurrences($supplier['name'] ?? '', $searchKeyword) : 0;
+                                        if ($hiddenMatches > 0):
+                                    ?>
+                                        <p class="small mb-2" style="background:#bfff4fd9; padding:4px 8px; border-radius:4px;">
+                                            "<?= esc($searchKeyword) ?>" appeared <?= $hiddenMatches ?> more time<?= $hiddenMatches > 1 ? 's' : '' ?> in this record.
+                                        </p>
+                                    <?php endif; ?>
                                     <div class="supplier-product-list-box-img">
                                         <?php if (isset($supplier['products']) && count($supplier['products']) > 0): ?>
                                             <?php foreach (array_slice($supplier['products'], 0, 2) as $product): ?>
@@ -112,16 +124,24 @@
                         </div>
                     <?php endif; ?>
                 </div>
+                <?php if (isset($searchPager)): ?>
+                    <div class="d-flex justify-content-center mb-100 mb-2">
+                        <?= $this->include('partials/search-pager') ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
         <?php endif; ?>
-        
-        
+
+
         <?php if (!isset($searchKeyword) || empty($searchKeyword)): ?>
 <section class="row mt-md-5 mt-4 align-items-start sp-page">
     <div class="container">
         <h2 class="text-center custom-h3 h3">All Suppliers</h2>
         <div class="supplier-product-list supplier-product-list-main">
+            <?php if (isset($resultsTotal)): ?>
+                <p class="text-muted text-center mb-0">Showing <?= count($suppliers ?? []) ?> results out of <?= $resultsTotal ?></p>
+            <?php endif; ?>
             <div class="row mt-4">
                 <?php if (isset($suppliers) && count($suppliers) > 0): ?>
                     <?php foreach ($suppliers as $supplier): ?>
@@ -172,7 +192,11 @@
                     </div>
                 <?php endif; ?>
             </div>
-            <?php if (isset($pager)): ?>
+            <?php if (isset($searchPager)): ?>
+                <div class="d-flex justify-content-center mb-100 mb-2">
+                    <?= $this->include('partials/search-pager') ?>
+                </div>
+            <?php elseif (isset($pager)): ?>
                 <div class="d-flex justify-content-center mb-100 mb-2">
                     <?= $pager->links('supplier', 'default_full') ?>
                 </div>

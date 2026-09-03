@@ -28,33 +28,6 @@ class Dashboard extends BaseController
         $this->session = session();
     }
 
-    protected function checkRestrictedKeywords($text)
-    {
-        $settingModel = new SiteSettingModel();
-        $textLower = strtolower($text);
-
-        $keywords = $settingModel->getSetting('restricted_keywords', '');
-        if (!empty($keywords)) {
-            $keywordList = array_map('trim', array_filter(preg_split('/[,\n]+/', strtolower($keywords))));
-            foreach ($keywordList as $kw) {
-                if (!empty($kw) && strpos($textLower, $kw) !== false) {
-                    return $kw;
-                }
-            }
-        }
-
-        $profanityEnabled = $settingModel->getSetting('profanity_filter', '0');
-        if ($profanityEnabled === '1') {
-            $profanityList = ['damn', 'hell', 'crap', 'stupid', 'idiot', 'fool', 'scam', 'fraud', 'fake', 'spam', 'porn', 'xxx', 'casino', 'gambling', 'drugs', 'narcotic', 'cocaine', 'heroin', 'marijuana', 'counterfeit', 'pirated', 'illegal', 'terrorist', 'weapon', 'explosive', 'smuggle', 'trafficking', 'money laundering'];
-            foreach ($profanityList as $word) {
-                if (preg_match('/\b' . preg_quote($word, '/') . '\b/i', $text)) {
-                    return $word;
-                }
-            }
-        }
-
-        return false;
-    }
 
 
     public function index()
@@ -322,7 +295,7 @@ class Dashboard extends BaseController
 
         if ($this->request->getMethod() === 'POST') {
             $contentToCheck = $this->request->getPost('name') . ' ' . $this->request->getPost('description') . ' ' . $this->request->getPost('specifications');
-            $restrictedWord = $this->checkRestrictedKeywords($contentToCheck);
+            $restrictedWord = check_restricted_keywords($contentToCheck);
             if ($restrictedWord !== false) {
                 return redirect()->back()->withInput()->with('error', 'Your product contains a restricted keyword: "' . $restrictedWord . '". Please remove it and try again.');
             }
@@ -394,7 +367,7 @@ class Dashboard extends BaseController
 
         if ($this->request->getMethod() === 'POST') {
             $contentToCheck = $this->request->getPost('name') . ' ' . $this->request->getPost('description') . ' ' . $this->request->getPost('specifications');
-            $restrictedWord = $this->checkRestrictedKeywords($contentToCheck);
+            $restrictedWord = check_restricted_keywords($contentToCheck);
             if ($restrictedWord !== false) {
                 return redirect()->back()->withInput()->with('error', 'Your product contains a restricted keyword: "' . $restrictedWord . '". Please remove it and try again.');
             }
@@ -510,6 +483,12 @@ class Dashboard extends BaseController
             ->findAll();
 
         if ($this->request->getMethod() === 'POST') {
+            $contentToCheck = $this->request->getPost('selling_products') . ' ' . $this->request->getPost('company_introduction');
+            $restrictedWord = check_restricted_keywords($contentToCheck);
+            if ($restrictedWord !== false) {
+                return redirect()->back()->withInput()->with('error', 'Your profile contains a restricted keyword: "' . $restrictedWord . '". Please remove it and try again.');
+            }
+
             $data = [
                 'selling_products'     => $this->request->getPost('selling_products'),
                 'company_introduction' => $this->request->getPost('company_introduction'),
@@ -654,7 +633,7 @@ class Dashboard extends BaseController
 
         if ($this->request->getMethod() === 'POST') {
             $contentToCheck = $this->request->getPost('title') . ' ' . $this->request->getPost('product_name') . ' ' . $this->request->getPost('description');
-            $restrictedWord = $this->checkRestrictedKeywords($contentToCheck);
+            $restrictedWord = check_restricted_keywords($contentToCheck);
             if ($restrictedWord !== false) {
                 return redirect()->back()->withInput()->with('error', 'Your inquiry contains a restricted keyword: "' . $restrictedWord . '". Please remove it and try again.');
             }
@@ -743,7 +722,7 @@ class Dashboard extends BaseController
 
         if ($this->request->getMethod() === 'POST') {
             $contentToCheck = $this->request->getPost('title') . ' ' . $this->request->getPost('product_name') . ' ' . $this->request->getPost('description');
-            $restrictedWord = $this->checkRestrictedKeywords($contentToCheck);
+            $restrictedWord = check_restricted_keywords($contentToCheck);
             if ($restrictedWord !== false) {
                 return redirect()->back()->withInput()->with('error', 'Your inquiry contains a restricted keyword: "' . $restrictedWord . '". Please remove it and try again.');
             }
@@ -1368,12 +1347,13 @@ class Dashboard extends BaseController
         $user = $this->userModel->find($this->session->get('user_id'));
 
         if ($this->request->getMethod() === 'POST') {
-            $contentToCheck = $this->request->getPost('title') . ' ' . $this->request->getPost('product_name') . ' ' . $this->request->getPost('description');
-            $restrictedWord = $this->checkRestrictedKeywords($contentToCheck);
-            if ($restrictedWord !== false) {
-                return redirect()->back()->withInput()->with('error', 'The inquiry contains a restricted keyword: "' . $restrictedWord . '". Please remove it and try again.');
-            }
-
+            // No restricted-keyword/profanity check here -- this is an admin
+            // manually logging a real inquiry (e.g. an industrial buyer's RFQ
+            // that legitimately mentions "explosive" or "weapon"-adjacent
+            // terms), not a public submission. The filter exists to screen
+            // public-facing submissions; admin data entry is trusted. Same
+            // reasoning as addSupplier()/editSupplier(), which never had this
+            // check -- this used to be the one admin form that did, inconsistently.
             $data = [
                 'title' => $this->request->getPost('title'),
                 'product_name' => $this->request->getPost('product_name'),
@@ -1469,11 +1449,9 @@ class Dashboard extends BaseController
         }
 
         if ($this->request->getMethod() === 'POST') {
-            $contentToCheck = $this->request->getPost('title') . ' ' . $this->request->getPost('product_name') . ' ' . $this->request->getPost('description');
-            $restrictedWord = $this->checkRestrictedKeywords($contentToCheck);
-            if ($restrictedWord !== false) {
-                return redirect()->back()->withInput()->with('error', 'The inquiry contains a restricted keyword: "' . $restrictedWord . '". Please remove it and try again.');
-            }
+            // No restricted-keyword/profanity check here -- see the matching
+            // comment in addInquiry(). Admin data entry is trusted; the
+            // filter is for public-facing submissions.
 
             $data = [
                 'title' => $this->request->getPost('title'),
@@ -1641,6 +1619,13 @@ class Dashboard extends BaseController
         } elseif ($user['user_type'] === 'buyer') {
             $data['buying_products'] = $this->request->getPost('buying_products');
             $data['requirement'] = $this->request->getPost('requirement');
+        }
+
+        $contentToCheck = $name . ' ' . $this->request->getPost('company_name') . ' '
+            . ($data['selling_products'] ?? '') . ' ' . ($data['buying_products'] ?? '') . ' ' . ($data['requirement'] ?? '');
+        $restrictedWord = check_restricted_keywords($contentToCheck);
+        if ($restrictedWord !== false) {
+            return redirect()->back()->withInput()->with('error', 'Your profile contains a restricted keyword: "' . $restrictedWord . '". Please remove it and try again.');
         }
 
         $newEmail = trim($this->request->getPost('email') ?? '');

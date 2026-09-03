@@ -26,6 +26,8 @@
                 <select id="filterStatus" class="form-select">
                     <option value="">All</option>
                     <option value="active">Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="inactive">Inactive</option>
                     <option value="closed">Closed</option>
                     <option value="expired">Expired</option>
                 </select>

@@ -97,13 +97,16 @@
             </div>
 
             <div class="supplier-product-list">
+                <?php if (isset($resultsTotal)): ?>
+                    <p class="text-muted mb-3">Showing <?= count($inquiries ?? []) ?> results out of <?= $resultsTotal ?></p>
+                <?php endif; ?>
                 <div id="buyerWrapper">
                     <?php if (isset($inquiries) && count($inquiries) > 0): ?>
                         <?php foreach ($inquiries as $inquiry): ?>
                             <div class="buyer-main-list move-on-hover">
                                 <div class="d-flex justify-content-between">
                                     <div class="buyer-main-list-content">
-                                        <h2 class="f-16 light-green-h2-color"><a href="<?= inquiry_url($inquiry) ?>" class="text-decoration-none light-green-h2-color"><?= esc($inquiry['title']) ?></a></h2>
+                                        <h2 class="f-16 light-green-h2-color"><a href="<?= inquiry_url($inquiry) ?>" class="text-decoration-none light-green-h2-color"><?= !empty($searchKeyword) ? highlight_keyword($inquiry['title'], $searchKeyword) : esc($inquiry['title']) ?></a></h2>
                                         <div class="d-flex justify-content-between mt-3 gap-15">
                                             <div>
                                                 <p><b>Quantity Required:</b> <br />
@@ -118,7 +121,16 @@
                                                 <?= isset($inquiry['created_at']) ? date('d M, Y', strtotime($inquiry['inquiry_date'])) : 'N/A' ?></p>
                                             </div>
                                         </div>
-                                        <p><?= esc(substr($inquiry['description'] ?? '', 0, 200)) ?>...</p>
+                                        <?php $descTruncated = substr($inquiry['description'] ?? '', 0, 200); ?>
+                                        <p><?= !empty($searchKeyword) ? highlight_keyword($descTruncated, $searchKeyword) : esc($descTruncated) ?>...</p>
+                                        <?php if (!empty($searchKeyword)):
+                                            $hiddenMatches = max(0, count_keyword_occurrences($inquiry['description'] ?? '', $searchKeyword) - count_keyword_occurrences($descTruncated, $searchKeyword))
+                                                + count_keyword_occurrences($inquiry['product_name'] ?? '', $searchKeyword);
+                                            if ($hiddenMatches > 0): ?>
+                                                <p class="small mb-2" style="background:#bfff4fd9; padding:4px 8px; border-radius:4px;">
+                                                    "<?= esc($searchKeyword) ?>" appeared <?= $hiddenMatches ?> more time<?= $hiddenMatches > 1 ? 's' : '' ?> in this record.
+                                                </p>
+                                        <?php endif; endif; ?>
                                     </div>
                                     <div class="buyer-main-list-cta-side text-center">
                                         <p class="font-weight-600 text-white"><?= esc($inquiry['buyer_name'] ?? 'Buyer') ?></p>
@@ -136,7 +148,11 @@
                         </div>
                     <?php endif; ?>
                 </div>
-                <?php if (isset($pager) && $pager): ?>
+                <?php if (isset($searchPager)): ?>
+                    <div class="d-flex justify-content-center mt-5 " style="border-top: 1px solid #e1e1e1;">
+                        <?= $this->include('partials/search-pager') ?>
+                    </div>
+                <?php elseif (isset($pager) && $pager): ?>
                     <div class="d-flex justify-content-center mt-5 " style="border-top: 1px solid #e1e1e1;">
                         <?= $pager->links('buyer', 'default_full') ?>
                     </div>

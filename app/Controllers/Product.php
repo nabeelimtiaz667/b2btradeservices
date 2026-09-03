@@ -26,11 +26,15 @@ class Product extends BaseController
     {
         $supplierId = $this->request->getGet('supplier');
 
+        $builder = $this->productModel->where('status', 'active');
+
         if ($supplierId) {
-            $products = $this->productModel->where('status', 'active')->where('supplier_id', $supplierId)->orderBy('created_at', 'DESC')->findAll();
+            $builder->where('supplier_id', $supplierId)->orderBy('created_at', 'DESC');
         } else {
-            $products = $this->productModel->getActiveProducts();
+            $builder->orderBy('is_featured', 'DESC')->orderBy('created_at', 'DESC');
         }
+
+        $products = $builder->paginate(12, 'product');
 
         $supplierName = null;
         foreach ($products as &$product) {
@@ -53,6 +57,8 @@ class Product extends BaseController
             // links to.
             'canonical' => $supplierId ? base_url('product/supplier/' . $supplierId) : current_url(),
             'products' => $products,
+            'pager' => $this->productModel->pager,
+            'resultsTotal' => $this->productModel->pager->getTotal('product'),
             'categories' => $this->categoryModel->getActiveCategories(),
         ];
 
@@ -65,7 +71,11 @@ class Product extends BaseController
             return redirect()->to('/product');
         }
 
-        $products = $this->productModel->where('status', 'active')->where('supplier_id', $supplierId)->orderBy('created_at', 'DESC')->findAll();
+        $products = $this->productModel
+            ->where('status', 'active')
+            ->where('supplier_id', $supplierId)
+            ->orderBy('created_at', 'DESC')
+            ->paginate(12, 'product');
 
         $supplierName = null;
         foreach ($products as &$product) {
@@ -83,6 +93,8 @@ class Product extends BaseController
                 : 'Browse products from verified suppliers and manufacturers on B2B Trade Services.',
             'canonical' => current_url(),
             'products' => $products,
+            'pager' => $this->productModel->pager,
+            'resultsTotal' => $this->productModel->pager->getTotal('product'),
             'categories' => $this->categoryModel->getActiveCategories(),
         ];
 
@@ -160,7 +172,7 @@ class Product extends BaseController
         // binding to a real controller method's parameters.
         $pathParams = $segments === [] ? null : implode('/', $segments);
 
-        $knownKeys = ['category'];
+        $knownKeys = ['category', 'page'];
 
         if ($pathParams === null && service('request')->getUri()->getQuery() !== '') {
             $filters = [];
@@ -201,12 +213,39 @@ class Product extends BaseController
             $builder->where('category_id', $categoryId);
         }
 
-        $products = $builder->orderBy('is_featured', 'DESC')->orderBy('created_at', 'DESC')->findAll();
+        $perPage = 12;
+        $total = $builder->countAllResults(false);
+        $totalPages = max(1, (int) ceil($total / $perPage));
+        // parse_search_path() hands back whatever string was in the URL
+        // segment -- (int) cast turns anything non-numeric (or missing) into
+        // 0, and the max(1, ...) below floors it to page 1 rather than a
+        // negative/zero offset.
+        $rawPage = $filters['page'] ?? null;
+        $page = min(max(1, (int) ($rawPage ?? 1)), $totalPages);
+
+        // If what was actually requested (page/-1, page/0, page/abc, or an
+        // out-of-range page/99999) doesn't match the clamped page being
+        // rendered, redirect to the URL for that actual page rather than
+        // silently rendering it under the wrong one.
+        if ($rawPage !== null && $rawPage !== (string) $page) {
+            $canonicalFilters = ['category' => $filters['category'] ?? null];
+            $canonicalFilters['page'] = $page > 1 ? (string) $page : null;
+            $clean = build_search_path($keyword, $canonicalFilters);
+
+            return redirect()->to(base_url('product/search' . ($clean !== '' ? '/' . $clean : '')), 301);
+        }
+
+        $products = $builder
+            ->orderBy('is_featured', 'DESC')
+            ->orderBy('created_at', 'DESC')
+            ->findAll($perPage, ($page - 1) * $perPage);
 
         foreach ($products as &$product) {
             $product['supplier'] = $this->userModel->find($product['supplier_id']);
             $product['category'] = $this->categoryModel->find($product['category_id']);
         }
+
+        $searchPager = build_search_pager('product/search', $keyword, ['category' => $filters['category'] ?? null], $page, $totalPages);
 
         $data = [
             'title' => $keyword ? 'Search Results for "' . $keyword . '" - Products' : 'Search Products',
@@ -215,6 +254,8 @@ class Product extends BaseController
                 : 'Search products from verified suppliers and manufacturers on B2B Trade Services.',
             'canonical' => current_url(),
             'products' => $products,
+            'searchPager' => $searchPager,
+            'resultsTotal' => $total,
             'categories' => $this->categoryModel->getActiveCategories(),
             'searchKeyword' => $keyword,
             'selectedCategory' => $categoryId,

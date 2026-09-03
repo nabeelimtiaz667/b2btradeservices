@@ -32,7 +32,7 @@
             <div class="mb-3">
                 <label class="form-label">Restricted Keywords</label>
                 <textarea name="restricted_keywords" class="form-control" rows="4" placeholder="keyword1, keyword2, keyword3"><?= esc($settings['restricted_keywords'] ?? '') ?></textarea>
-                <small class="text-muted">Products, inquiries, registrations and contact submissions containing these words will be blocked from submission. Separate with commas.</small>
+                <small class="text-muted">Products, inquiries, registrations, profile edits and contact submissions containing these words will be blocked from submission. Separate with commas. Matched as whole words, so "spa" won't block "aerospace" -- but a multi-word phrase like "money laundering" only matches that exact phrase. Doesn't apply to admin-entered data (Manage Suppliers, Manage Buyer Inquiries, etc.), which is trusted.</small>
             </div>
             <div class="mb-3">
                 <div class="form-check form-switch">

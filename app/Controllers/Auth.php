@@ -22,34 +22,6 @@ class Auth extends BaseController
         $this->session = session();
     }
 
-    protected function checkRestrictedKeywords($text)
-    {
-        $settingModel = new SiteSettingModel();
-        $textLower = strtolower($text);
-
-        $keywords = $settingModel->getSetting('restricted_keywords', '');
-        if (!empty($keywords)) {
-            $keywordList = array_map('trim', array_filter(preg_split('/[,\n]+/', strtolower($keywords))));
-            foreach ($keywordList as $kw) {
-                if (!empty($kw) && strpos($textLower, $kw) !== false) {
-                    return $kw;
-                }
-            }
-        }
-
-        $profanityEnabled = $settingModel->getSetting('profanity_filter', '0');
-        if ($profanityEnabled === '1') {
-            $profanityList = ['damn', 'hell', 'crap', 'stupid', 'idiot', 'fool', 'scam', 'fraud', 'fake', 'spam', 'porn', 'xxx', 'casino', 'gambling', 'drugs', 'narcotic', 'cocaine', 'heroin', 'marijuana', 'counterfeit', 'pirated', 'illegal', 'terrorist', 'weapon', 'explosive', 'smuggle', 'trafficking', 'money laundering'];
-            foreach ($profanityList as $word) {
-                if (preg_match('/\b' . preg_quote($word, '/') . '\b/i', $text)) {
-                    return $word;
-                }
-            }
-        }
-
-        return false;
-    }
-
     public function register()
     {
         $settingModel = new SiteSettingModel();
@@ -83,7 +55,7 @@ class Auth extends BaseController
         }
 
         $contentToCheck = $this->request->getPost('name') . ' ' . $this->request->getPost('company_name') . ' ' . $this->request->getPost('selling_products') . ' ' . $this->request->getPost('buying_products') . ' ' . $this->request->getPost('requirement');
-        $restrictedWord = $this->checkRestrictedKeywords($contentToCheck);
+        $restrictedWord = check_restricted_keywords($contentToCheck);
         if ($restrictedWord !== false) {
             return redirect()->back()->withInput()->with('error', 'Your registration contains a restricted keyword: "' . $restrictedWord . '". Please revise and try again.');
         }

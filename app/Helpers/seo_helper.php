@@ -130,6 +130,55 @@ if (! function_exists('build_search_path')) {
     }
 }
 
+if (! function_exists('build_search_pager')) {
+    /**
+     * Clean-URL pagination data for the search()-family pages, using the
+     * same segment convention as parse_search_path()/build_search_path()
+     * above (.../search/{keyword}/category/{slug}/page/{n}) instead of a
+     * query string -- so a pagination link never trips the legacy
+     * ?q=...&category=... redirect branch in each search() method, and
+     * paginated results stay canonical/crawlable path URLs like every other
+     * clean URL on the site.
+     *
+     * Page 1 omits the 'page' segment entirely rather than emitting an
+     * explicit .../page/1, so the first page only ever has one URL form.
+     *
+     * $filters must already be in the fixed, controller-declared order
+     * (e.g. ['category' => ...] for products) -- build_search_path() just
+     * emits key/value pairs in iteration order, it doesn't know a canonical
+     * order, so the caller is responsible for it.
+     */
+    function build_search_pager(string $basePath, ?string $keyword, array $filters, int $currentPage, int $totalPages, int $surround = 2): array
+    {
+        unset($filters['page']);
+
+        $urlFor = static function (int $page) use ($basePath, $keyword, $filters): string {
+            $pageFilters = $filters;
+            $pageFilters['page'] = $page > 1 ? (string) $page : null;
+            $clean = build_search_path($keyword, $pageFilters);
+
+            return base_url($basePath . ($clean !== '' ? '/' . $clean : ''));
+        };
+
+        $links = [];
+        $start = max(1, $currentPage - $surround);
+        $end   = min($totalPages, $currentPage + $surround);
+        for ($p = $start; $p <= $end; $p++) {
+            $links[] = ['page' => $p, 'url' => $urlFor($p), 'active' => $p === $currentPage];
+        }
+
+        return [
+            'currentPage' => $currentPage,
+            'totalPages'  => $totalPages,
+            'first'       => $currentPage > 1 ? $urlFor(1) : null,
+            'previous'    => $currentPage > 1 ? $urlFor($currentPage - 1) : null,
+            'next'        => $currentPage < $totalPages ? $urlFor($currentPage + 1) : null,
+            'last'        => $currentPage < $totalPages ? $urlFor($totalPages) : null,
+            'links'       => $links,
+        ];
+    }
+}
+
 if (! function_exists('truncate_for_meta')) {
     /**
      * Normalize free-form text into a meta-description-safe string: collapse

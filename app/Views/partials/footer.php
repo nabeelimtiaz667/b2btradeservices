@@ -16,10 +16,12 @@ $orgJsonLd = [
     ],
 ];
 ?>
-<script type="application/ld+json"><?= json_encode(
-    $orgJsonLd,
-    JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
-) ?></script>
+<script type="application/ld+json">
+<?= json_encode(
+        $orgJsonLd,
+        JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    ) ?>
+</script>
 <footer>
     <div class="border-top-footer"></div>
 
@@ -62,8 +64,17 @@ $orgJsonLd = [
                 <div class="footer-links-col">
                     <p class="link_head text-white">Get In Touch</p>
                     <ul>
-                        <li><a href="<?= base_url('contact') ?>">
-                                <?= esc($siteSettings['contact_address'] ?? '1001 S MAIN STREET, STE 500 - Kalispell, MONTANA, UNITED STATES 59901') ?></a>
+                        <li class="text-white">
+                            <strong>NIGERIA OFFICE:</strong><br>
+                            20 Saliu Obodo Street Okera Nla, Addo Road, Ajah Lagos
+                        </li>
+                        <li class="text-white">
+                            <strong>UK OFFICE:</strong><br>
+                            102 London Road, Reading, RG1 5AU. United Kingdom
+                        </li>
+                        <li class="text-white">
+                            <strong>CHINA OFFICE:</strong><br>
+                            Room 519, No.60 Mudan Road, Pudong New area, Shanghai
                         </li>
                         <?php if (!empty($siteSettings['contact_phone'])): ?>
                         <li><a href="tel:<?= esc($siteSettings['contact_phone']) ?>"><i class="fas fa-phone"></i>
@@ -88,8 +99,14 @@ $orgJsonLd = [
                     <a href="mailto:support@b2btradeservices.com">support@b2btradeservices.com</a>
                     <?php endif; ?>
                     <div class="social-icons mt-2 d-flex gap-2 align-items-center">
-                        <a href="https://www.facebook.com/people/B2B-Trade-Services/61592672702945/" target="_blank" rel="noopener noreferrer" aria-label="B2B Trade Services on Facebook"><img src="<?= base_url('assets/images/fb-icon.svg') ?>" alt="Facebook" width="24" height="24"></a>
-                        <a href="https://www.instagram.com/b2btradeservicesllc" target="_blank" rel="noopener noreferrer" aria-label="B2B Trade Services on Instagram"><img src="<?= base_url('assets/images/insta-icon.svg') ?>" alt="Instagram" width="24" height="24"></a>
+                        <a href="https://www.facebook.com/people/B2B-Trade-Services/61592672702945/" target="_blank"
+                            rel="noopener noreferrer" aria-label="B2B Trade Services on Facebook"><img
+                                src="<?= base_url('assets/images/fb-icon.svg') ?>" alt="Facebook" width="24"
+                                height="24"></a>
+                        <a href="https://www.instagram.com/b2btradeservicesllc" target="_blank"
+                            rel="noopener noreferrer" aria-label="B2B Trade Services on Instagram"><img
+                                src="<?= base_url('assets/images/insta-icon.svg') ?>" alt="Instagram" width="24"
+                                height="24"></a>
                     </div>
                 </div>
                 <div class="footer-bottom-col-2">
@@ -179,10 +196,11 @@ document.getElementById("closePopup2").onclick = function() {
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="<?= base_url('assets/js/script.js') ?>"></script>
 <?php // This partial's own "Register Your Company" popup (above) uses
-      // lead-capture-inline-form.php, so this script -- which wires every
-      // .lead-capture-inline-form on the page to LeadCapture::capture() --
-      // is needed on every page footer.php appears on, not just the
-      // homepage. Loaded here (once, sitewide) instead of per-page. ?>
+// lead-capture-inline-form.php, so this script -- which wires every
+// .lead-capture-inline-form on the page to LeadCapture::capture() --
+// is needed on every page footer.php appears on, not just the
+// homepage. Loaded here (once, sitewide) instead of per-page. 
+?>
 <script src="<?= base_url('assets/js/homepage-lead-forms.js') ?>"></script>
 
 <script>
@@ -236,7 +254,7 @@ if ($('.success-stories-slider').length) {
 // .each() rather than a single .slick() call handles that per-instance,
 // same as this file's other sliders otherwise share one config.
 if ($('.top-products-carousel').length) {
-    $('.top-products-carousel').each(function () {
+    $('.top-products-carousel').each(function() {
         $(this).slick({
             autoplay: $(this).find('.top-products-set').length > 1,
             autoplaySpeed: parseInt($(this).data('autoplay-speed'), 10) || 5000,
@@ -252,7 +270,7 @@ if ($('.top-products-carousel').length) {
     });
 }
 if ($('.top-supplier-carousel').length) {
-    $('.top-supplier-carousel').each(function () {
+    $('.top-supplier-carousel').each(function() {
         $(this).slick({
             autoplay: $(this).find('.top-supplier-set').length > 1,
             autoplaySpeed: parseInt($(this).data('autoplay-speed'), 10) || 5000,
@@ -268,7 +286,7 @@ if ($('.top-supplier-carousel').length) {
     });
 }
 if ($('.latest-buy-offer-carousel').length) {
-    $('.latest-buy-offer-carousel').each(function () {
+    $('.latest-buy-offer-carousel').each(function() {
         $(this).slick({
             autoplay: $(this).find('.latest-buy-offer-set').length > 1,
             autoplaySpeed: parseInt($(this).data('autoplay-speed'), 10) || 5000,

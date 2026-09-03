@@ -159,6 +159,18 @@
             </div>
 
             <div class="tab-pane fade" id="inquiries" role="tabpanel">
+                <?php $pendingInquiryCount = count(array_filter($inquiries, fn($i) => $i['status'] === 'pending')); ?>
+                <?php if ($pendingInquiryCount > 0): ?>
+                <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" class="flex-shrink-0">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                    <div>
+                        <strong><?= $pendingInquiryCount ?> inquir<?= $pendingInquiryCount > 1 ? 'ies' : 'y' ?> pending review.</strong>
+                        <?= $pendingInquiryCount > 1 ? 'These were' : 'This was' ?> submitted by buyers and <?= $pendingInquiryCount > 1 ? 'are' : 'is' ?> awaiting your approval. Change the status to <strong>Active</strong> to publish.
+                    </div>
+                </div>
+                <?php endif; ?>
                 <div class="mb-3">
                     <input type="text" class="form-control" id="inquirySearch" placeholder="Search inquiries..." onkeyup="filterTable('inquirySearch', 'inquiriesTable')">
                 </div>
@@ -190,7 +202,10 @@
                                                 <input type="hidden" name="id" value="<?= $inq['id'] ?>">
                                                 <select name="status" class="form-select form-select-sm" style="width:auto;display:inline-block;" onchange="this.form.submit()">
                                                     <option value="active" <?= $inq['status'] === 'active' ? 'selected' : '' ?>>Active</option>
+                                                    <option value="pending" <?= $inq['status'] === 'pending' ? 'selected' : '' ?>>Pending</option>
                                                     <option value="inactive" <?= $inq['status'] === 'inactive' ? 'selected' : '' ?>>Inactive</option>
+                                                    <option value="closed" <?= $inq['status'] === 'closed' ? 'selected' : '' ?>>Closed</option>
+                                                    <option value="expired" <?= $inq['status'] === 'expired' ? 'selected' : '' ?>>Expired</option>
                                                 </select>
                                             </form>
                                         </td>
