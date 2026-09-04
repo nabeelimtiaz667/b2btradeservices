@@ -46,7 +46,7 @@
                         <?php if (isset($countries)): ?>
                             <?php foreach (array_slice($countries, 0, 10) as $country): ?>
                                 <a href="<?= base_url('supplier-country/' . $country['code']) ?>" class="flag-item mt-3">
-                                    <img src="<?= base_url('assets/images/flags/' . strtolower($country['flag'] ?? $country['code'] . '.svg')) ?>" alt="<?= esc($country['name']) ?>" onerror="this.style.display='none'">
+                                    <img src="<?= esc($country['flag']) ?>" alt="<?= esc($country['name']) ?>" onerror="this.style.display='none'">
                                     <?= esc($country['name']) ?>
                                 </a>
                             <?php endforeach; ?>

@@ -75,7 +75,7 @@ $jsonLd = [
                         <p><b>Country/Region:</b></p>
                         <p class="d-flex gap-2 align-items-center"><?= esc($inquiry['country']['name'] ?? 'N/A') ?>
                             <?php if (!empty($inquiry['country']['flag'] ?? '')): ?>
-                            <img src="<?= base_url('assets/images/flags/' . $inquiry['country']['flag']) ?>"
+                            <img src="<?= esc($inquiry['country']['flag']) ?>"
                                 width="20" onerror="this.style.display='none'">
                             <?php endif; ?>
                         </p>
@@ -155,7 +155,7 @@ $jsonLd = [
                             <p class="d-flex align-items-center gap-3">
                                 <?= isset($related['country']) ? esc($related['country']['name']) : 'N/A' ?>
                                 <?php if (!empty($related['country']['flag'] ?? '')): ?>
-                                <img src="<?= base_url('assets/images/flags/' . $related['country']['flag']) ?>"
+                                <img src="<?= esc($related['country']['flag']) ?>"
                                     width="20" onerror="this.style.display='none'">
                                 <?php endif; ?>
                             </p>

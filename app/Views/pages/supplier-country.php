@@ -54,7 +54,7 @@
                     <?php if (isset($countries)): ?>
                         <?php foreach ($countries as $c): ?>
                             <a href="<?= base_url('supplier-country/' . ($c['code'] ?? strtolower(str_replace(' ', '-', $c['name'])))) ?>" class="flag-item mt-3 <?= (isset($country) && $country['id'] == $c['id']) ? 'fw-bold' : '' ?>">
-                                <img src="<?= base_url('assets/images/flags/' . strtolower(str_replace(' ', '-', $c['name'])) . '.svg') ?>" alt="<?= esc($c['name']) ?>" onerror="this.style.display='none'">
+                                <img src="<?= esc($c['flag']) ?>" alt="<?= esc($c['name']) ?>" onerror="this.style.display='none'">
                                 <?= esc($c['name']) ?>
                             </a>
                         <?php endforeach; ?>
@@ -90,7 +90,7 @@
                                     <h4>
                                         <?= esc($supplier['company_name'] ?? $supplier['name']) ?>
                                         <?php if (!empty($supplier['country']['flag'] ?? '')): ?>
-                                            <img src="<?= base_url('assets/images/flags/' . $supplier['country']['flag']) ?>" width="20" onerror="this.style.display='none'">
+                                            <img src="<?= esc($supplier['country']['flag']) ?>" width="20" onerror="this.style.display='none'">
                                         <?php endif; ?>
                                     </h4>
                                     <p>Products: <?= esc($supplier['selling_products'] ?? 'Various') ?><br>

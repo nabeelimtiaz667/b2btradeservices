@@ -116,7 +116,7 @@
                         <h2 class="d-flex align-items-center gap-2 text-white">
                             <?= esc($supplier['company_name'] ?? $supplier['name'] ?? 'Company Name') ?>
                             <?php if (!empty($supplier['country']['flag'] ?? '')): ?>
-                                <img src="<?= base_url('assets/images/flags/' . $supplier['country']['flag']) ?>" width="35" onerror="this.style.display='none'">
+                                <img src="<?= esc($supplier['country']['flag']) ?>" width="35" onerror="this.style.display='none'">
                             <?php endif; ?>
                         </h2>
                         <p class="text-white mb-1"><b>Contact Person:</b> <?= esc($supplier['name'] ?? 'N/A') ?></p>

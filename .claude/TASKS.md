@@ -60,6 +60,7 @@ Unscheduled, no commitment yet.
 | T-0.9 | Remove hardcoded credentials from seeders, clean git history | 2026-07-29 | CHANGELOG 2026-07-29 |
 | T-0.10 | Set up `.claude/` project documentation | 2026-07-29 | This file and its siblings |
 | T-1 | Rotate the Aiven database password | 2026-07-29 | Done by owner. BLOCKERS #1 closed |
+| T-30 | Revamp country system: DB table → file-backed, 122 → 250 countries | 2026-09-03 | CHANGELOG 2026-09-03, DECISIONS #15 |
 | T-2 | Delete `app/Config/_database.php` | 2026-07-29 | Done by owner. Verified gone. BLOCKERS #2 closed |
 | T-3 | Delete `app.zip` (166 MB) | 2026-07-29 | Done by owner. Verified gone. BLOCKERS #3 closed |
 | T-4 | Verify the application under `app/` | 2026-07-29 | Full sweep — 168 files linted, 136 handlers resolved, 97 GET routes exercised. CHANGELOG 2026-07-29 |

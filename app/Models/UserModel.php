@@ -192,7 +192,7 @@ class UserModel extends Model
             if (isset($regionMapping[$filters['region']])) {
                 $codes = $regionMapping[$filters['region']];
                 $countryModel = new CountryModel();
-                $regionCountries = $countryModel->whereIn('code', $codes)->findAll();
+                $regionCountries = $countryModel->getCountriesByCodes($codes);
                 $regionCountryIds = array_column($regionCountries, 'id');
                 if (!empty($regionCountryIds)) {
                     $builder->whereIn('country_id', $regionCountryIds);

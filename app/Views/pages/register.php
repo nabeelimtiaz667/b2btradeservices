@@ -72,7 +72,7 @@
                 <select class="form-control country-select" required name="country_id">
                     <option value="">Select Country*</option>
                     <?php foreach (($countries ?? []) as $c): ?>
-                    <option value="<?= esc($c['id']) ?>"><?= esc($c['name']) ?></option>
+                    <option value="<?= esc($c['id']) ?>" data-code="<?= esc($c['code']) ?>"><?= esc($c['name']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -122,6 +122,21 @@
             phoneCodeInput.value = '+' + selectedCountryData.dialCode;
         }
     });
+
+    // Keep the phone widget's dial code in sync with the "Select Country"
+    // field -- they used to be two unrelated pickers with no cross-check,
+    // so a supplier could pick "Pakistan" here but leave the phone widget
+    // on its default "+1". This doesn't restrict the phone widget (still
+    // freely changeable after), just defaults it sensibly.
+    const countrySelect = document.querySelector('select[name="country_id"]');
+    if (countrySelect && iti) {
+        countrySelect.addEventListener('change', function() {
+            const code = this.selectedOptions[0]?.dataset.code;
+            if (code) {
+                iti.setCountry(code.toLowerCase());
+            }
+        });
+    }
 
     function toggleFields(radio) {
         const sellingField = document.querySelector('.selling-field');

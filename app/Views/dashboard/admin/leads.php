@@ -199,7 +199,7 @@ foreach (($agents ?? []) as $a) {
                         <?php $country = $countryLookup[$lead['country_id']] ?? null; ?>
                         <td style="text-align:center;">
                             <?php if ($country && !empty($country['flag'])): ?>
-                                <img src="<?= base_url('assets/images/flags/' . $country['flag']) ?>" alt="<?= esc($country['name']) ?>" title="<?= esc($country['name']) ?>" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
+                                <img src="<?= esc($country['flag']) ?>" alt="<?= esc($country['name']) ?>" title="<?= esc($country['name']) ?>" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
                             <?php else: ?>-<?php endif; ?>
                         </td>
                         <td style="font-size:12px;">

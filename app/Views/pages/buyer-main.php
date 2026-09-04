@@ -135,7 +135,7 @@
                                     <div class="buyer-main-list-cta-side text-center">
                                         <p class="font-weight-600 text-white"><?= esc($inquiry['buyer_name'] ?? 'Buyer') ?></p>
                                         <?php if (isset($inquiry['country']) && $inquiry['country'] && !empty($inquiry['country']['flag'])): ?>
-                                            <img src="<?= base_url('assets/images/flags/' . $inquiry['country']['flag']) ?>" width="24" onerror="this.style.display='none'" alt="<?= esc($inquiry['country']['name']) ?>">
+                                            <img src="<?= esc($inquiry['country']['flag']) ?>" width="24" onerror="this.style.display='none'" alt="<?= esc($inquiry['country']['name']) ?>">
                                         <?php endif; ?>
                                         <a class="solid-btn mt-3" href="<?= inquiry_url($inquiry) ?>">Contact Buyer</a>
                                     </div>

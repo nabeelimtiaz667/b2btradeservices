@@ -95,6 +95,14 @@ Run a seeder (writes to the **local** database — see DECISIONS #8):
 php seed_data.php
 ```
 
+Refresh the country data file (see DECISIONS #15 — country data is now
+`app/Data/countries.php`, not a DB table; this fetches from `mledoze/countries`
+on GitHub and rewrites that file, preserving existing ids):
+
+```bash
+php spark countries:sync
+```
+
 ## Gotchas
 
 1. **Subfolder install.** Rewrite rules and `baseURL` are subfolder-aware. A rule

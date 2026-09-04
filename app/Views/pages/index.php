@@ -73,7 +73,7 @@
                             <div class="latest-buy-offer-row mt-4">
                                 <div class="d-flex gap-3 align-items-center">
                                     <?php if (!empty($inq['country_flag'])): ?>
-                                    <img src="<?= base_url('assets/images/flags/' . $inq['country_flag']) ?>" alt=""
+                                    <img src="<?= esc($inq['country_flag']) ?>" alt=""
                                         style="width: 30px; height: 20px; object-fit: cover; border-radius: 3px; border: 1px solid #eee;">
                                     <?php elseif (!empty($inq['attachment'])): ?>
                                     <img src="<?= base_url('uploads/inquiries/' . $inq['attachment']) ?>" alt="Reference"
@@ -141,7 +141,7 @@
                                 <h3><?= esc($tp['name']) ?></h3>
                                 <?php if (isset($tp['supplier']['country'])): ?>
                                 <p class="d-flex align-items-center gap-2">
-                                    <img src="<?= base_url('assets/images/flags/' . ($tp['supplier']['country']['flag'] ?? '')) ?>"
+                                    <img src="<?= esc($tp['supplier']['country']['flag'] ?? '') ?>"
                                         width="20" onerror="this.style.display='none'">
                                     <?= esc($tp['supplier']['country']['name'] ?? '') ?>
                                 </p>
@@ -908,7 +908,7 @@ if (isset($categories) && !empty($categories)) {
                         <a href="<?= base_url('supplier-country/' . $c['code']) ?>"
                             class="flag-slider-box text-center text-decoration-none text-dark">
                             <?php if (!empty($c['flag'])): ?>
-                            <img src="<?= base_url('assets/images/flags/' . $c['flag']) ?>">
+                            <img src="<?= esc($c['flag']) ?>">
                             <?php else: ?>
                             <div
                                 style="width: 60px; height: 40px; background: #f0f0f0; border-radius: 4px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">

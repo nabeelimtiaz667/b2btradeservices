@@ -91,7 +91,7 @@
                                         <?php $usedCompanyName = !empty($supplier['company_name']); ?>
                                         <?= highlight_keyword($usedCompanyName ? $supplier['company_name'] : $supplier['name'], $searchKeyword) ?>
                                         <?php if (!empty($supplier['country']['flag'] ?? '')): ?>
-                                            <img src="<?= base_url('assets/images/flags/' . $supplier['country']['flag']) ?>" width="20" onerror="this.style.display='none'">
+                                            <img src="<?= esc($supplier['country']['flag']) ?>" width="20" onerror="this.style.display='none'">
                                         <?php endif; ?>
                                     </h3>
                                     <p>Products: <?= !empty($supplier['selling_products']) ? highlight_keyword($supplier['selling_products'], $searchKeyword) : 'Various' ?><br>
@@ -167,7 +167,7 @@
                                 <h3 class="h4">
                                     <?= esc($supplier['company_name'] ?? $supplier['name']) ?>
                                     <?php if (!empty($supplier['country']['flag'] ?? '')): ?>
-                                        <img src="<?= base_url('assets/images/flags/' . $supplier['country']['flag']) ?>" width="20" onerror="this.style.display='none'">
+                                        <img src="<?= esc($supplier['country']['flag']) ?>" width="20" onerror="this.style.display='none'">
                                     <?php endif; ?>
                                 </h3>
                                 <p>Products: <?= esc($supplier['selling_products'] ?? 'Various') ?><br>
@@ -239,7 +239,7 @@
                     <?php if (isset($countries) && count($countries) > 0): ?>
                         <?php foreach (array_slice($countries, 0, 32) as $c): ?>
                             <a href="<?= base_url('supplier-country/' . ($c['code'] ?? strtolower(str_replace(' ', '-', $c['name'])))) ?>" class="flag-item">
-                                <img src="<?= base_url('assets/images/flags/' . strtolower(str_replace(' ', '-', $c['name'])) . '.svg') ?>" alt="<?= esc($c['name']) ?>" onerror="this.style.display='none'"> <?= esc($c['name']) ?>
+                                <img src="<?= esc($c['flag']) ?>" alt="<?= esc($c['name']) ?>" onerror="this.style.display='none'"> <?= esc($c['name']) ?>
                             </a>
                         <?php endforeach; ?>
                     <?php endif; ?>

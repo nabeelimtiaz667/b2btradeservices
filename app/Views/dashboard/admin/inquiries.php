@@ -78,12 +78,7 @@
                 <tbody>
                     <?php foreach ($inquiries as $i):
                         $countryName = $i['country']['name'] ?? '';
-                        $countryFlag = '';
-                        if (!empty($i['country']['name'] ?? '')) {
-                            $flagName = strtolower($i['country']['name']);
-                            $flagName = str_replace(' ', '-', $flagName);
-                            $countryFlag = $flagName;
-                        }
+                        $countryFlag = $i['country']['flag'] ?? '';
                         $createdDate = !empty($i['created_at']) ? date('d M Y H:i', strtotime($i['created_at'])) : '-';
                     ?>
                     <tr data-title="<?= esc(strtolower($i['title'])) ?>"
@@ -99,7 +94,7 @@
                         <td><?= esc($i['buyer_phone'] ?? '-') ?></td>
                         <td>
                             <?php if (!empty($countryFlag)): ?>
-                                <img src="<?= base_url('assets/images/flags/' . $countryFlag . '.svg') ?>" alt="<?= esc($countryName) ?>" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:5px;vertical-align:middle;">
+                                <img src="<?= esc($countryFlag) ?>" alt="<?= esc($countryName) ?>" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:5px;vertical-align:middle;">
                             <?php endif; ?>
                             <?= esc($countryName ?: 'N/A') ?>
                         </td>

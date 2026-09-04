@@ -905,26 +905,51 @@ class Dashboard extends BaseController
 
         $user = $this->userModel->find($this->session->get('user_id'));
 
-        $query = $this->userModel->where('user_type', 'supplier');
         if ($sort === 'country_name') {
-            $query->select('users.*, countries.name as country_name')
-                ->join('countries', 'countries.id = users.country_id', 'left')
-                ->orderBy('country_name', $dir);
-        } else {
-            $query->orderBy($sort, $dir);
-        }
-        $suppliers = $query->paginate(25, 'supplier');
+            // Country data lives in app/Data/countries.php now, not a DB
+            // table (see CountryModel), so this can no longer sort via a SQL
+            // JOIN. Fetch every supplier, enrich + sort in PHP, then
+            // paginate manually -- fine at this app's scale (a few hundred
+            // suppliers). Pager::store() seeds a real Pager object from
+            // scratch (the same primitive Model::paginate() uses
+            // internally), so the view's existing $pager->links(...) call
+            // keeps working unchanged.
+            $allSuppliers = $this->userModel->where('user_type', 'supplier')->findAll();
+            foreach ($allSuppliers as &$supplier) {
+                $supplier['country'] = $this->countryModel->find($supplier['country_id']);
+                $supplier['country_name'] = $supplier['country']['name'] ?? '';
+            }
+            unset($supplier);
 
-        foreach ($suppliers as &$supplier) {
-            $supplier['country'] = $this->countryModel->find($supplier['country_id']);
+            usort($allSuppliers, static function ($a, $b) use ($dir) {
+                $cmp = strcasecmp($a['country_name'], $b['country_name']);
+                return $dir === 'asc' ? $cmp : -$cmp;
+            });
+
+            $perPage = 25;
+            $pagerService = service('pager');
+            $currentPage = $pagerService->getCurrentPage('supplier');
+            $pager = $pagerService->store('supplier', $currentPage, $perPage, count($allSuppliers));
+            $offset = ($pagerService->getCurrentPage('supplier') - 1) * $perPage;
+            $suppliers = array_slice($allSuppliers, $offset, $perPage);
+        } else {
+            $suppliers = $this->userModel
+                ->where('user_type', 'supplier')
+                ->orderBy($sort, $dir)
+                ->paginate(25, 'supplier');
+            $pager = $this->userModel->pager;
+
+            foreach ($suppliers as &$supplier) {
+                $supplier['country'] = $this->countryModel->find($supplier['country_id']);
+            }
+            unset($supplier);
         }
-        unset($supplier);
 
         return view('dashboard/admin/suppliers', [
             'title' => 'Manage Suppliers',
             'user' => $user,
             'suppliers' => $suppliers,
-            'pager' => $this->userModel->pager,
+            'pager' => $pager,
             'sort' => $sort,
             'dir' => $dir,
             'showStarredAsFeatured' => $settingModel->getSetting('show_starred_suppliers_as_featured', '0') === '1',
