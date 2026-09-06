@@ -62,6 +62,9 @@ class Product extends BaseController
             'categories' => $this->categoryModel->getActiveCategories(),
         ];
 
+        $tier = $this->contentAccessTier();
+        $data['gateTier'] = ($this->productModel->pager->getCurrentPage('product') > 1 && $tier !== 'privileged') ? $tier : null;
+
         return view('pages/product', $data);
     }
 
@@ -97,6 +100,9 @@ class Product extends BaseController
             'resultsTotal' => $this->productModel->pager->getTotal('product'),
             'categories' => $this->categoryModel->getActiveCategories(),
         ];
+
+        $tier = $this->contentAccessTier();
+        $data['gateTier'] = ($this->productModel->pager->getCurrentPage('product') > 1 && $tier !== 'privileged') ? $tier : null;
 
         return view('pages/product', $data);
     }
@@ -260,6 +266,9 @@ class Product extends BaseController
             'searchKeyword' => $keyword,
             'selectedCategory' => $categoryId,
         ];
+
+        $tier = $this->contentAccessTier();
+        $data['gateTier'] = ($page > 1 && $tier !== 'privileged') ? $tier : null;
 
         return view('pages/product', $data);
     }

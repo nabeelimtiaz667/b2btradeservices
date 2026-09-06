@@ -100,6 +100,9 @@
                 <?php if (isset($resultsTotal)): ?>
                     <p class="text-muted mb-3">Showing <?= count($inquiries ?? []) ?> results out of <?= $resultsTotal ?></p>
                 <?php endif; ?>
+                <?php if (!empty($gateTier)): ?>
+                    <?= $this->include('partials/content-gate') ?>
+                <?php else: ?>
                 <div id="buyerWrapper">
                     <?php if (isset($inquiries) && count($inquiries) > 0): ?>
                         <?php foreach ($inquiries as $inquiry): ?>
@@ -148,6 +151,7 @@
                         </div>
                     <?php endif; ?>
                 </div>
+                <?php endif; ?>
                 <?php if (isset($searchPager)): ?>
                     <div class="d-flex justify-content-center mt-5 " style="border-top: 1px solid #e1e1e1;">
                         <?= $this->include('partials/search-pager') ?>

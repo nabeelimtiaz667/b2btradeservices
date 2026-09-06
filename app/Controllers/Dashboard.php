@@ -1686,6 +1686,55 @@ class Dashboard extends BaseController
         }
     }
 
+    /**
+     * Read-only browse of the country/phone-code list -- see DECISIONS #15.
+     * Data comes from app/Data/countries.php (CountryModel), not the DB;
+     * "last updated" is that file's own mtime, which is exact regardless of
+     * whether the most recent sync ran from here or from a cron'd
+     * `php spark countries:sync`.
+     */
+    public function countries()
+    {
+        if (!$this->session->get('logged_in') || $this->session->get('user_type') !== 'admin') {
+            return redirect()->to('/login');
+        }
+
+        $countries = $this->countryModel->findAll();
+        usort($countries, static fn ($a, $b) => strcmp($a['name'], $b['name']));
+
+        $dataFile = APPPATH . 'Data/countries.php';
+        $lastUpdated = is_file($dataFile) ? date('F j, Y \a\t g:i A', filemtime($dataFile)) : null;
+
+        $user = $this->userModel->find($this->session->get('user_id'));
+
+        return view('dashboard/admin/countries', [
+            'title' => 'Countries - Admin',
+            'user' => $user,
+            'countries' => $countries,
+            'lastUpdated' => $lastUpdated,
+        ]);
+    }
+
+    /**
+     * "Update Now" on the Countries page. Runs the same CountrySyncer as
+     * `php spark countries:sync` -- see that class for the full sync logic.
+     */
+    public function syncCountriesNow()
+    {
+        if (!$this->session->get('logged_in') || $this->session->get('user_type') !== 'admin') {
+            return redirect()->to('/login');
+        }
+
+        if ($this->request->getMethod() !== 'POST') {
+            return redirect()->to('/dashboard/countries');
+        }
+
+        $result = (new \App\Libraries\CountrySyncer())->sync();
+
+        $this->session->setFlashdata($result['success'] ? 'success' : 'error', $result['message']);
+        return redirect()->to('/dashboard/countries');
+    }
+
     public function submissions()
     {
         if (!$this->session->get('logged_in') || !in_array($this->session->get('user_type'), ['admin', 'agent'])) {

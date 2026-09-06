@@ -58,6 +58,9 @@ class Supplier extends BaseController
             'countries' => $this->countryModel->getActiveCountries(),
         ];
 
+        $tier = $this->contentAccessTier();
+        $data['gateTier'] = ($this->userModel->pager->getCurrentPage('supplier') > 1 && $tier !== 'privileged') ? $tier : null;
+
         return view('pages/supplier', $data);
     }
 
@@ -220,6 +223,9 @@ class Supplier extends BaseController
             'countries' => $this->countryModel->getActiveCountries(),
         ];
 
+        $tier = $this->contentAccessTier();
+        $data['gateTier'] = ($this->userModel->pager->getCurrentPage('supplier') > 1 && $tier !== 'privileged') ? $tier : null;
+
         return view('pages/supplier-category', $data);
     }
 
@@ -264,6 +270,9 @@ class Supplier extends BaseController
             'categories' => $this->categoryModel->getActiveCategories(),
             'countries' => $this->countryModel->getActiveCountries(),
         ];
+
+        $tier = $this->contentAccessTier();
+        $data['gateTier'] = ($this->userModel->pager->getCurrentPage('supplier') > 1 && $tier !== 'privileged') ? $tier : null;
 
         return view('pages/supplier-country', $data);
     }
@@ -385,6 +394,9 @@ class Supplier extends BaseController
             'countries' => $this->countryModel->getActiveCountries(),
             'searchKeyword' => $keyword,
         ];
+
+        $tier = $this->contentAccessTier();
+        $data['gateTier'] = ($page > 1 && $tier !== 'privileged') ? $tier : null;
 
         return view('pages/supplier', $data);
     }

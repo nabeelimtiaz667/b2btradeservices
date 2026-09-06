@@ -64,6 +64,9 @@
                     <?php if (isset($resultsTotal)): ?>
                         <p class="text-muted mb-3">Showing <?= count($suppliers ?? []) ?> results out of <?= $resultsTotal ?></p>
                     <?php endif; ?>
+                    <?php if (!empty($gateTier)): ?>
+                        <?= $this->include('partials/content-gate') ?>
+                    <?php else: ?>
                     <div class="row gap-0">
                         <?php if (isset($suppliers) && count($suppliers) > 0): ?>
                             <?php foreach ($suppliers as $supplier): ?>
@@ -116,6 +119,7 @@
                             </div>
                         <?php endif; ?>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

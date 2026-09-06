@@ -66,6 +66,9 @@
                 <?php if (isset($resultsTotal)): ?>
                     <p class="text-muted mb-0">Showing <?= count($suppliers ?? []) ?> results out of <?= $resultsTotal ?></p>
                 <?php endif; ?>
+                <?php if (!empty($gateTier)): ?>
+                    <?= $this->include('partials/content-gate') ?>
+                <?php else: ?>
                 <div class="row mt-4">
                     <?php if (isset($suppliers) && count($suppliers) > 0): ?>
                         <?php foreach ($suppliers as $supplier): ?>
@@ -124,6 +127,7 @@
                         </div>
                     <?php endif; ?>
                 </div>
+                <?php endif; ?>
                 <?php if (isset($searchPager)): ?>
                     <div class="d-flex justify-content-center mb-100 mb-2">
                         <?= $this->include('partials/search-pager') ?>
@@ -142,6 +146,9 @@
             <?php if (isset($resultsTotal)): ?>
                 <p class="text-muted text-center mb-0">Showing <?= count($suppliers ?? []) ?> results out of <?= $resultsTotal ?></p>
             <?php endif; ?>
+            <?php if (!empty($gateTier)): ?>
+                <?= $this->include('partials/content-gate') ?>
+            <?php else: ?>
             <div class="row mt-4">
                 <?php if (isset($suppliers) && count($suppliers) > 0): ?>
                     <?php foreach ($suppliers as $supplier): ?>
@@ -192,6 +199,7 @@
                     </div>
                 <?php endif; ?>
             </div>
+            <?php endif; ?>
             <?php if (isset($searchPager)): ?>
                 <div class="d-flex justify-content-center mb-100 mb-2">
                     <?= $this->include('partials/search-pager') ?>

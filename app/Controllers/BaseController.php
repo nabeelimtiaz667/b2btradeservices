@@ -74,4 +74,38 @@ abstract class BaseController extends Controller
         $viewed[] = $id;
         session()->set($sessionKey, $viewed);
     }
+
+    /**
+     * The current visitor's content-access tier: 'guest' (not logged in),
+     * 'free' (logged in, free membership), or 'privileged' (admin, or a
+     * paid membership tier). Used to gate page 2+ of the public listing
+     * pages (Product/Supplier/Buyer index/search/etc) behind a sign-in or
+     * upgrade prompt -- page 1 always stays fully open.
+     *
+     * Generalizes what was Buyer::canViewPremiumDetails()'s tier check
+     * (buyer contact-detail masking) -- that method now just wraps this.
+     * Checked live against the DB, not trusted from session data:
+     * membership_level is never written into the session (Auth.php only
+     * stores user_id/name/email/user_type/status), so an admin changing
+     * someone's tier takes effect on their very next page load rather than
+     * after a re-login.
+     */
+    protected function contentAccessTier(): string
+    {
+        if (session()->get('user_type') === 'admin') {
+            return 'privileged';
+        }
+
+        $userId = session()->get('user_id');
+        if (!$userId) {
+            return 'guest';
+        }
+
+        $user = (new \App\Models\UserModel())->find($userId);
+        $premiumTiers = ['starter', 'gold', 'platinum', 'vip'];
+
+        return ($user && in_array($user['membership_level'] ?? 'free', $premiumTiers, true))
+            ? 'privileged'
+            : 'free';
+    }
 }

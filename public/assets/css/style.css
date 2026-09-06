@@ -4474,3 +4474,71 @@ mark {
     color: inherit;
     padding: 0 1px;
 }
+
+/* Pagination paywall (partials/content-gate.php) -- skeleton placeholder
+   cards standing in for page 2+ results a guest/free-tier visitor isn't
+   shown, with the sign-in/upgrade prompt overlaid on top. */
+.content-gate-wrap {
+    position: relative;
+    min-height: 320px;
+}
+.content-gate-placeholders {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    pointer-events: none;
+    user-select: none;
+}
+.content-gate-card {
+    width: calc(33.33% - 14px);
+    min-width: 220px;
+    flex: 1 1 220px;
+    padding: 16px;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    background: #fff;
+}
+.cg-skel {
+    background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
+    background-size: 400% 100%;
+    animation: cg-shimmer 1.4s ease infinite;
+    border-radius: 6px;
+}
+.cg-skel-img {
+    width: 100%;
+    height: 140px;
+    margin-bottom: 14px;
+}
+.cg-skel-line {
+    height: 14px;
+    margin-bottom: 10px;
+}
+@keyframes cg-shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
+.content-gate-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(1px);
+}
+.content-gate-message {
+    font-weight: 600;
+    font-size: 17px;
+    color: #141413;
+    max-width: 320px;
+    margin: 0 0 16px;
+}
+.content-gate-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}

@@ -24,6 +24,8 @@ $routes->post('contact/submit', 'Contact::submit');
 $routes->post('contact/submit-ajax', 'Contact::submitAjax');
 
 
+$routes->get('dashboard/countries', 'Dashboard::countries');
+$routes->post('dashboard/countries/sync', 'Dashboard::syncCountriesNow');
 $routes->get('dashboard/submissions', 'Dashboard::submissions');
 $routes->get('dashboard/submissions/view/(:num)', 'Dashboard::viewSubmission/$1');
 $routes->post('dashboard/submissions/update-status/(:num)', 'Dashboard::updateSubmissionStatus/$1');

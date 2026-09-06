@@ -40,6 +40,9 @@
             <p class="text-muted mb-3">Showing <?= count($products ?? []) ?> results out of <?= $resultsTotal ?></p>
         <?php endif; ?>
 
+        <?php if (!empty($gateTier)): ?>
+            <?= $this->include('partials/content-gate') ?>
+        <?php else: ?>
         <div class="row">
             <?php if (isset($products) && count($products) > 0): ?>
                 <?php foreach ($products as $product): ?>
@@ -79,6 +82,7 @@
                 </div>
             <?php endif; ?>
         </div>
+        <?php endif; ?>
         <?php if (isset($searchPager)): ?>
             <div class="d-flex justify-content-center mt-4">
                 <?= $this->include('partials/search-pager') ?>
