@@ -1735,6 +1735,71 @@ class Dashboard extends BaseController
         return redirect()->to('/dashboard/countries');
     }
 
+    /**
+     * "Site Security" admin page. For now, just lets an admin override "N"
+     * (the capacity) for each rate-limited public form -- see
+     * RateLimitFilter::forms() for the single source of truth on which
+     * forms exist, their fixed time window, and default N. Overrides are
+     * read from app/Data/rate_limits.php (a plain PHP file, like
+     * app/Data/countries.php), not the database -- RateLimitFilter runs on
+     * every hit to a public form, including ones a brute-force attempt
+     * makes on purpose to get blocked, so this can't be a query that would
+     * hit the DB on every single attempt.
+     */
+    public function siteSecurity()
+    {
+        if (!$this->session->get('logged_in') || $this->session->get('user_type') !== 'admin') {
+            return redirect()->to('/login');
+        }
+
+        $overrides = \App\Filters\RateLimitFilter::overrides();
+        $forms = \App\Filters\RateLimitFilter::forms();
+
+        foreach ($forms as $name => &$form) {
+            $form['capacity'] = (isset($overrides[$name]) && (int) $overrides[$name] > 0)
+                ? (int) $overrides[$name]
+                : $form['default'];
+        }
+        unset($form);
+
+        $user = $this->userModel->find($this->session->get('user_id'));
+
+        return view('dashboard/admin/security', [
+            'title' => 'Site Security - Admin',
+            'user' => $user,
+            'forms' => $forms,
+        ]);
+    }
+
+    public function updateSiteSecurity()
+    {
+        if (!$this->session->get('logged_in') || $this->session->get('user_type') !== 'admin') {
+            return redirect()->to('/login');
+        }
+
+        if ($this->request->getMethod() !== 'POST') {
+            return redirect()->to('/dashboard/security');
+        }
+
+        $forms = \App\Filters\RateLimitFilter::forms();
+        $overrides = [];
+
+        foreach ($forms as $name => $form) {
+            $value = (int) $this->request->getPost('ratelimit_' . $name);
+            if ($value < 1) {
+                $value = 1;
+            } elseif ($value > 1000) {
+                $value = 1000;
+            }
+            $overrides[$name] = $value;
+        }
+
+        \App\Filters\RateLimitFilter::saveOverrides($overrides);
+
+        $this->session->setFlashdata('success', 'Rate limiting settings updated.');
+        return redirect()->to('/dashboard/security');
+    }
+
     public function submissions()
     {
         if (!$this->session->get('logged_in') || !in_array($this->session->get('user_type'), ['admin', 'agent'])) {

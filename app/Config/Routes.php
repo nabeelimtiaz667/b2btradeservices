@@ -20,12 +20,14 @@ $routes->get('/', 'Pages::index');
 $routes->get('about-us', 'Pages::index/about-us');
 $routes->get('contact', 'Pages::index/contact');
 $routes->get('success-stories', 'Pages::index/success-stories');
-$routes->post('contact/submit', 'Contact::submit');
-$routes->post('contact/submit-ajax', 'Contact::submitAjax');
+$routes->post('contact/submit', 'Contact::submit', ['filter' => 'ratelimit:contact,5,300']);
+$routes->post('contact/submit-ajax', 'Contact::submitAjax', ['filter' => 'ratelimit:contact_ajax,5,300']);
 
 
 $routes->get('dashboard/countries', 'Dashboard::countries');
 $routes->post('dashboard/countries/sync', 'Dashboard::syncCountriesNow');
+$routes->get('dashboard/security', 'Dashboard::siteSecurity');
+$routes->post('dashboard/security/update', 'Dashboard::updateSiteSecurity');
 $routes->get('dashboard/submissions', 'Dashboard::submissions');
 $routes->get('dashboard/submissions/view/(:num)', 'Dashboard::viewSubmission/$1');
 $routes->post('dashboard/submissions/update-status/(:num)', 'Dashboard::updateSubmissionStatus/$1');
@@ -68,7 +70,7 @@ $routes->get('supplier-category/(:segment)', 'Supplier::category/$1');
 $routes->get('buyer', 'Buyer::index');
 $routes->get('buyers', 'Buyer::index');
 $routes->get('buyer/post-rfq', 'Buyer::postRfq');
-$routes->post('buyer/post-rfq', 'Contact::submit');
+$routes->post('buyer/post-rfq', 'Contact::submit', ['filter' => 'ratelimit:post_rfq,5,300']);
 $routes->get('buyer/search', 'Buyer::search');
 $routes->get('buyer/search/(:any)', 'Buyer::search/$1');
 $routes->get('buyers/(:segment)', 'Buyer::category/$1');
@@ -90,13 +92,13 @@ $routes->get('buyer-inquiry/(:segment)', 'Buyer::detail/$1');
 $routes->get('buyer-inquiry', static function () { return redirect()->to(base_url('buyers'), 301); });
 
 $routes->get('login', 'Auth::login');
-$routes->post('login', 'Auth::login');
+$routes->post('login', 'Auth::login', ['filter' => 'ratelimit:login,8,60']);
 $routes->get('forgot-password', 'Auth::forgotPassword');
-$routes->post('forgot-password', 'Auth::forgotPassword');
+$routes->post('forgot-password', 'Auth::forgotPassword', ['filter' => 'ratelimit:forgot_password,3,300']);
 $routes->get('reset-password/(:alphanum)', 'Auth::resetPassword/$1');
-$routes->post('reset-password/(:alphanum)', 'Auth::resetPassword/$1');
+$routes->post('reset-password/(:alphanum)', 'Auth::resetPassword/$1', ['filter' => 'ratelimit:reset_password,5,300']);
 $routes->get('register', 'Auth::register');
-$routes->post('register', 'Auth::register');
+$routes->post('register', 'Auth::register', ['filter' => 'ratelimit:register,5,300']);
 $routes->get('logout', 'Auth::logout');
 
 $routes->get('dashboard', 'Dashboard::index');
@@ -189,10 +191,10 @@ $routes->post('admin/settings/email', 'AdminSettings::email');
 // (:alphanum), matching reset-password/(:alphanum) above -- the token is a
 // plain hex string, never contains '/', so there's no risk of the (:any)
 // re-splitting behaviour found and fixed during the search-URL work (T-28).
-$routes->post('lead/capture', 'LeadCapture::capture');
+$routes->post('lead/capture', 'LeadCapture::capture', ['filter' => 'ratelimit:lead_capture,8,300']);
 $routes->get('lead/verify/(:alphanum)', 'LeadCapture::verify/$1');
 $routes->get('lead/complete/(:alphanum)', 'LeadCapture::completeSignup/$1');
-$routes->post('lead/complete/(:alphanum)', 'LeadCapture::completeSignup/$1');
+$routes->post('lead/complete/(:alphanum)', 'LeadCapture::completeSignup/$1', ['filter' => 'ratelimit:lead_complete,5,300']);
 
 $routes->get('leads/all', 'LeadManagement::allLeads');
 $routes->get('leads/buyer', 'LeadManagement::buyerLeads');
