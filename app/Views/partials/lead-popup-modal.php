@@ -60,6 +60,17 @@
 #leadPopupForm input {
     border: 1px solid #DBDBDB;
 }
+
+/* Same step-1 lead-capture form as partials/lead-capture-inline-form.php
+   (used here for the Supplier/Buyer toggle and submit button) -- centered
+   the same way partials/footer.php's copy already is via .b2b-top-form,
+   scoped to this modal only. */
+#leadPopupModal .filter-group {
+    justify-content: center;
+}
+#leadPopupModal .gradeint-cta {
+    max-width: 100%;
+}
 </style>
 
 <div class="modal fade" id="leadPopupModal" tabindex="-1" aria-labelledby="leadPopupModalLabel" aria-hidden="true">

@@ -741,6 +741,18 @@ margin: auto;
     margin-left: 1%;
     padding: 30px 30px;
 }
+/* Step-1 lead-capture form (partials/lead-capture-inline-form.php) centering
+   -- .b2b-top-form (footer) already has these two overrides; .multiple-quote-form
+   never did, which is why its Supplier/Buyer toggle sat left-aligned and its
+   button was capped at the base .gradeint-cta's 212px instead of filling the
+   card. Scoped to .multiple-quote-form only, so it doesn't touch the base
+   .filter-group/.gradeint-cta rules used elsewhere on the site. */
+.multiple-quote-form .filter-group {
+    justify-content: center;
+}
+.multiple-quote-form .gradeint-cta {
+    max-width: 100%;
+}
 .multiple-quote-form  .select2-container .select2-selection--single{
     text-align: left;
         width: 100%;
