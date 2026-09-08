@@ -8,11 +8,73 @@ Severity: `CRITICAL` · `HIGH` · `MEDIUM` · `LOW`
 Resolved and removed: #1 (Aiven credential — rotated), #2 (`_database.php` —
 deleted), #3 (`app.zip` — deleted), #5 (app unverified — swept 2026-07-29),
 #14 (inquiry slugs — shipped to dev 2026-08-01, pending production deploy T-15),
-#23 (second flag-filename convention, all 8 locations fixed — 2026-08-19).
+#23 (second flag-filename convention, all 8 locations fixed — 2026-08-19),
+#26 (`app/Data/countries.php` and `rate_limits.php` gitignored and untracked
+from git with `git rm --cached`, files kept in place on disk — 2026-09-06).
 
 **Still open despite the slug work:** #10 and #13, the "01 Jan, 1970" rendering
 bugs. They share the same `buyer_inquiries` table but are a separate defect —
 nothing in the slug change touched `inquiry_date`. Tasks T-5, T-6, T-12.
+
+---
+
+## #27 — `composer install` fails from scratch on this box's PHP version — `vendor/` only works because it predates the drift
+**Severity:** HIGH · **Raised:** 2026-09-06 · **Open**
+
+Found while writing the top-level `README.md`'s setup steps and actually
+testing them, rather than assuming `composer install` (as CONTEXT.md's
+"Commands" section has said, unqualified, since 2026-07-29) still works on a
+truly fresh clone.
+
+**It does not.** `composer install` (with or without `--no-dev`) fails outright:
+
+```
+Your lock file does not contain a compatible set of packages. Please run composer update.
+  Problem 1
+    - laminas/laminas-escaper is locked to version 2.18.0 and an update of
+      this package was not requested.
+    - laminas/laminas-escaper 2.18.0 requires php ~8.2.0 || ~8.3.0 || ~8.4.0
+      || ~8.5.0 -> your php version (8.1.5) does not satisfy that requirement.
+```
+
+This isn't only the `require-dev` tooling (already known, see the 2026-09-05
+CHANGELOG entry about `phpunit`/`php-cs-fixer` needing PHP 8.2+/8.4) — it's now
+one of the two actual **runtime** dependencies too. `--no-dev` doesn't route
+around it either: composer still resolves the full `require-dev` graph during
+`install`/`update` even with `--no-dev` (it only skips *installing* those
+packages afterward), so `phpunit`/`php-cs-fixer`'s PHP 8.2+/8.4 requirement
+blocks the whole lock resolution regardless.
+
+**Why the app runs fine here anyway:** `vendor/laminas/laminas-escaper`'s own
+installed `composer.json` declares `"php": "8.2.99"` — this box's `vendor/`
+was evidently populated by a `composer install`/`update` run elsewhere (or
+with `--ignore-platform-reqs`) on PHP 8.2+, then `composer.lock` drifted to
+match, all *before* `vendor/` was gitignored and this box's own PHP 8.1.5
+became the reference. PHP does not enforce a package's own declared
+`"php"` constraint at runtime — only Composer's install/update step does —
+so the already-installed code keeps working here. `vendor/` is gitignored
+(`.gitignore:36`), so none of this shipped in git; a fresh clone gets no
+`vendor/` at all and hits this immediately on the very first setup step.
+
+**Verified, not just asserted:** ran `composer install --no-dev --dry-run`
+(fails, shown above), `composer update laminas/laminas-escaper --no-dev
+--dry-run` (fails on `phpunit`/`php-cs-fixer` instead), and confirmed via
+`vendor/laminas/laminas-escaper/composer.json` that the installed version's
+own declared PHP requirement doesn't match this box's PHP. All read-only —
+no changes made to `composer.json`/`composer.lock`/`vendor/`.
+
+**Not fixed here** — same root cause as the composer.lock issue flagged
+2026-09-05 (declined then in favor of a non-PHPUnit test script), now shown
+to be broader than just the dev tooling. Fixing it for real means a full
+`composer update` against PHP 8.1.5 across both `require` and `require-dev`,
+regenerating `composer.lock` from scratch — a deliberate choice with its own
+approval, not something to do as a side effect of writing a README.
+
+**Until fixed:** anyone who needs to run `composer install` from a truly
+fresh clone on PHP 8.1.5 (a new dev machine, a CI runner, disaster recovery)
+cannot, full stop. The workaround is copying an already-populated `vendor/`
+from a working machine (this one) rather than reinstalling — documented as
+such in `README.md`, with a pointer back here for the real fix.
 
 ---
 
@@ -42,6 +104,15 @@ gitignored, not all of `assets/`. `public/uploads/` has the same gap, but is
 lower-risk in practice since it's populated by user uploads and by
 migrations that copy their own source files at `php spark migrate` time
 (e.g. the 2026-08-22 hero banner migration) rather than by hand.
+
+**2026-09-06:** `app/Data/countries.php` and `app/Data/rate_limits.php` were
+deliberately gitignored too (formerly #26, now resolved into this one — same
+tradeoff, taken on purpose this time to stop a deploy from overwriting live
+admin-set values with a stale committed copy). Any future edit to either —
+a country sync, a rate-limit change — will *also* not show up in `git
+status`/`git diff`. Deploy checklists need to know both of these paths, not
+just `assets/images/`/`uploads/`, are excluded and must be checked for
+by hand.
 
 **Not closing this one** — it can't be "fixed" in code, only mitigated by
 discipline: any future deploy-file list must explicitly check touched paths

@@ -70,6 +70,18 @@ php_errors.log
 /blog/wp-content/uploads/
 
 #---------------------------------------------------------------------
+# Admin-generated data files -- rewritten at runtime by the app itself
+# (countries:sync / "Update Now", the Site Security rate-limit page).
+# Gitignored so a future manual deploy-file-copy can never silently
+# overwrite production's live values with whatever's committed here.
+# See BLOCKERS.md #26. Run `php spark countries:sync` after a fresh
+# clone to populate countries.php; rate_limits.php needs no seeding,
+# RateLimitFilter falls back to each form's own default when absent.
+#---------------------------------------------------------------------
+/app/Data/countries.php
+/app/Data/rate_limits.php
+
+#---------------------------------------------------------------------
 # WordPress runtime
 #---------------------------------------------------------------------
 blog/wp-content/cache/
