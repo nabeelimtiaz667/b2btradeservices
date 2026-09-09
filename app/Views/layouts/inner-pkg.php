@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="google-site-verification" content="kRFgQvLuEyEQoIR2DA5vSHQxTbVIn_bJ4l0g_nvkq7M" />
     <link href="<?= base_url('assets/images/b2b-icon.svg') ?>" rel="icon">
     <link href="<?= base_url('assets/images/b2b-icon.svg') ?>" rel="apple-touch-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">

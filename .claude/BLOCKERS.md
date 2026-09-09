@@ -18,6 +18,110 @@ nothing in the slug change touched `inquiry_date`. Tasks T-5, T-6, T-12.
 
 ---
 
+## #28 — Unrestricted file upload → remote code execution (any registered supplier/buyer)
+**Severity:** CRITICAL · **Raised:** 2026-09-09 · **Open**
+
+Found in a full-app security audit (2026-09-09). **This is the most serious
+issue in the codebase — an anonymous attacker can get arbitrary PHP execution
+on the server in ~4 requests.**
+
+### The chain
+
+Every image upload calls only `isValid()` + `!hasMoved()` before `move()` —
+**no file-type/extension/MIME allowlist anywhere**. `isValid()` (verified in
+`system/HTTP/Files/UploadedFile.php:335`) checks *only* `is_uploaded_file()`
+and `error === UPLOAD_ERR_OK`; it does not look at type. `getRandomName()`
+preserves the extension: `getExtension()` → `guessExtension()` →
+`Mimes::guessExtensionFromType(finfoMime, clientExtension)`, and `app/Config/
+Mimes.php:115` maps `text/x-php` → `php` (falls back to the attacker-controlled
+client extension otherwise). Files land in **`public/uploads/products/`**,
+which is web-served and has **no `.htaccess` blocking PHP execution** (only
+`public/.htaccess` exists, and it doesn't).
+
+**Empirically verified (2026-09-09, safe/benign, no shell deployed):** `finfo`
+detects a file containing `<?php ... ?>` as `text/x-php`, and `Mimes.php` maps
+that back to `.php`. So an uploaded PHP file is stored as
+`TIMESTAMP_RANDOMHEX.php` and executes.
+
+### Why it's fully self-service (anonymous → RCE)
+
+- Registration is open by default (`allow_registration` defaults `'1'`,
+  `Auth::register`).
+- Login does **not** gate on `status` (`Auth.php:130-156` sets the session for
+  any correct password, even a `pending`/`rejected` row).
+- The upload guard checks only `user_type === 'supplier'`
+  (`Dashboard::supplierAddProduct`, `:281`) — **not** `status === 'approved'`.
+- The random filename is not secret: it's stored as `products.main_image` and
+  rendered as the product image `src`, so the attacker reads their own listing
+  to get the URL.
+
+Full path: register as supplier → log in → `POST /dashboard/supplier/products/add`
+with `main_image = shell.php` → open own product page, read image URL → request
+`/uploads/products/<name>.php?c=...` → arbitrary code execution.
+
+### Every affected upload site (all the same defect)
+
+`Dashboard.php` product images (`:332,395,1244,1309`), company logos/banners
+(`:523,553,1010,1025,1130,1162`), inquiry attachments (`:687,769,1415,1530`);
+`AdminSettings.php` hero-banner images (`:660`). The supplier/buyer ones are the
+dangerous set (low barrier); the admin ones (`AdminSettings`, admin inquiry mgmt)
+are gated behind an admin session but still unvalidated.
+
+### Fix (needs owner sign-off — changes upload behaviour on a live-mirrored app)
+
+Three layers, all worth doing: (1) validate uploads with an extension **and**
+MIME allowlist (`jpg,jpeg,png,webp,gif` for images; `csv` for imports) via CI4
+validation rules (`uploaded[...]|is_image[...]|mime_in[...]|max_size[...]`)
+before `move()`; (2) drop a hardening `.htaccess` into `public/uploads/`
+(`php_flag engine off` / `RemoveHandler .php` / SetHandler to plain text) so a
+missed spot can't execute; (3) confirm production Apache/LiteSpeed honours it
+(cPanel may use a PHP handler that ignores `php_flag` — a `RemoveHandler` +
+`RemoveType` is more portable). Not fixed in the audit pass itself — it touches
+~15 call sites and live upload behaviour, so it's a deliberate change.
+
+---
+
+## #29 — No session ID regeneration on login (session fixation)
+**Severity:** MEDIUM · **Raised:** 2026-09-09 · **Open**
+
+`Auth::login` (`app/Controllers/Auth.php:156`) calls `$this->session->set(...)`
+to establish the authenticated session but never calls
+`$this->session->regenerate()`. The session ID a user carries *before* logging
+in therefore remains valid *after* the privilege change — the classic session
+fixation setup (attacker fixes a victim's pre-auth session ID, e.g. via a shared
+machine or a cookie-forcing vector, and inherits the authenticated session).
+
+**Partial mitigations already in place:** `Session::timeToUpdate = 300`
+(`app/Config/Session.php:81`) auto-rotates the ID every 5 min regardless, so the
+fixation window is bounded to ≤5 min rather than the whole session; cookies are
+`httponly = true` and `samesite = 'Lax'` (`app/Config/Cookie.php`), which blunts
+the easiest cookie-forcing routes. But `regenerateDestroy = false`, so rotated-out
+IDs keep their session data alive rather than being destroyed.
+
+**Fix:** add `$this->session->regenerate(true)` immediately before/after
+`$this->session->set($sessionData)` in `Auth::login` (the `true` destroys the old
+session data). One line, low risk, no view changes — worth doing alongside the
+#7 CSRF work since both are auth-surface hardening.
+
+---
+
+## #30 — Session cookie `Secure` flag is off
+**Severity:** LOW · **Raised:** 2026-09-09 · **Open**
+
+`app/Config/Cookie.php:57` has `public bool $secure = false`, so the session
+cookie is sent over plain HTTP as well as HTTPS. On production (HTTPS), a single
+HTTP request — a mistyped `http://` link, a downgrade, an asset over HTTP —
+leaks the session cookie in cleartext. `App::forceGlobalSecureRequests` is also
+`false` (`App.php:180`), though the `forcehttps` filter is in `Filters::$required`;
+whether HTTPS is actually enforced end-to-end on production is unconfirmed.
+
+**Fix:** set `$secure = true` on production (gate it on environment so local
+HTTP dev still works — e.g. `CI_ENVIRONMENT`-based, or set it in the production
+`.env`). Confirm HTTPS is force-redirected at the server/app level while there.
+Low severity on its own; pairs naturally with #29's login hardening.
+
+---
+
 ## #27 — `composer install` fails from scratch on this box's PHP version — `vendor/` only works because it predates the drift
 **Severity:** HIGH · **Raised:** 2026-09-06 · **Open**
 

@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="google-site-verification" content="kRFgQvLuEyEQoIR2DA5vSHQxTbVIn_bJ4l0g_nvkq7M" />
     <link href="<?= base_url('assets/images/b2b-icon.svg') ?>" rel="icon">
     <link href="<?= base_url('assets/images/b2b-icon.svg') ?>" rel="apple-touch-icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">

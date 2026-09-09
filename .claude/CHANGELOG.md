@@ -14,6 +14,13 @@ Entry format:
 
 ---
 
+## 2026-09-08 — Restored the Google Search Console verification meta tag, missing from all six layouts
+**Files:** `app/Views/layouts/main.php`, `inner.php`, `inner-pkg.php`, `supplier-profile.php`, `auth.php`, `dashboard.php`
+**Why:** owner asked to check whether a `google-site-verification` meta tag was still on the site. It wasn't -- confirmed absent from every layout's `<head>`, from `public/` (no static `google*.html` verification file either), and from the entire git history (`git log -S"google-site-verification"` returns zero commits, so it was never added or removed here -- this repo never had it). Also confirmed absent on the live production homepage (`b2btradeservices.com`) by fetching it directly, ruling out a local-only gap. Owner then supplied the original tag's value.
+- Added `<meta name="google-site-verification" content="kRFgQvLuEyEQoIR2DA5vSHQxTbVIn_bJ4l0g_nvkq7M" />` to all six layout files, right after the existing `viewport` meta tag -- matches this codebase's own convention of duplicating shared `<head>` tags (`msapplication-TileColor` etc.) per-layout rather than through one shared partial, confirmed identical across all six before editing. Included `dashboard.php` (admin-only, not indexed) for the same consistency reason those other shared tags already are there.
+- Verified live: started XAMPP (both Apache and MySQL were stopped), curled the homepage (`main.php`), `/login` (`auth.php`), and `/about-us` (`inner.php`) -- the tag renders correctly on all three layout families actually exercised.
+- Not logged as a BLOCKERS entry: this is a straightforward restore of a known, supplied value, not an open risk needing tracking.
+
 ## 2026-09-06 — Added project `README.md` (was the generic CodeIgniter framework boilerplate); found and logged BLOCKERS #27
 **Files:** `README.md` (replaced), `.claude/BLOCKERS.md`
 **Why:** owner asked for a README covering what to do right after cloning, before running the site — the repo's `README.md` was still CodeIgniter's own generic framework distribution text (unrelated to this actual app), left over from the initial import.
