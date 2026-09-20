@@ -328,6 +328,10 @@ class Dashboard extends BaseController
 
             $mainImage = $this->request->getFile('main_image');
             if ($mainImage && $mainImage->isValid() && !$mainImage->hasMoved()) {
+                $uploadError = validate_uploaded_image($mainImage);
+                if ($uploadError) {
+                    return redirect()->back()->withInput()->with('error', $uploadError);
+                }
                 $newName = $mainImage->getRandomName();
                 $mainImage->move('uploads/products', $newName);
                 $data['main_image'] = $newName;
@@ -391,6 +395,10 @@ class Dashboard extends BaseController
 
             $mainImage = $this->request->getFile('main_image');
             if ($mainImage && $mainImage->isValid() && !$mainImage->hasMoved()) {
+                $uploadError = validate_uploaded_image($mainImage);
+                if ($uploadError) {
+                    return redirect()->back()->withInput()->with('error', $uploadError);
+                }
                 $newName = $mainImage->getRandomName();
                 $mainImage->move('uploads/products', $newName);
                 $data['main_image'] = $newName;
@@ -513,6 +521,10 @@ class Dashboard extends BaseController
             } else {
                 $logo = $this->request->getFile('company_logo');
                 if ($logo && $logo->isValid() && !$logo->hasMoved()) {
+                    $uploadError = validate_uploaded_image($logo);
+                    if ($uploadError) {
+                        return redirect()->back()->withInput()->with('error', $uploadError);
+                    }
                     if ($logo->getSize() > $maxLogoSize) {
                         return redirect()->back()->withInput()->with('error', 'Company logo must be under 500 KB.');
                     }
@@ -543,6 +555,10 @@ class Dashboard extends BaseController
                 } else {
                     $banner = $this->request->getFile($inputName);
                     if ($banner && $banner->isValid() && !$banner->hasMoved()) {
+                        $uploadError = validate_uploaded_image($banner);
+                        if ($uploadError) {
+                            return redirect()->back()->withInput()->with('error', $uploadError);
+                        }
                         if ($banner->getSize() > $maxBannerSize) {
                             return redirect()->back()->withInput()->with('error', 'Banner image ' . ($i + 1) . ' must be under 1 MB.');
                         }
@@ -672,6 +688,10 @@ class Dashboard extends BaseController
 
             $attachment = $this->request->getFile('attachment');
             if ($attachment && $attachment->isValid() && !$attachment->hasMoved()) {
+                $uploadError = validate_uploaded_image($attachment);
+                if ($uploadError) {
+                    return redirect()->back()->withInput()->with('error', $uploadError);
+                }
                 $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
                 if (!in_array($attachment->getMimeType(), $allowedTypes)) {
                     return redirect()->back()->withInput()->with('error', 'Reference image must be a JPG, PNG, or WEBP file.');
@@ -748,6 +768,10 @@ class Dashboard extends BaseController
 
             $attachment = $this->request->getFile('attachment');
             if ($attachment && $attachment->isValid() && !$attachment->hasMoved()) {
+                $uploadError = validate_uploaded_image($attachment);
+                if ($uploadError) {
+                    return redirect()->back()->withInput()->with('error', $uploadError);
+                }
                 $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
                 if (!in_array($attachment->getMimeType(), $allowedTypes)) {
                     return redirect()->back()->withInput()->with('error', 'Reference image must be a JPG, PNG, or WEBP file.');
@@ -1000,6 +1024,10 @@ class Dashboard extends BaseController
 
             $logo = $this->request->getFile('company_logo');
             if ($logo && $logo->isValid() && !$logo->hasMoved()) {
+                $uploadError = validate_uploaded_image($logo);
+                if ($uploadError) {
+                    return redirect()->back()->withInput()->with('error', $uploadError);
+                }
                 if ($logo->getSize() > $maxLogoSize) {
                     return redirect()->back()->withInput()->with('error', 'Company logo must be under 500 KB.');
                 }
@@ -1015,6 +1043,10 @@ class Dashboard extends BaseController
             for ($i = 0; $i < 3; $i++) {
                 $banner = $this->request->getFile($bannerInputNames[$i]);
                 if ($banner && $banner->isValid() && !$banner->hasMoved()) {
+                    $uploadError = validate_uploaded_image($banner);
+                    if ($uploadError) {
+                        return redirect()->back()->withInput()->with('error', $uploadError);
+                    }
                     if ($banner->getSize() > $maxBannerSize) {
                         return redirect()->back()->withInput()->with('error', 'Banner image ' . ($i + 1) . ' must be under 1 MB.');
                     }
@@ -1120,6 +1152,10 @@ class Dashboard extends BaseController
             } else {
                 $logo = $this->request->getFile('company_logo');
                 if ($logo && $logo->isValid() && !$logo->hasMoved()) {
+                    $uploadError = validate_uploaded_image($logo);
+                    if ($uploadError) {
+                        return redirect()->back()->withInput()->with('error', $uploadError);
+                    }
                     if ($logo->getSize() > $maxLogoSize) {
                         return redirect()->back()->withInput()->with('error', 'Company logo must be under 500 KB.');
                     }
@@ -1152,6 +1188,10 @@ class Dashboard extends BaseController
                 } else {
                     $banner = $this->request->getFile($inputName);
                     if ($banner && $banner->isValid() && !$banner->hasMoved()) {
+                        $uploadError = validate_uploaded_image($banner);
+                        if ($uploadError) {
+                            return redirect()->back()->withInput()->with('error', $uploadError);
+                        }
                         if ($banner->getSize() > $maxBannerSize) {
                             return redirect()->back()->withInput()->with('error', 'Banner image ' . ($i + 1) . ' must be under 1 MB.');
                         }
@@ -1236,6 +1276,10 @@ class Dashboard extends BaseController
 
             $mainImage = $this->request->getFile('main_image');
             if ($mainImage && $mainImage->isValid() && !$mainImage->hasMoved()) {
+                $uploadError = validate_uploaded_image($mainImage);
+                if ($uploadError) {
+                    return redirect()->back()->withInput()->with('error', $uploadError);
+                }
                 $uploadPath = FCPATH . 'uploads/products';
                 if (!is_dir($uploadPath)) {
                     mkdir($uploadPath, 0777, true);
@@ -1301,6 +1345,10 @@ class Dashboard extends BaseController
 
             $mainImage = $this->request->getFile('main_image');
             if ($mainImage && $mainImage->isValid() && !$mainImage->hasMoved()) {
+                $uploadError = validate_uploaded_image($mainImage);
+                if ($uploadError) {
+                    return redirect()->back()->withInput()->with('error', $uploadError);
+                }
                 $uploadPath = FCPATH . 'uploads/products';
                 if (!is_dir($uploadPath)) {
                     mkdir($uploadPath, 0777, true);
@@ -1403,6 +1451,10 @@ class Dashboard extends BaseController
 
             $attachment = $this->request->getFile('attachment');
             if ($attachment && $attachment->isValid() && !$attachment->hasMoved()) {
+                $uploadError = validate_uploaded_image($attachment);
+                if ($uploadError) {
+                    return redirect()->back()->withInput()->with('error', $uploadError);
+                }
                 $maxSize = 1 * 1024 * 1024;
                 if ($attachment->getSize() > $maxSize) {
                     return redirect()->back()->withInput()->with('error', 'Product reference image must be less than 1 MB.');
@@ -1512,6 +1564,10 @@ class Dashboard extends BaseController
 
             $attachment = $this->request->getFile('attachment');
             if ($attachment && $attachment->isValid() && !$attachment->hasMoved()) {
+                $uploadError = validate_uploaded_image($attachment);
+                if ($uploadError) {
+                    return redirect()->back()->withInput()->with('error', $uploadError);
+                }
                 $maxSize = 1 * 1024 * 1024;
                 if ($attachment->getSize() > $maxSize) {
                     return redirect()->back()->withInput()->with('error', 'Product reference image must be less than 1 MB.');

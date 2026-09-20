@@ -16,6 +16,7 @@
 <div class="card card-custom">
     <div class="card-body">
         <form action="<?= isset($supplier) && $supplier ? base_url('dashboard/suppliers/edit/' . $supplier['id']) : base_url('dashboard/suppliers/add') ?>" method="post" enctype="multipart/form-data">
+            <?= csrf_field() ?>
 
             <h5 class="mb-3 pb-2 border-bottom">Basic Information</h5>
             <div class="row">

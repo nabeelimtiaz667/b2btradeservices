@@ -83,7 +83,10 @@
                                 <td><?= date('M d, Y', strtotime($s['created_at'])) ?></td>
                                 <td>
                                     <a href="<?= base_url('dashboard/submissions/view/' . $s['id']) ?>" class="btn btn-sm btn-outline-primary">View</a>
-                                    <a href="<?= base_url('dashboard/submissions/delete/' . $s['id']) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                                    <form action="<?= base_url('dashboard/submissions/delete/' . $s['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Are you sure?')">
+                                        <?= csrf_field() ?>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

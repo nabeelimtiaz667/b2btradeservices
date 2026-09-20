@@ -951,15 +951,18 @@
             <?php endif; ?>
         </nav>
         <div class="md-footer">
-            <a href="<?= base_url('logout') ?>" class="md-logout">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd"
-                        d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z" />
-                    <path fill-rule="evenodd"
-                        d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z" />
-                </svg>
-                Logout
-            </a>
+            <form action="<?= base_url('logout') ?>" method="post" class="md-logout-form">
+                <?= csrf_field() ?>
+                <button type="submit" class="md-logout" style="border:none; background:none; width:100%; text-align:left; font:inherit; cursor:pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd"
+                            d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z" />
+                        <path fill-rule="evenodd"
+                            d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z" />
+                    </svg>
+                    Logout
+                </button>
+            </form>
         </div>
     </div>
 
@@ -1191,15 +1194,18 @@
         </nav>
 
         <div class="sidebar-footer">
-            <a href="<?= base_url('logout') ?>" class="logout-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd"
-                        d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z" />
-                    <path fill-rule="evenodd"
-                        d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z" />
-                </svg>
-                <span>Logout</span>
-            </a>
+            <form action="<?= base_url('logout') ?>" method="post">
+                <?= csrf_field() ?>
+                <button type="submit" class="logout-btn" style="font: inherit; cursor: pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd"
+                            d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z" />
+                        <path fill-rule="evenodd"
+                            d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z" />
+                    </svg>
+                    <span>Logout</span>
+                </button>
+            </form>
         </div>
     </aside>
 
@@ -1209,6 +1215,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <?php // See BLOCKERS #7 -- every raw fetch() AJAX call on dashboard pages
+    // (leads.php, popup-leads.php, etc.) needs this to survive the CSRF
+    // token rotating after each request. ?>
+    <script src="<?= base_url('assets/js/csrf-refresh.js') ?>"></script>
     <script>
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.querySelector('.main-content');
@@ -1309,6 +1319,7 @@
     <script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="<?= base_url('assets/js/script.js') ?>"></script>
+    <script src="<?= base_url('assets/js/csrf-refresh.js') ?>"></script>
     <script>
     document.addEventListener('error', function(e) {
         var img = e.target;

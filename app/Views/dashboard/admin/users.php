@@ -76,12 +76,21 @@
                             <div class="d-flex gap-1">
                                 <a href="<?= base_url('dashboard/admin-edit-user/' . $u['id']) ?>" class="btn btn-sm btn-outline-primary" style="font-size:12px;">Edit</a>
                                 <?php if ($u['status'] !== 'approved'): ?>
-                                    <a href="<?= base_url('dashboard/approve/' . $u['id']) ?>" class="btn btn-approve btn-sm">Approve</a>
+                                    <form action="<?= base_url('dashboard/approve/' . $u['id']) ?>" method="post" class="d-inline">
+                                        <?= csrf_field() ?>
+                                        <button type="submit" class="btn btn-approve btn-sm">Approve</button>
+                                    </form>
                                 <?php endif; ?>
                                 <?php if ($u['status'] !== 'rejected'): ?>
-                                    <a href="<?= base_url('dashboard/reject/' . $u['id']) ?>" class="btn btn-reject btn-sm">Reject</a>
+                                    <form action="<?= base_url('dashboard/reject/' . $u['id']) ?>" method="post" class="d-inline">
+                                        <?= csrf_field() ?>
+                                        <button type="submit" class="btn btn-reject btn-sm">Reject</button>
+                                    </form>
                                 <?php endif; ?>
-                                <a href="<?= base_url('dashboard/delete/' . $u['id']) ?>" class="btn btn-delete btn-sm" onclick="return confirm('Are you sure you want to delete this user?')">Delete</a>
+                                <form action="<?= base_url('dashboard/delete/' . $u['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this user?')">
+                                    <?= csrf_field() ?>
+                                    <button type="submit" class="btn btn-delete btn-sm">Delete</button>
+                                </form>
                             </div>
                         </td>
                     </tr>

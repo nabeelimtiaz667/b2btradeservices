@@ -13,6 +13,7 @@ use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
 use App\Filters\AuthFilter;
+use App\Filters\CsrfTokenHeader;
 use App\Filters\RateLimitFilter;
 use App\Filters\RoleFilter;
 use App\Filters\SiteSettingsFilter;
@@ -42,6 +43,7 @@ class Filters extends BaseFilters
         'role'          => RoleFilter::class,
         'sitesettings'  => SiteSettingsFilter::class,
         'ratelimit'     => RateLimitFilter::class,
+        'csrftoken'     => CsrfTokenHeader::class,
     ];
 
     /**
@@ -81,11 +83,12 @@ class Filters extends BaseFilters
     public array $globals = [
         'before' => [
             'sitesettings',
+            'csrf', // See BLOCKERS #7 -- enabled 2026-09-09, every form audited for csrf_field()
             // 'honeypot',
-            // 'csrf',
             // 'invalidchars',
         ],
         'after' => [
+            'csrftoken', // See BLOCKERS #7 / public/assets/js/csrf-refresh.js -- lets AJAX flows survive the token's rotation
             // 'honeypot',
             // 'secureheaders',
         ],
@@ -115,5 +118,17 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        // See BLOCKERS #9 -- every dashboard/admin controller method already
+        // checks session()->get('logged_in') by hand, and that still runs
+        // (this doesn't replace those checks, including the role-specific
+        // ones), but that made protection opt-in per method: a new method
+        // that forgot the check was public by default. This makes it
+        // opt-out instead -- a route under these two prefixes is
+        // login-required unless explicitly excluded below.
+        // 'dashboard' (bare, no trailing segment) is listed separately from
+        // 'dashboard/*' because the wildcard's pseudo-regex requires a
+        // literal '/' after the prefix and won't match the bare path.
+        'auth' => ['before' => ['dashboard', 'dashboard/*', 'admin/*']],
+    ];
 }

@@ -136,6 +136,7 @@
         btn.disabled = true; btn.textContent = 'Submitting...';
         ok.classList.add('d-none'); err.classList.add('d-none');
         fetch(form.action, { method:'POST', body:new FormData(form), headers:{'X-Requested-With':'XMLHttpRequest'} })
+        .then(bumpCsrfToken)
         .then(function(r){ return r.json(); })
         .then(function(d) {
             if (d.status === 'success') { ok.classList.remove('d-none'); form.reset(); selected=[]; renderTags(); }

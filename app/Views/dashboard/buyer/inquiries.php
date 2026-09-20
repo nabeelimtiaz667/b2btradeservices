@@ -77,7 +77,10 @@
                             <td><?= date('M d, Y', strtotime($inquiry['created_at'])) ?></td>
                             <td>
                                 <a href="<?= base_url('dashboard/buyer/inquiries/edit/' . $inquiry['id']) ?>" class="btn btn-sm btn-approve me-1">Edit</a>
-                                <a href="<?= base_url('dashboard/buyer/inquiries/delete/' . $inquiry['id']) ?>" class="btn btn-sm btn-reject" onclick="return confirm('Are you sure you want to delete this inquiry?')">Delete</a>
+                                <form action="<?= base_url('dashboard/buyer/inquiries/delete/' . $inquiry['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this inquiry?')">
+                                    <?= csrf_field() ?>
+                                    <button type="submit" class="btn btn-sm btn-reject">Delete</button>
+                                </form>
                             </td>
                         </tr>
                         <?php endforeach; ?>

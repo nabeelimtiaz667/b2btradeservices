@@ -336,6 +336,10 @@ foreach (($agents ?? []) as $a) {
 </div>
 
 <script>
+// See leads.php / BLOCKERS #7: no <form> here, so seed and track the token
+// via window.__csrfTokenValue instead of a hidden field.
+window.__csrfTokenValue = '<?= csrf_hash() ?>';
+
 document.querySelectorAll('.popup-inline-field').forEach(function(select) {
     select.addEventListener('change', function() {
         this.title = this.options[this.selectedIndex].text;
@@ -347,8 +351,9 @@ document.querySelectorAll('.popup-inline-field').forEach(function(select) {
         fetch('<?= base_url("leads/popup/update-inline") ?>', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest'},
-            body: 'lead_id=' + encodeURIComponent(leadId) + '&' + encodeURIComponent(field) + '=' + encodeURIComponent(value)
+            body: '<?= csrf_token() ?>=' + encodeURIComponent(window.__csrfTokenValue) + '&lead_id=' + encodeURIComponent(leadId) + '&' + encodeURIComponent(field) + '=' + encodeURIComponent(value)
         })
+        .then(bumpCsrfToken)
         .then(r => r.json())
         .then(data => {
             el.disabled = false;
@@ -375,8 +380,9 @@ document.querySelectorAll('.popup-save-note-btn').forEach(function(btn) {
         fetch('<?= base_url("leads/popup/add-note") ?>', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest'},
-            body: 'lead_id=' + leadId + '&note=' + encodeURIComponent(note)
+            body: '<?= csrf_token() ?>=' + encodeURIComponent(window.__csrfTokenValue) + '&lead_id=' + leadId + '&note=' + encodeURIComponent(note)
         })
+        .then(bumpCsrfToken)
         .then(r => r.json())
         .then(data => {
             if (data.success) {

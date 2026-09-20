@@ -45,7 +45,10 @@
                             </div>
                             <span class="text-white ">|</span>
                             <div class="sign-btn gap-1 text-white d-flex align-items-center">
-                                <a href="<?= base_url('logout') ?>" class="text-white text-decoration-none"><i class="fas fa-sign-out-alt me-1"></i> Logout</a>
+                                <form action="<?= base_url('logout') ?>" method="post" class="d-inline">
+                                    <?= csrf_field() ?>
+                                    <button type="submit" class="text-white text-decoration-none border-0 bg-transparent p-0" style="font: inherit; cursor: pointer;"><i class="fas fa-sign-out-alt me-1"></i> Logout</button>
+                                </form>
                             </div>
                         <?php else: ?>
                             <div class="sign-btn gap-2 d-flex align-items-center">
@@ -84,7 +87,10 @@
                             </div>
                             <span class="text-white ">|</span>
                             <div class="sign-btn gap-1 text-white d-flex align-items-center">
-                                <a href="<?= base_url('logout') ?>" class="text-white text-decoration-none"><i class="fas fa-sign-out-alt me-1"></i> Logout</a>
+                                <form action="<?= base_url('logout') ?>" method="post" class="d-inline">
+                                    <?= csrf_field() ?>
+                                    <button type="submit" class="text-white text-decoration-none border-0 bg-transparent p-0" style="font: inherit; cursor: pointer;"><i class="fas fa-sign-out-alt me-1"></i> Logout</button>
+                                </form>
                             </div>
                         <?php else: ?>
                             <div class="sign-btn gap-1 d-flex align-items-center">
@@ -130,7 +136,10 @@
                         </div>
                         <span class="text-white">|</span>
                         <div class="sign-btn gap-2 text-white d-flex align-items-center">
-                            <a href="<?= base_url('logout') ?>" class="text-white text-decoration-none"><i class="fas fa-sign-out-alt me-1"></i> Logout</a>
+                            <form action="<?= base_url('logout') ?>" method="post" class="d-inline">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="text-white text-decoration-none border-0 bg-transparent p-0" style="font: inherit; cursor: pointer;"><i class="fas fa-sign-out-alt me-1"></i> Logout</button>
+                            </form>
                         </div>
                     <?php else: ?>
                         <div class="sign-btn gap-2 d-flex align-items-center">

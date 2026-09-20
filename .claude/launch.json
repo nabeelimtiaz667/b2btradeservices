@@ -1,0 +1,10 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "xampp-apache",
+      "url": "http://localhost",
+      "port": 80
+    }
+  ]
+}

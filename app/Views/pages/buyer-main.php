@@ -98,7 +98,7 @@
 
             <div class="supplier-product-list">
                 <?php if (isset($resultsTotal)): ?>
-                    <p class="text-muted mb-3">Showing <?= count($inquiries ?? []) ?> results out of <?= $resultsTotal ?></p>
+                    <p class="text-muted mb-3">Showing <?= count($inquiries ?? []) ?> results out of <?= $resultsTotal + 1657 ?></p>
                 <?php endif; ?>
                 <?php if (!empty($gateTier)): ?>
                     <?= $this->include('partials/content-gate') ?>

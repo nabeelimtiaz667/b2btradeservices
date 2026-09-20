@@ -13,6 +13,7 @@
 <div class="card card-custom">
     <div class="card-body">
         <form action="<?= isset($inquiry) && $inquiry ? base_url('dashboard/inquiries/edit/' . $inquiry['id']) : base_url('dashboard/inquiries/add') ?>" method="post" enctype="multipart/form-data">
+            <?= csrf_field() ?>
             <h5 class="mb-3">Inquiry Details</h5>
             <div class="row">
                 <div class="col-md-12 mb-3">

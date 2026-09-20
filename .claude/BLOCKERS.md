@@ -10,98 +10,19 @@ deleted), #3 (`app.zip` — deleted), #5 (app unverified — swept 2026-07-29),
 #14 (inquiry slugs — shipped to dev 2026-08-01, pending production deploy T-15),
 #23 (second flag-filename convention, all 8 locations fixed — 2026-08-19),
 #26 (`app/Data/countries.php` and `rate_limits.php` gitignored and untracked
-from git with `git rm --cached`, files kept in place on disk — 2026-09-06).
+from git with `git rm --cached`, files kept in place on disk — 2026-09-06),
+#28 (unrestricted file upload / RCE in product/logo/banner/attachment
+uploads — fixed 2026-09-09: `validate_uploaded_image()` helper + hardened
+`public/uploads/.htaccess`), #7 (CSRF disabled site-wide — enabled
+2026-09-09, every form/AJAX call audited and fixed), #8 (9 destructive GET
+routes converted to POST forms with CSRF — fixed 2026-09-09), #29 (session
+fixation — `Auth::login()` now calls `$this->session->regenerate(true)` —
+fixed 2026-09-09), #9 (`AuthFilter` now applied via URI pattern to
+`dashboard`/`dashboard/*`/`admin/*` — fixed 2026-09-09).
 
 **Still open despite the slug work:** #10 and #13, the "01 Jan, 1970" rendering
 bugs. They share the same `buyer_inquiries` table but are a separate defect —
 nothing in the slug change touched `inquiry_date`. Tasks T-5, T-6, T-12.
-
----
-
-## #28 — Unrestricted file upload → remote code execution (any registered supplier/buyer)
-**Severity:** CRITICAL · **Raised:** 2026-09-09 · **Open**
-
-Found in a full-app security audit (2026-09-09). **This is the most serious
-issue in the codebase — an anonymous attacker can get arbitrary PHP execution
-on the server in ~4 requests.**
-
-### The chain
-
-Every image upload calls only `isValid()` + `!hasMoved()` before `move()` —
-**no file-type/extension/MIME allowlist anywhere**. `isValid()` (verified in
-`system/HTTP/Files/UploadedFile.php:335`) checks *only* `is_uploaded_file()`
-and `error === UPLOAD_ERR_OK`; it does not look at type. `getRandomName()`
-preserves the extension: `getExtension()` → `guessExtension()` →
-`Mimes::guessExtensionFromType(finfoMime, clientExtension)`, and `app/Config/
-Mimes.php:115` maps `text/x-php` → `php` (falls back to the attacker-controlled
-client extension otherwise). Files land in **`public/uploads/products/`**,
-which is web-served and has **no `.htaccess` blocking PHP execution** (only
-`public/.htaccess` exists, and it doesn't).
-
-**Empirically verified (2026-09-09, safe/benign, no shell deployed):** `finfo`
-detects a file containing `<?php ... ?>` as `text/x-php`, and `Mimes.php` maps
-that back to `.php`. So an uploaded PHP file is stored as
-`TIMESTAMP_RANDOMHEX.php` and executes.
-
-### Why it's fully self-service (anonymous → RCE)
-
-- Registration is open by default (`allow_registration` defaults `'1'`,
-  `Auth::register`).
-- Login does **not** gate on `status` (`Auth.php:130-156` sets the session for
-  any correct password, even a `pending`/`rejected` row).
-- The upload guard checks only `user_type === 'supplier'`
-  (`Dashboard::supplierAddProduct`, `:281`) — **not** `status === 'approved'`.
-- The random filename is not secret: it's stored as `products.main_image` and
-  rendered as the product image `src`, so the attacker reads their own listing
-  to get the URL.
-
-Full path: register as supplier → log in → `POST /dashboard/supplier/products/add`
-with `main_image = shell.php` → open own product page, read image URL → request
-`/uploads/products/<name>.php?c=...` → arbitrary code execution.
-
-### Every affected upload site (all the same defect)
-
-`Dashboard.php` product images (`:332,395,1244,1309`), company logos/banners
-(`:523,553,1010,1025,1130,1162`), inquiry attachments (`:687,769,1415,1530`);
-`AdminSettings.php` hero-banner images (`:660`). The supplier/buyer ones are the
-dangerous set (low barrier); the admin ones (`AdminSettings`, admin inquiry mgmt)
-are gated behind an admin session but still unvalidated.
-
-### Fix (needs owner sign-off — changes upload behaviour on a live-mirrored app)
-
-Three layers, all worth doing: (1) validate uploads with an extension **and**
-MIME allowlist (`jpg,jpeg,png,webp,gif` for images; `csv` for imports) via CI4
-validation rules (`uploaded[...]|is_image[...]|mime_in[...]|max_size[...]`)
-before `move()`; (2) drop a hardening `.htaccess` into `public/uploads/`
-(`php_flag engine off` / `RemoveHandler .php` / SetHandler to plain text) so a
-missed spot can't execute; (3) confirm production Apache/LiteSpeed honours it
-(cPanel may use a PHP handler that ignores `php_flag` — a `RemoveHandler` +
-`RemoveType` is more portable). Not fixed in the audit pass itself — it touches
-~15 call sites and live upload behaviour, so it's a deliberate change.
-
----
-
-## #29 — No session ID regeneration on login (session fixation)
-**Severity:** MEDIUM · **Raised:** 2026-09-09 · **Open**
-
-`Auth::login` (`app/Controllers/Auth.php:156`) calls `$this->session->set(...)`
-to establish the authenticated session but never calls
-`$this->session->regenerate()`. The session ID a user carries *before* logging
-in therefore remains valid *after* the privilege change — the classic session
-fixation setup (attacker fixes a victim's pre-auth session ID, e.g. via a shared
-machine or a cookie-forcing vector, and inherits the authenticated session).
-
-**Partial mitigations already in place:** `Session::timeToUpdate = 300`
-(`app/Config/Session.php:81`) auto-rotates the ID every 5 min regardless, so the
-fixation window is bounded to ≤5 min rather than the whole session; cookies are
-`httponly = true` and `samesite = 'Lax'` (`app/Config/Cookie.php`), which blunts
-the easiest cookie-forcing routes. But `regenerateDestroy = false`, so rotated-out
-IDs keep their session data alive rather than being destroyed.
-
-**Fix:** add `$this->session->regenerate(true)` immediately before/after
-`$this->session->set($sessionData)` in `Auth::login` (the `true` destroys the old
-session data). One line, low risk, no view changes — worth doing alongside the
-#7 CSRF work since both are auth-surface hardening.
 
 ---
 
@@ -390,6 +311,30 @@ to delete once someone confirms neither is referenced from outside this repo
 
 ---
 
+## #32 — `app/Views/partials/apply-now-form.php` is a dead partial, included by no page
+**Severity:** LOW · **Raised:** 2026-09-10 · **Open**
+
+Found while site-wide testing the day's security fixes — specifically, while
+confirming every public form that posts to `contact/submit-ajax` still works
+with CSRF enabled. Two of the three (`agent-partner-form-modal.php` on
+`/become-our-agent-partner`, `tradeshow-form-modal.php` on
+`/tradeshow-marketing-services`) are live and were confirmed working
+end-to-end. The third, `apply-now-form.php`, is not included by any page —
+confirmed by grepping the whole `app/Views/` tree for `apply-now-form` and
+for `applyNowForm`/`apply-now` more broadly: no `view()` call, no
+`$this->include(...)`, no reference anywhere outside the partial file
+itself.
+
+Not fixed here — same category of issue as BLOCKERS #20
+(`thankyou.php`/`rfq.php`, superseded/orphaned view files no route or
+include reaches) and #12 (`suppliers` table / `SupplierModel`): dead but
+harmless, safe to delete once someone confirms it isn't referenced from
+outside this repo (an email template, a hardcoded link elsewhere, a page
+that's meant to include it but doesn't yet, etc.). Left alone rather than
+deleted since removing code wasn't what was asked.
+
+---
+
 ## #18 — Two Google Analytics snippets would fire simultaneously if the admin GA setting is ever used
 **Severity:** LOW · **Raised:** 2026-08-02 (owner change, logged after the fact) · **Open**
 
@@ -556,6 +501,42 @@ error in PHP 9 — worth fixing before any major upgrade.
 
 ---
 
+## #31 — `Auth::logout()`'s "logged out successfully" flash message never renders
+**Severity:** LOW · **Raised:** 2026-09-09 · **Open**
+
+Found incidentally while site-wide testing the day's five security fixes
+(specifically, browser-clicking the newly-POST-based logout button for
+BLOCKERS #8 and checking the result page). The logout itself works
+correctly — session destroyed, redirected to `/login` — but the
+`with('success', 'You have been logged out successfully.')` flash never
+shows up on the login page. Not caused by today's GET-to-POST route change;
+`Auth::logout()`'s own body was untouched by that fix (confirmed via
+`git diff`), and this reproduces identically over a plain, correctly-formed
+request — verified with curl (fresh login, `POST /logout` with a valid
+token, then a separate `GET /login` matching real browser behaviour):
+no `alert-success` in the response, every time.
+
+**Root cause (likely):** `Auth::logout()` calls `$this->session->destroy()`
+*before* `redirect()->to('/login')->with('success', ...)`. `destroy()` calls
+raw `session_destroy()`, which removes the session's persistent storage
+immediately; the flashdata write that follows only reaches `$_SESSION` in
+memory, and it's unclear whether that survives to the next request once the
+session's storage has already been torn down (needs a deliberate look, not
+guessed at further here). Registration's own `redirect()->to('/login')->with('success', ...)` — same pattern, no preceding `destroy()` — rendered
+correctly in the same test session, isolating `destroy()` as the
+distinguishing factor rather than a general flashdata problem (see
+BLOCKERS #24, a different flashdata bug on a different pattern —
+`withInput()` chained with `with()` — not this one).
+
+**Not fixed here** — out of scope for the CSRF/upload/route work this pass
+covered, and the underlying mechanism is worth confirming with a targeted
+look (e.g. does setting flashdata *before* `destroy()`, or regenerating
+instead of destroying, fix it?) rather than patching blind. User impact is
+minor — logout functions correctly, the user just doesn't see a confirmation
+message on the resulting login page.
+
+---
+
 ## #6 — Production encryption key is on the dev machine
 **Severity:** LOW · **Raised:** 2026-07-29 · **Open — deferred by owner**
 
@@ -566,74 +547,6 @@ Convenient — production-encrypted values stay readable locally — but it mean
 production secret now lives on a development machine. Worth generating a separate
 key for local use if the environment is ever shared or the machine is not solely
 the owner's.
-
----
-
-## #7 — CSRF protection is disabled site-wide
-**Severity:** HIGH · **Raised:** 2026-07-29 · **Open**
-
-`app/Config/Filters.php:83` has `// 'csrf',` — the CSRF filter is registered as an
-alias but commented out of `$globals`, so **no route is CSRF-protected**.
-
-**Verified empirically:** a `POST` to `/contact/submit` with no CSRF token and no
-session was accepted and inserted a row (test row removed afterwards).
-
-This affects all 41 POST routes, including the authenticated dashboard ones —
-user edits, supplier/product changes, admin imports and settings updates.
-
-Compounded by #8: with CSRF off *and* destructive actions on GET, an authenticated
-admin merely loading a hostile page can have records deleted.
-
-**Also applies to:** the planned public lead-capture popup (T-29) — its `POST
-lead/capture` endpoint is unauthenticated by design (that's the point of a lead
-form) and will carry the same exposure as every other POST route here. Not a
-separate issue, logged here per the owner's call to group it with the existing
-CSRF gap rather than open a new entry.
-
-**Fix:** uncomment `'csrf'` in `$globals['before']`, then confirm every form and
-AJAX call sends the token. Not done unilaterally — enabling it will break any form
-that does not currently include `csrf_field()`, so it needs a pass over the views.
-
----
-
-## #8 — Nine destructive actions are exposed as GET routes
-**Severity:** HIGH · **Raised:** 2026-07-29 · **Open**
-
-State-changing operations reachable by a plain link:
-
-```
-dashboard/delete/(:num)                 dashboard/approve/(:num)
-dashboard/agents/delete/(:num)          dashboard/reject/(:num)
-dashboard/suppliers/delete/(:num)       dashboard/submissions/delete/(:num)
-dashboard/inquiries/delete/(:num)       dashboard/buyer/inquiries/delete/(:num)
-logout
-```
-
-GET is meant to be safe and idempotent. As written these are triggerable by
-prefetchers, crawlers, browser accelerators, or an `<img src>` on any page an
-authenticated admin visits — and with #7 there is no token to stop it.
-
-**Fix:** convert to POST/DELETE with a CSRF token and a confirmation step.
-
-**Note for testing:** these routes were deliberately excluded from the verification
-sweep. Do not curl them against a database holding real data.
-
----
-
-## #9 — `AuthFilter` exists but is applied to no route
-**Severity:** MEDIUM · **Raised:** 2026-07-29 · **Open**
-
-`app/Filters/AuthFilter.php` is written and aliased as `'auth'` in `Filters.php`,
-but `Routes.php` never references it — every route's only before-filter is
-`sitesettings` (plus `role:admin` on the 6 import routes).
-
-Authentication is instead enforced method-by-method inside the controllers.
-Empirically this currently works — all 45 dashboard/admin routes tested redirect to
-`/login` when unauthenticated, and none leaked a 200.
-
-The risk is structural, not present-tense: protection is opt-in per method, so any
-new controller method that forgets the check is public by default. A filter on the
-`dashboard/*` and `admin/*` groups would make it opt-out instead.
 
 ---
 

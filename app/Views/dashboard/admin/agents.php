@@ -59,7 +59,10 @@
                         <td>
                             <div class="d-flex gap-1">
                                 <a href="<?= base_url('dashboard/agents/edit/' . $agent['id']) ?>" class="btn btn-sm btn-outline-primary" style="font-size:11px; padding:3px 8px;">Edit</a>
-                                <a href="<?= base_url('dashboard/agents/delete/' . $agent['id']) ?>" class="btn btn-sm btn-outline-danger" style="font-size:11px; padding:3px 8px;" onclick="return confirm('Are you sure you want to delete this agent?')">Delete</a>
+                                <form action="<?= base_url('dashboard/agents/delete/' . $agent['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this agent?')">
+                                    <?= csrf_field() ?>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size:11px; padding:3px 8px;">Delete</button>
+                                </form>
                             </div>
                         </td>
                     </tr>

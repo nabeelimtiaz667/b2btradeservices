@@ -111,7 +111,10 @@
                         <td><?= esc($i['agent_name'] ?? '-') ?></td>
                         <td>
                             <a href="<?= base_url('dashboard/inquiries/edit/' . $i['id']) ?>" class="btn btn-sm btn-primary">Edit</a>
-                            <a href="<?= base_url('dashboard/inquiries/delete/' . $i['id']) ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this inquiry?')">Delete</a>
+                            <form action="<?= base_url('dashboard/inquiries/delete/' . $i['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this inquiry?')">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
                         </td>
                     </tr>
                     <?php endforeach; ?>

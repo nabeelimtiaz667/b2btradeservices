@@ -140,7 +140,10 @@
         </div>
         <div class="card">
             <div class="card-body">
-                <a href="<?= base_url('dashboard/submissions/delete/' . $submission['id']) ?>" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure you want to delete this submission?')">Delete Submission</a>
+                <form action="<?= base_url('dashboard/submissions/delete/' . $submission['id']) ?>" method="post" onsubmit="return confirm('Are you sure you want to delete this submission?')">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-outline-danger w-100">Delete Submission</button>
+                </form>
             </div>
         </div>
     </div>

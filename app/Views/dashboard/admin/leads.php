@@ -322,6 +322,12 @@ foreach (($agents ?? []) as $a) {
 </div>
 
 <script>
+// This page builds its POST bodies by hand rather than submitting a <form>,
+// so there's no hidden csrf_test_name field for bumpCsrfToken() to update --
+// seed the token here instead and keep it current via window.__csrfTokenValue.
+// See public/assets/js/csrf-refresh.js and BLOCKERS #7.
+window.__csrfTokenValue = '<?= csrf_hash() ?>';
+
 document.querySelectorAll('.stage-select').forEach(function(select) {
     select.addEventListener('change', function() {
         const leadId = this.dataset.leadId;
@@ -329,8 +335,9 @@ document.querySelectorAll('.stage-select').forEach(function(select) {
         fetch('<?= base_url("leads/ajax-update-stage") ?>', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest'},
-            body: 'lead_id=' + leadId + '&lead_stage=' + stage
+            body: '<?= csrf_token() ?>=' + encodeURIComponent(window.__csrfTokenValue) + '&lead_id=' + leadId + '&lead_stage=' + stage
         })
+        .then(bumpCsrfToken)
         .then(r => r.json())
         .then(data => {
             if (data.success) {
@@ -357,8 +364,9 @@ document.querySelectorAll('.save-note-btn').forEach(function(btn) {
         fetch('<?= base_url("leads/ajax-add-note") ?>', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest'},
-            body: 'lead_id=' + leadId + '&note=' + encodeURIComponent(note)
+            body: '<?= csrf_token() ?>=' + encodeURIComponent(window.__csrfTokenValue) + '&lead_id=' + leadId + '&note=' + encodeURIComponent(note)
         })
+        .then(bumpCsrfToken)
         .then(r => r.json())
         .then(data => {
             if (data.success) {

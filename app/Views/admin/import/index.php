@@ -48,6 +48,7 @@
                         </a>
 
                         <form method="post" action="<?= base_url('admin/import/' . $activeTab) ?>" enctype="multipart/form-data" id="importForm">
+                            <?= csrf_field() ?>
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Select CSV File</label>
                                 <input type="file" class="form-control" name="csv_file" id="csvFileInput" accept=".csv" required>

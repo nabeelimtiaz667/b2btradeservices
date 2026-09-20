@@ -195,6 +195,10 @@ document.getElementById("closePopup2").onclick = function() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.2.1/js/intlTelInput.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="<?= base_url('assets/js/script.js') ?>"></script>
+<?php // Sitewide, same reasoning as homepage-lead-forms.js below: every AJAX
+// call on the site needs this to survive the CSRF token rotating after
+// each request (BLOCKERS #7). Loaded before the scripts that use it. ?>
+<script src="<?= base_url('assets/js/csrf-refresh.js') ?>"></script>
 <?php // This partial's own "Register Your Company" popup (above) uses
 // lead-capture-inline-form.php, so this script -- which wires every
 // .lead-capture-inline-form on the page to LeadCapture::capture() --

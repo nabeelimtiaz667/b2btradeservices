@@ -1,0 +1,38 @@
+# Nothing under uploads/ (or its subfolders -- hero-banner, inquiries,
+# logos, products, suppliers) should ever execute as a script. This is a
+# defense-in-depth backstop for BLOCKERS #28: even if a future upload site
+# forgets to call validate_uploaded_image() before move(), a file that lands
+# here still can't run.
+#
+# Different Apache/PHP setups honor different directives (mod_php locally
+# vs. cPanel's suPHP/FastCGI handler vs. LiteSpeed in production), so all
+# three approaches are stacked rather than relying on just one.
+
+# mod_php -- module identifier differs by Apache/PHP build. This box's
+# `httpd -M` reports `php_module`; older/other builds report `mod_php.c` or
+# `mod_php7.c`. All three are harmless no-ops if the module isn't loaded.
+<IfModule php_module>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+
+# Handler/Action-based PHP (common on cPanel)
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .pht .phar
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .pht .phar
+
+# Deny outright regardless of handler -- if somehow still reached, this
+# 403s instead of falling through to being served/executed.
+<FilesMatch "\.(?i:php\d?|phtml|pht|phar|cgi|pl|py|sh|asp|aspx|exe)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

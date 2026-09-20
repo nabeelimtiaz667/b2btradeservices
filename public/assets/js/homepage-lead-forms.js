@@ -42,6 +42,7 @@
                 body: new FormData(form),
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
             })
+                .then(bumpCsrfToken)
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (data.status === 'success') {

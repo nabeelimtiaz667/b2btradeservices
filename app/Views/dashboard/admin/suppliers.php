@@ -93,7 +93,10 @@
                         </td>
                         <td>
                             <a href="<?= base_url('dashboard/suppliers/edit/' . $s['id']) ?>" class="btn btn-sm btn-primary">Edit</a>
-                            <a href="<?= base_url('dashboard/suppliers/delete/' . $s['id']) ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this supplier?')">Delete</a>
+                            <form action="<?= base_url('dashboard/suppliers/delete/' . $s['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this supplier?')">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
                             <a href="<?= base_url('supplier/profile/' . ($s['slug'] ?? $s['id'])) ?>" class="btn btn-sm btn-outline-secondary" target="_blank">View</a>
                         </td>
                     </tr>

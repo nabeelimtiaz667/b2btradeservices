@@ -64,7 +64,17 @@ php_errors.log
 # Uploaded media (user-generated content, ~95 MB)
 # Remove this block if you want the images committed to the repo.
 #---------------------------------------------------------------------
-/public/uploads/
+/public/uploads/*
+# Exception: this is security-critical (blocks uploaded files from ever
+# executing as scripts -- see BLOCKERS #28) and must actually reach
+# production, unlike everything else under uploads/. A gitignored folder
+# hides files from git status/diff, which is exactly how #28's fix could
+# otherwise silently fail to get deployed -- see BLOCKERS #25.
+# (Must exclude contents with a trailing /* rather than the whole
+# directory with a bare /public/uploads/ -- git can't re-include a file
+# inside a directory that's excluded outright, only inside one whose
+# contents are excluded.)
+!/public/uploads/.htaccess
 /public/assets/images/
 /uploads/
 /blog/wp-content/uploads/

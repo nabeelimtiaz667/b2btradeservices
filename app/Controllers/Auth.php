@@ -144,6 +144,15 @@ class Auth extends BaseController
 
         $this->activityModel->logActivity($user['id'], 'login', 'User logged in');
 
+        // Regenerate the session ID on every successful login, destroying the
+        // old session's data (BLOCKERS #29 -- session fixation). Without this,
+        // whatever session ID a visitor carried *before* authenticating stays
+        // valid *after* it too, which is exactly the setup a fixation attack
+        // relies on (fix a victim's pre-auth session ID, then inherit it once
+        // they log in). Must happen before set() so the new privileged data
+        // lands on the new id, not the old one.
+        $this->session->regenerate(true);
+
         $sessionData = [
             'user_id'   => $user['id'],
             'name'      => $user['name'],

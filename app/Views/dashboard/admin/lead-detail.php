@@ -14,7 +14,7 @@ $stages = [
 ];
 $membershipColors = [
     'free' => '#6c757d',
-    'silver' => '#adb5bd',
+    'starter' => '#adb5bd',
     'gold' => '#ffc107',
     'platinum' => '#6610f2',
     'vip' => '#dc3545',
