@@ -29,7 +29,7 @@ class Supplier extends BaseController
             ->where('status', 'approved')
             ->orderBy('membership_level', 'DESC')
             ->orderBy('created_at', 'DESC')
-            ->paginate(12, 'supplier');
+            ->paginate(10, 'supplier');
 
         foreach ($suppliers as &$supplier) {
             $supplier['country'] = !empty($supplier['country_id']) ? $this->countryModel->find($supplier['country_id']) : null;

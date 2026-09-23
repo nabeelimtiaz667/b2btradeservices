@@ -34,7 +34,7 @@ class Product extends BaseController
             $builder->orderBy('is_featured', 'DESC')->orderBy('created_at', 'DESC');
         }
 
-        $products = $builder->paginate(12, 'product');
+        $products = $builder->paginate(10, 'product');
 
         $supplierName = null;
         foreach ($products as &$product) {

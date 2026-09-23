@@ -44,7 +44,7 @@ class Buyer extends BaseController
             ->where('status', 'active')
             ->orderBy('inquiry_date', 'DESC')
             ->orderBy('is_featured', 'DESC')
-            ->paginate(50, 'buyer');
+            ->paginate(10, 'buyer');
 
         foreach ($inquiries as &$inquiry) {
             $inquiry['category'] = $this->categoryModel->find($inquiry['category_id']);
@@ -338,20 +338,20 @@ class Buyer extends BaseController
     {
         $inquiries = [];
         $categoryName = 'All Categories';
-        
+
         if ($slug) {
             $category = $this->categoryModel->where('slug', $slug)->first();
-            
+
             if (!$category) {
                 throw new \CodeIgniter\Exceptions\PageNotFoundException('Category not found');
             }
-            
+
             $inquiries = $this->inquiryModel
                 ->where('status', 'active')
                 ->where('category_id', $category['id'])
                 ->orderBy('inquiry_date', 'DESC')
                 ->findAll();
-            
+
             // Not esc()'d here: $categoryName only ever flows into 'title' and
             // 'metaDescription', both of which the layout already escapes
             // exactly once. Escaping it here too would double-encode any
