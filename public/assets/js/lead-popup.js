@@ -64,9 +64,9 @@
         } catch (e) { /* ignore */ }
     }
 
-    function openPopup(trigger) {
+    function openPopup(trigger, force) {
         if (modalEl.classList.contains('show')) return; // already open
-        if (alreadyHandledThisSession()) return; // already submitted this session
+        if (!force && alreadyHandledThisSession()) return; // already submitted this session
 
         document.getElementById('leadPopupHeading').textContent = trigger.text.heading;
         document.getElementById('leadPopupSubtext').textContent = trigger.text.subtext;
@@ -134,6 +134,24 @@
                 targets.forEach(function (el) { observer.observe(el); });
                 break;
         }
+    });
+
+    // --- Manual open (e.g. content-gate "Register" button) -----------------
+    // Bypasses the auto-triggers' once-per-session suppression -- a visitor
+    // deliberately clicking a button should always see the form, unlike the
+    // unprompted nag popups above.
+
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest('[data-open-lead-popup]');
+        if (!el) return;
+        e.preventDefault();
+        openPopup({
+            key: 'manual',
+            text: {
+                heading: 'Join B2B Trade Services',
+                subtext: "Leave your details and start connecting with trade partners.",
+            },
+        }, true);
     });
 
     // --- Phone input (intlTelInput, same pattern as register.php) ---------

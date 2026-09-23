@@ -66,7 +66,7 @@ class Buyer extends BaseController
         ];
 
         $tier = $this->contentAccessTier();
-        $data['gateTier'] = ($pager->getCurrentPage('buyer') > 1 && $tier !== 'privileged') ? $tier : null;
+        $data['gateTier'] = $this->gateTierForPage($pager->getCurrentPage('buyer'), $tier);
 
         return view('pages/buyer-main', $data);
     }
@@ -329,7 +329,7 @@ class Buyer extends BaseController
         ];
 
         $tier = $this->contentAccessTier();
-        $data['gateTier'] = ($page > 1 && $tier !== 'privileged') ? $tier : null;
+        $data['gateTier'] = $this->gateTierForPage($page, $tier);
 
         return view('pages/buyer-main', $data);
     }

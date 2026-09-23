@@ -59,7 +59,7 @@ class Supplier extends BaseController
         ];
 
         $tier = $this->contentAccessTier();
-        $data['gateTier'] = ($this->userModel->pager->getCurrentPage('supplier') > 1 && $tier !== 'privileged') ? $tier : null;
+        $data['gateTier'] = $this->gateTierForPage($this->userModel->pager->getCurrentPage('supplier'), $tier);
 
         return view('pages/supplier', $data);
     }
@@ -224,7 +224,7 @@ class Supplier extends BaseController
         ];
 
         $tier = $this->contentAccessTier();
-        $data['gateTier'] = ($this->userModel->pager->getCurrentPage('supplier') > 1 && $tier !== 'privileged') ? $tier : null;
+        $data['gateTier'] = $this->gateTierForPage($this->userModel->pager->getCurrentPage('supplier'), $tier);
 
         return view('pages/supplier-category', $data);
     }
@@ -272,7 +272,7 @@ class Supplier extends BaseController
         ];
 
         $tier = $this->contentAccessTier();
-        $data['gateTier'] = ($this->userModel->pager->getCurrentPage('supplier') > 1 && $tier !== 'privileged') ? $tier : null;
+        $data['gateTier'] = $this->gateTierForPage($this->userModel->pager->getCurrentPage('supplier'), $tier);
 
         return view('pages/supplier-country', $data);
     }
@@ -396,7 +396,7 @@ class Supplier extends BaseController
         ];
 
         $tier = $this->contentAccessTier();
-        $data['gateTier'] = ($page > 1 && $tier !== 'privileged') ? $tier : null;
+        $data['gateTier'] = $this->gateTierForPage($page, $tier);
 
         return view('pages/supplier', $data);
     }

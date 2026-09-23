@@ -108,4 +108,21 @@ abstract class BaseController extends Controller
             ? 'privileged'
             : 'free';
     }
+
+    /**
+     * Page number at which the content gate kicks in for a given tier --
+     * guests are gated straight after page 1, signed-up free accounts get an
+     * extra page before the gate shows. Returns the tier to gate as (for
+     * partials/content-gate.php), or null when the page shouldn't be gated.
+     */
+    protected function gateTierForPage(int $page, string $tier): ?string
+    {
+        if ($tier === 'privileged') {
+            return null;
+        }
+
+        $threshold = $tier === 'guest' ? 1 : 2;
+
+        return $page > $threshold ? $tier : null;
+    }
 }

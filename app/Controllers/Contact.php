@@ -14,6 +14,23 @@ class Contact extends BaseController
         $this->submissionModel = new ContactSubmissionModel();
     }
 
+    /**
+     * Which party the submitter is actually trying to reach, for the
+     * acknowledgement email's "the {type} will get back to you" line.
+     * Only the supplier-profile and buyer-detail contact forms map to a
+     * specific party -- everything else (general contact page, package
+     * inquiries, RFQ) falls back to a generic "our team" in the email
+     * helper itself.
+     */
+    protected function resolveContactedPartyType(string $sourcePage): ?string
+    {
+        return match ($sourcePage) {
+            'supplier-profile', 'product-detail' => 'Supplier',
+            'buyer-detail' => 'Buyer',
+            default => null,
+        };
+    }
+
     protected function resolveLeadType(): string
     {
         $leadType = strtolower(trim($this->request->getPost('lead_type') ?? ''));
@@ -110,6 +127,12 @@ class Contact extends BaseController
                     'inquiry_date'   => date('Y-m-d'),
                     'status'         => 'active',
                 ]);
+            }
+
+            helper('email');
+            notifyAdminOfContactSubmission($data);
+            if (!empty($data['email'])) {
+                sendContactAcknowledgementEmail($data['email'], $data['name'], $this->resolveContactedPartyType($data['source_page']));
             }
 
             return redirect()->back()->with('success', 'Thank you! Your inquiry has been submitted successfully. We will get back to you soon.');

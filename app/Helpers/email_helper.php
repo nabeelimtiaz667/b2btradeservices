@@ -427,3 +427,91 @@ if (!function_exists('notifyAdminNewInquiry')) {
         sendAdminNotification($subject, $message);
     }
 }
+
+if (!function_exists('notifyAdminOfContactSubmission')) {
+    function notifyAdminOfContactSubmission(array $data): bool
+    {
+        $settingModel = new SiteSettingModel();
+        if ($settingModel->getSetting('notify_on_inquiry', '0') !== '1') {
+            return false;
+        }
+
+        $siteName = $settingModel->getSetting('site_name', 'B2B Trade Services');
+        $subject  = "[{$siteName}] New Contact Form Submission (" . ($data['form_type'] ?? 'contact') . ")";
+
+        $rows = [
+            'Form Type'   => $data['form_type'] ?? '',
+            'Source Page' => $data['source_page'] ?? '',
+            'Name'        => $data['name'] ?? '',
+            'Email'       => $data['email'] ?? '',
+            'Phone'       => $data['phone'] ?? '',
+            'Company'     => $data['company'] ?? '',
+            'Industry'    => $data['industry'] ?? '',
+            'Quantity'    => $data['quantity'] ?? '',
+            'Message'     => $data['message'] ?? '',
+        ];
+
+        $message = "<h2 style='color:#333;'>New Contact Form Submission</h2>";
+        $message .= "<table style='border-collapse:collapse;width:100%;'>";
+        foreach ($rows as $label => $value) {
+            if ($value === '' || $value === null) {
+                continue;
+            }
+            $message .= "<tr><td style='padding:6px 10px;border:1px solid #eee;font-weight:600;color:#333;vertical-align:top;white-space:nowrap;'>" . esc($label) . "</td><td style='padding:6px 10px;border:1px solid #eee;color:#555;'>" . nl2br(esc($value)) . "</td></tr>";
+        }
+        $message .= "</table>";
+
+        return sendAdminNotification($subject, $message);
+    }
+}
+
+if (!function_exists('sendContactAcknowledgementEmail')) {
+    function sendContactAcknowledgementEmail(string $toEmail, string $toName, ?string $recipientType = null): bool
+    {
+        $settingModel = new SiteSettingModel();
+        $smtpHost = $settingModel->getSetting('smtp_host', '');
+        $smtpPort = (int) $settingModel->getSetting('smtp_port', '587');
+        $smtpUser = $settingModel->getSetting('smtp_user', '');
+        $smtpPass = $settingModel->getSetting('smtp_pass', '');
+        $siteName = $settingModel->getSetting('site_name', 'B2B Trade Services');
+        $contactEmail = $settingModel->getSetting('contact_email', '');
+
+        $fromEmail = !empty($contactEmail) ? $contactEmail : (!empty($smtpUser) ? $smtpUser : 'noreply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+
+        $subject = '[' . $siteName . '] We\'ve received your message';
+
+        $replyNote = $recipientType
+            ? 'The ' . esc($recipientType) . ' will get back to you shortly.'
+            : 'Our team will get back to you shortly.';
+
+        $message  = "<div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>";
+        $message .= "<h2 style='color:#333;'>Thank you, " . esc($toName ?: 'there') . "!</h2>";
+        $message .= "<p>We've received your message and forwarded it. " . $replyNote . "</p>";
+        $message .= "<p style='color:#999;font-size:12px;'>If you didn't submit this request, you can safely ignore this email.</p>";
+        $message .= "</div>";
+
+        $hasSmtp = !empty($smtpHost) && !empty($smtpUser) && !empty($smtpPass);
+
+        if ($hasSmtp) {
+            try {
+                if (sendViaSmtp($toEmail, $subject, $message, $fromEmail, $siteName, $smtpHost, $smtpPort, $smtpUser, $smtpPass)) {
+                    log_message('info', 'Contact acknowledgement sent via SMTP to ' . $toEmail);
+                    return true;
+                }
+            } catch (\Exception $e) {
+                log_message('error', 'Contact acknowledgement SMTP exception: ' . $e->getMessage());
+            }
+            log_message('warning', 'Contact acknowledgement SMTP failed for ' . $toEmail . ', falling back to PHP mail().');
+        } else {
+            log_message('info', 'Contact acknowledgement: no SMTP configured, using PHP mail().');
+        }
+
+        if (sendViaPhpMail($toEmail, $subject, $message, $fromEmail, $siteName)) {
+            log_message('info', 'Contact acknowledgement sent via PHP mail() to ' . $toEmail);
+            return true;
+        }
+
+        log_message('error', 'Contact acknowledgement failed via both SMTP and PHP mail() for ' . $toEmail);
+        return false;
+    }
+}

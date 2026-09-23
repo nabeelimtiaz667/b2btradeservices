@@ -27,7 +27,7 @@ $placeholderCount = $placeholderCount ?? 6;
             <p class="content-gate-message">Sign in or create a free account to see more results.</p>
             <div class="content-gate-actions">
                 <a href="<?= base_url('login') ?>" class="solid-btn">Sign In</a>
-                <a href="<?= base_url('register') ?>" class="outline-btn btn">Register</a>
+                <button type="button" class="outline-btn btn" data-open-lead-popup>Register</button>
             </div>
         <?php else: ?>
             <p class="content-gate-message">Upgrade your membership to see more results.</p>

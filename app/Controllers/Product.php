@@ -63,7 +63,7 @@ class Product extends BaseController
         ];
 
         $tier = $this->contentAccessTier();
-        $data['gateTier'] = ($this->productModel->pager->getCurrentPage('product') > 1 && $tier !== 'privileged') ? $tier : null;
+        $data['gateTier'] = $this->gateTierForPage($this->productModel->pager->getCurrentPage('product'), $tier);
 
         return view('pages/product', $data);
     }
@@ -102,7 +102,7 @@ class Product extends BaseController
         ];
 
         $tier = $this->contentAccessTier();
-        $data['gateTier'] = ($this->productModel->pager->getCurrentPage('product') > 1 && $tier !== 'privileged') ? $tier : null;
+        $data['gateTier'] = $this->gateTierForPage($this->productModel->pager->getCurrentPage('product'), $tier);
 
         return view('pages/product', $data);
     }
@@ -268,7 +268,7 @@ class Product extends BaseController
         ];
 
         $tier = $this->contentAccessTier();
-        $data['gateTier'] = ($page > 1 && $tier !== 'privileged') ? $tier : null;
+        $data['gateTier'] = $this->gateTierForPage($page, $tier);
 
         return view('pages/product', $data);
     }
