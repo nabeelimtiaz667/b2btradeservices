@@ -278,8 +278,14 @@ $jsonLd = [
                 <div id="popupSuccessMsg" class="alert alert-success text-center" style="display: none;">
                     Your information has been sent to the buyer.
                 </div>
+                <div id="popupErrorMsg" class="alert alert-danger text-center" style="display: none;"></div>
 
-                <form id="popupContactForm" class="popupContactForms">
+                <form id="popupContactForm" class="popupContactForms" data-action="<?= base_url('contact/submit-ajax') ?>">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="form_type" value="contact">
+                    <input type="hidden" name="source_page" value="buyer-detail">
+                    <input type="hidden" name="source_id" value="<?= $inquiry['id'] ?? '' ?>">
+                    <input type="hidden" name="lead_type" value="supplier">
                     <div class="mb-3 form-input">
                         <input type="text" class="form-control" name="name" placeholder="Name*" required
                             style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
@@ -320,30 +326,61 @@ $jsonLd = [
 document.addEventListener('DOMContentLoaded', function() {
     const contactForm = document.getElementById('popupContactForm');
     const successMsg = document.getElementById('popupSuccessMsg');
+    const errorMsg = document.getElementById('popupErrorMsg');
 
     if (contactForm) {
         contactForm.addEventListener('submit', function(e) {
             e.preventDefault(); // Prevents the page from reloading
 
-            // 1. Show the success message
-            successMsg.style.display = 'block';
+            errorMsg.style.display = 'none';
+            const submitBtn = contactForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
 
-            // 2. Reset the form fields to blank
-            contactForm.reset();
+            fetch(contactForm.dataset.action, {
+                method: 'POST',
+                body: new FormData(contactForm),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            })
+                .then(bumpCsrfToken)
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalBtnText;
 
-            // 3. Wait 2 seconds, then close the modal and hide the message
-            setTimeout(() => {
-                // Find the active modal instance and close it
-                const modalElement = document.getElementById('contactBuyerModal');
-                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                    if (data.status !== 'success') {
+                        errorMsg.textContent = data.message || 'Something went wrong. Please try again.';
+                        errorMsg.style.display = 'block';
+                        return;
+                    }
 
-                if (modalInstance) {
-                    modalInstance.hide();
-                }
+                    // 1. Show the success message
+                    successMsg.style.display = 'block';
 
-                // Hide the message again so it's fresh for the next time it's opened
-                successMsg.style.display = 'none';
-            }, 2000);
+                    // 2. Reset the form fields to blank
+                    contactForm.reset();
+
+                    // 3. Wait 2 seconds, then close the modal and hide the message
+                    setTimeout(() => {
+                        // Find the active modal instance and close it
+                        const modalElement = document.getElementById('contactBuyerModal');
+                        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+
+                        if (modalInstance) {
+                            modalInstance.hide();
+                        }
+
+                        // Hide the message again so it's fresh for the next time it's opened
+                        successMsg.style.display = 'none';
+                    }, 2000);
+                })
+                .catch(function () {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalBtnText;
+                    errorMsg.textContent = 'Something went wrong. Please try again.';
+                    errorMsg.style.display = 'block';
+                });
         });
     }
 });

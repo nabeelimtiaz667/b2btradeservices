@@ -217,6 +217,12 @@ class Contact extends BaseController
             if (!in_array($formType, $skipLeadForms)) {
                 $leadType = $this->resolveLeadType();
                 $this->createLeadIfNew($data, $leadType);
+
+                helper('email');
+                notifyAdminOfContactSubmission($data);
+                if (!empty($data['email'])) {
+                    sendContactAcknowledgementEmail($data['email'], $data['name'], $this->resolveContactedPartyType($data['source_page']));
+                }
             }
             return $this->response->setJSON(['status' => 'success', 'message' => 'Thank you! Your inquiry has been submitted successfully. We will get back to you soon.']);
         }

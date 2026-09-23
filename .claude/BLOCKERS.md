@@ -103,6 +103,54 @@ such in `README.md`, with a pointer back here for the real fix.
 
 ---
 
+## #33 — Production SMTP host `mail.b2btradeservices.com` fails TLS cert check and AUTH
+
+**Severity:** MEDIUM · **Raised:** 2026-09-21 · **Open — config issue, not a code bug; degrades safely**
+
+Owner pasted production's log after the new contact-form emails (CHANGELOG
+2026-09-21) went live. Confirms `admin/settings/email` has real SMTP
+credentials filled in on production: `smtp_host = mail.b2btradeservices.com`,
+port `587`, user `info@b2btradeservices.com`. Every attempted send fails in
+two different ways:
+
+1. **Certificate mismatch:** `stream_socket_enable_crypto(): Peer certificate
+   CN=`*.prod.sin2.secureserver.net' did not match expected CN=
+   `mail.b2btradeservices.com'`. The hostname resolves to GoDaddy's shared
+   mail infrastructure, but that server's TLS cert is issued for GoDaddy's own
+   multi-tenant hostname, not the client's domain -- a strong signal
+   `mail.b2btradeservices.com` isn't the correct SMTP endpoint for this
+   GoDaddy account. (Discussed earlier the same day: GoDaddy Workspace Email's
+   real SMTP host is normally `smtpout.secureserver.net`, using the full
+   mailbox address as the username -- worth confirming against the actual
+   GoDaddy account before changing anything.)
+2. **AUTH failure on retry:** `Failed to send AUTH LOGIN command` -- a
+   separate credential/auth-mechanism problem, independent of the cert issue.
+
+**Not a defect in the new email feature** -- `sendViaSmtp()`/
+`sendAdminNotification()` (`app/Helpers/email_helper.php`) caught both
+failures exactly as designed and fell through to the PHP `mail()` fallback,
+so the actual site visitor still got their success message; nothing 500'd.
+The one secondary log line (`Invalid message format: ... MessageFormatter
+Error`) is CI4's own defensive logging (`system/Language/Language.php:228`)
+about a `{0}` placeholder in the raw AUTH error text -- also non-fatal, just
+noisy.
+
+**Locally this same misconfiguration also produced a real crash** (a
+`TypeError` in `CodeIgniter\Debug\Toolbar::run()`), but only because local
+dev has `CI_ENVIRONMENT=development` -- the debug toolbar tried to
+`json_encode()` a log file that had picked up non-UTF8 bytes from the raw
+SMTP server greeting, and failed. Confirmed this cannot happen on production,
+since the toolbar never runs there.
+
+**Not fixed here** -- owner said they'd check the correct GoDaddy SMTP
+details themselves. Until the host/credentials are corrected, every SMTP
+attempt on production will keep failing and silently fall back to `mail()`
+(which is already known to work -- confirmed working via the forgot-password
+test on 2026-09-16). No urgency to fix unless the owner specifically wants
+SMTP's better deliverability/reputation over plain `mail()`.
+
+---
+
 ## #25 — `public/assets/images/` is gitignored -- deploy lists built from `git status` silently omit any change there
 
 **Severity:** HIGH · **Raised:** 2026-08-23 · **Open — process risk, not a code bug**
