@@ -14,6 +14,13 @@ Entry format:
 
 ---
 
+## 2026-09-24 — Unified per-page result counts within each of Buyer/Supplier/Product
+**Files:** `app/Controllers/Buyer.php`, `app/Controllers/Supplier.php`, `app/Controllers/Product.php`
+**Why:** owner had changed each entity's main listing page (`index()`) to show 10 results per page, but every other listing variant for that same entity still used its own separately hardcoded number -- `search()` on all three controllers, plus `Supplier::category()`/`Supplier::country()` and `Product::bySupplier()`, were still at their old values (50 for buyer search, 12 everywhere else). Owner's rule: one entity type should show the same result count everywhere, not a different count depending on which listing page you're on.
+- Added a `private const PER_PAGE = 10;` to each of `Buyer`, `Supplier`, `Product` and replaced every hardcoded page-size number in that controller (both CI4's `->paginate(N, group)` calls and the manually-paginated `search()` methods' `$perPage = N;`) with `self::PER_PAGE`. Buyer: 2 sites. Supplier: 4 sites (index, category, country, search). Product: 3 sites (index, bySupplier, search). One constant per controller, not a single global one, since there's no reason buyer/supplier/product counts need to match each other -- only that each entity's own listings agree with each other.
+- **Verified live**: buyer search (1673 total results) now shows "Showing 10 results out of 1673", matching the already-confirmed 10-per-page on `Buyer::index()`. All three files lint clean.
+- Changing the per-page count for one entity going forward is now a one-line edit (the constant) instead of finding and updating every call site by hand.
+
 ## 2026-09-24 — Fixed: "Contact Buyer" modal never actually submitted anything
 **Files:** `app/Views/pages/buyer-detail.php`, `app/Controllers/Contact.php`
 **Why:** owner reported that contacting a supplier creates a DB row and sends both emails (2026-09-21 work), but contacting a buyer does neither. Investigated and found the buyer-inquiry detail page has **two** separate "contact" UIs: a real inline form further down the page (posts to `contact/submit`, already working, already verified), and a much more prominent "Contact Buyer" button/modal at the top of the page that the owner was actually using. That modal's JS (`#popupContactForm`'s submit handler) never sent a request anywhere -- it only called `preventDefault()`, showed a hardcoded "Your information has been sent to the buyer" success message, reset the form, and closed the modal after 2 seconds. A pre-existing stub, unrelated to anything built this week, that just never got wired up.

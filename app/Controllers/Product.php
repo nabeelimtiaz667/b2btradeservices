@@ -9,6 +9,13 @@ use App\Models\CountryModel;
 
 class Product extends BaseController
 {
+    /**
+     * Single source of truth for how many products show per page across
+     * every listing variant (index, bySupplier, search) so they can't drift
+     * apart -- they previously disagreed (10 vs 12).
+     */
+    private const PER_PAGE = 10;
+
     protected $productModel;
     protected $userModel;
     protected $categoryModel;
@@ -34,7 +41,7 @@ class Product extends BaseController
             $builder->orderBy('is_featured', 'DESC')->orderBy('created_at', 'DESC');
         }
 
-        $products = $builder->paginate(10, 'product');
+        $products = $builder->paginate(self::PER_PAGE, 'product');
 
         $supplierName = null;
         foreach ($products as &$product) {
@@ -78,7 +85,7 @@ class Product extends BaseController
             ->where('status', 'active')
             ->where('supplier_id', $supplierId)
             ->orderBy('created_at', 'DESC')
-            ->paginate(12, 'product');
+            ->paginate(self::PER_PAGE, 'product');
 
         $supplierName = null;
         foreach ($products as &$product) {
@@ -219,7 +226,7 @@ class Product extends BaseController
             $builder->where('category_id', $categoryId);
         }
 
-        $perPage = 12;
+        $perPage = self::PER_PAGE;
         $total = $builder->countAllResults(false);
         $totalPages = max(1, (int) ceil($total / $perPage));
         // parse_search_path() hands back whatever string was in the URL

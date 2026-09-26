@@ -9,6 +9,14 @@ use App\Models\CountryModel;
 
 class Buyer extends BaseController
 {
+    /**
+     * Single source of truth for how many buyer inquiries show per page --
+     * used by both index() and search() so they can't drift apart again
+     * (index() was 50, search() was hardcoded to 50 separately; owner has
+     * since changed the count and wants both to always match).
+     */
+    private const PER_PAGE = 10;
+
     protected $inquiryModel;
     protected $userModel;
     protected $categoryModel;
@@ -44,7 +52,7 @@ class Buyer extends BaseController
             ->where('status', 'active')
             ->orderBy('inquiry_date', 'DESC')
             ->orderBy('is_featured', 'DESC')
-            ->paginate(10, 'buyer');
+            ->paginate(self::PER_PAGE, 'buyer');
 
         foreach ($inquiries as &$inquiry) {
             $inquiry['category'] = $this->categoryModel->find($inquiry['category_id']);
@@ -276,7 +284,7 @@ class Buyer extends BaseController
             $builder->where('DATE(created_at) >=', $date);
         }
 
-        $perPage = 50;
+        $perPage = self::PER_PAGE;
         $total = $builder->countAllResults(false);
         $totalPages = max(1, (int) ceil($total / $perPage));
         $rawPage = $filters['page'] ?? null;

@@ -9,6 +9,13 @@ use App\Models\ProductModel;
 
 class Supplier extends BaseController
 {
+    /**
+     * Single source of truth for how many suppliers show per page across
+     * every listing variant (index, category, country, search) so they
+     * can't drift apart -- they previously disagreed (10 vs 12).
+     */
+    private const PER_PAGE = 10;
+
     protected $userModel;
     protected $categoryModel;
     protected $countryModel;
@@ -29,7 +36,7 @@ class Supplier extends BaseController
             ->where('status', 'approved')
             ->orderBy('membership_level', 'DESC')
             ->orderBy('created_at', 'DESC')
-            ->paginate(10, 'supplier');
+            ->paginate(self::PER_PAGE, 'supplier');
 
         foreach ($suppliers as &$supplier) {
             $supplier['country'] = !empty($supplier['country_id']) ? $this->countryModel->find($supplier['country_id']) : null;
@@ -190,7 +197,7 @@ class Supplier extends BaseController
         $suppliers = $builder
             ->orderBy('membership_level', 'DESC')
             ->orderBy('created_at', 'DESC')
-            ->paginate(12, 'supplier');
+            ->paginate(self::PER_PAGE, 'supplier');
 
         foreach ($suppliers as &$supplier) {
             $supplier['country'] = !empty($supplier['country_id']) ? $this->countryModel->find($supplier['country_id']) : null;
@@ -244,7 +251,7 @@ class Supplier extends BaseController
             }
         }
 
-        $suppliers = $builder->orderBy('created_at', 'DESC')->paginate(12, 'supplier');
+        $suppliers = $builder->orderBy('created_at', 'DESC')->paginate(self::PER_PAGE, 'supplier');
 
         foreach ($suppliers as &$supplier) {
             $supplier['country'] = !empty($supplier['country_id']) ? $this->countryModel->find($supplier['country_id']) : null;
@@ -341,7 +348,7 @@ class Supplier extends BaseController
             $builder->where('membership_level', $membership);
         }
 
-        $perPage = 12;
+        $perPage = self::PER_PAGE;
         $total = $builder->countAllResults(false);
         $totalPages = max(1, (int) ceil($total / $perPage));
         $rawPage = $filters['page'] ?? null;
