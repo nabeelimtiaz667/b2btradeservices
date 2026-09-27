@@ -11,7 +11,7 @@
 
 <section class="supplier-page-sec mt-5">
     <div class="container">
-        <h1 class="text-center h2">Find Suppliers <br>By Country/Region</h1>
+        <div class="text-center h2">Find Suppliers <br>By Country/Region</div>
         <div class="searchbar-box mb-5">
             <form action="<?= base_url('supplier/search') ?>" method="get">
                 <div class="searchbar-input">
@@ -67,6 +67,7 @@
                 </div>
             </div>
             <div class="supplier-product-list">
+                <h1 class="h4"><?= isset($country) ? 'Suppliers in ' . esc($country['name']) : 'Find Suppliers By Country' ?></h1>
                 <?php if (isset($resultsTotal)): ?>
                     <p class="text-muted mb-3">Showing <?= count($suppliers ?? []) ?> results out of <?= $resultsTotal ?></p>
                 <?php endif; ?>

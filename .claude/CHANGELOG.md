@@ -14,6 +14,13 @@ Entry format:
 
 ---
 
+## 2026-09-27 — `supplier-country/*` H1 was generic and identical on every country page
+**Files:** `app/Views/pages/supplier-country.php`
+**Why:** owner noticed the page's SEO `<title>`/meta description are already unique per country (`Suppliers in {Country}`, set in `Supplier::country()`), but the visible H1 was the generic "Find Suppliers By Country/Region" on every single country page -- an SEO/accessibility mismatch (duplicate H1 across hundreds of country pages).
+- Changed the generic heading from `<h1 class="text-center h2">` to a plain `<div class="text-center h2">` -- same text, same visual styling, no longer a heading element.
+- Added a real `<h1>` directly above the "Showing X results out of Y" line in the results column, mirroring the same text already used for the page's `<title>`: `Suppliers in {$country['name']}` when a specific country is selected, falling back to `Find Suppliers By Country` on the generic browse-all-countries page (same view, no `$country` set).
+- **Verified live**: `/supplier-country/pk` now has exactly one real H1, "Suppliers in Pakistan" (a second `<h1>` picked up by a DOM query is CI4's own dev-only debug toolbar markup, not page content, and doesn't exist on production); the bare `/supplier-country` browse page correctly falls back to "Find Suppliers By Country".
+
 ## 2026-09-27 — Added a search box to the country list on `supplier-country/*`
 **Files:** `app/Views/pages/supplier-country.php`
 **Why:** owner reported visitors had to scroll through the full country list by hand to find one, on both the "all countries" browse page and every individual country page (same shared view).
