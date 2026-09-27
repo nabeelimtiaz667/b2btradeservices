@@ -50,15 +50,19 @@
                 </div>
                  <div class="sup-cat-flag">
                 <h3 class="custom-h3 mb-2">Find Suppliers <br>By Country/Region</h3>
-                <div class="flags-grid mt-0 mb-5">
+                <div class="country-filter-box mb-3">
+                    <input type="text" id="countryFilterInput" class="form-control" placeholder="Search countries...">
+                </div>
+                <div class="flags-grid mt-0 mb-5" id="countryFlagsGrid">
                     <?php if (isset($countries)): ?>
                         <?php foreach ($countries as $c): ?>
-                            <a href="<?= base_url('supplier-country/' . ($c['code'] ?? strtolower(str_replace(' ', '-', $c['name'])))) ?>" class="flag-item mt-3 <?= (isset($country) && $country['id'] == $c['id']) ? 'fw-bold' : '' ?>">
+                            <a href="<?= base_url('supplier-country/' . strtolower($c['code'] ?? str_replace(' ', '-', $c['name']))) ?>" class="flag-item mt-3 <?= (isset($country) && $country['id'] == $c['id']) ? 'fw-bold' : '' ?>" data-country-name="<?= esc(strtolower($c['name'])) ?>">
                                 <img src="<?= esc($c['flag']) ?>" alt="<?= esc($c['name']) ?>" onerror="this.style.display='none'">
                                 <?= esc($c['name']) ?>
                             </a>
                         <?php endforeach; ?>
                     <?php endif; ?>
+                    <p id="countryFilterNoResults" class="text-muted mb-3" style="display:none;">No countries match your search.</p>
                 </div>
                 </div>
             </div>
@@ -202,4 +206,28 @@
         <a href="<?= base_url('about-us') ?>" class="read_more_link">Read More</a>
     </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var input = document.getElementById('countryFilterInput');
+    var grid = document.getElementById('countryFlagsGrid');
+    var noResults = document.getElementById('countryFilterNoResults');
+    if (!input || !grid) return;
+
+    var items = Array.from(grid.querySelectorAll('.flag-item'));
+
+    input.addEventListener('input', function () {
+        var term = input.value.trim().toLowerCase();
+        var visibleCount = 0;
+
+        items.forEach(function (item) {
+            var matches = item.dataset.countryName.indexOf(term) !== -1;
+            item.style.display = matches ? '' : 'none';
+            if (matches) visibleCount++;
+        });
+
+        noResults.style.display = visibleCount === 0 ? '' : 'none';
+    });
+});
+</script>
 <?= $this->endSection() ?>

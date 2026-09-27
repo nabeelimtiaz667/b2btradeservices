@@ -45,7 +45,7 @@
                     <div class="flags-grid mt-0 mb-5">
                         <?php if (isset($countries)): ?>
                             <?php foreach (array_slice($countries, 0, 10) as $country): ?>
-                                <a href="<?= base_url('supplier-country/' . $country['code']) ?>" class="flag-item mt-3">
+                                <a href="<?= base_url('supplier-country/' . strtolower($country['code'])) ?>" class="flag-item mt-3">
                                     <img src="<?= esc($country['flag']) ?>" alt="<?= esc($country['name']) ?>" onerror="this.style.display='none'">
                                     <?= esc($country['name']) ?>
                                 </a>

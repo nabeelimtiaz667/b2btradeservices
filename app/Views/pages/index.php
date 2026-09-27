@@ -905,7 +905,7 @@ if (isset($categories) && !empty($categories)) {
                 <div>
                     <div class="row">
                         <?php foreach ($chunk as $c): ?>
-                        <a href="<?= base_url('supplier-country/' . $c['code']) ?>"
+                        <a href="<?= base_url('supplier-country/' . strtolower($c['code'])) ?>"
                             class="flag-slider-box text-center text-decoration-none text-dark">
                             <?php if (!empty($c['flag'])): ?>
                             <img src="<?= esc($c['flag']) ?>">

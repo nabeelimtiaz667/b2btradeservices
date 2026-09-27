@@ -246,7 +246,7 @@
                 <div class="flags-grid">
                     <?php if (isset($countries) && count($countries) > 0): ?>
                         <?php foreach (array_slice($countries, 0, 32) as $c): ?>
-                            <a href="<?= base_url('supplier-country/' . ($c['code'] ?? strtolower(str_replace(' ', '-', $c['name'])))) ?>" class="flag-item">
+                            <a href="<?= base_url('supplier-country/' . strtolower($c['code'] ?? str_replace(' ', '-', $c['name']))) ?>" class="flag-item">
                                 <img src="<?= esc($c['flag']) ?>" alt="<?= esc($c['name']) ?>" onerror="this.style.display='none'"> <?= esc($c['name']) ?>
                             </a>
                         <?php endforeach; ?>

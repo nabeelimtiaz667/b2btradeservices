@@ -303,7 +303,7 @@ class Supplier extends BaseController
             if ($countryId = $this->request->getGet('country')) {
                 $country = $this->countryModel->find($countryId);
                 if (! empty($country['code'])) {
-                    $filters['country'] = $country['code'];
+                    $filters['country'] = strtolower($country['code']);
                 }
             }
 

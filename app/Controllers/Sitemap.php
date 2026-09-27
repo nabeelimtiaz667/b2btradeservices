@@ -171,18 +171,20 @@ class Sitemap extends BaseController
     public function locations()
     {
         return $this->render('sitemap_locations', function () {
-            $rows = (new CountryModel())
-                ->select('code, updated_at, created_at')
-                ->where('status', 'active')
-                ->where('code IS NOT NULL', null, false)
-                ->where('code !=', '')
-                ->orderBy('name', 'ASC')
-                ->findAll();
+            // CountryModel is a plain-array lookup, not a DB-backed CI4 Model
+            // (see its docblock) -- it has no select()/where()/orderBy(). Use
+            // its real methods instead: getActiveCountries() already filters
+            // to status=active and sorts by name, so only the empty-code
+            // check needs doing here.
+            $rows = array_filter(
+                (new CountryModel())->getActiveCountries(),
+                static fn ($c) => !empty($c['code'])
+            );
 
             $urls = [];
             foreach ($rows as $r) {
                 $urls[] = [
-                    'loc'     => base_url('supplier-country/' . $r['code']),
+                    'loc'     => base_url('supplier-country/' . strtolower($r['code'])),
                     'lastmod' => $this->lastmod($r),
                 ];
             }
