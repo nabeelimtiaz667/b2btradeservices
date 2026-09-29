@@ -16,23 +16,23 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.2.1/css/intlTelInput.css" />
 
-    <link rel="apple-touch-icon" sizes="57x57" href="<?= base_url('assets/site-identity/apple-icon-57x57.png') ?>">
-    <link rel="apple-touch-icon" sizes="60x60" href="<?= base_url('assets/site-identity/apple-icon-60x60.png') ?>">
-    <link rel="apple-touch-icon" sizes="72x72" href="<?= base_url('assets/site-identity/apple-icon-72x72.png') ?>">
-    <link rel="apple-touch-icon" sizes="76x76" href="<?= base_url('assets/site-identity/apple-icon-76x76.png') ?>">
-    <link rel="apple-touch-icon" sizes="114x114" href="<?= base_url('assets/site-identity/apple-icon-114x114.png') ?>">
-    <link rel="apple-touch-icon" sizes="120x120" href="<?= base_url('assets/site-identity/apple-icon-120x120.png') ?>">
-    <link rel="apple-touch-icon" sizes="144x144" href="<?= base_url('assets/site-identity/apple-icon-144x144.png') ?>">
-    <link rel="apple-touch-icon" sizes="152x152" href="<?= base_url('assets/site-identity/apple-icon-152x152.png') ?>">
-    <link rel="apple-touch-icon" sizes="180x180" href="<?= base_url('assets/site-identity/apple-icon-180x180.png') ?>">
+    <link rel="apple-touch-icon" sizes="57x57" href="<?= base_url('assets/images/site-identity/apple-icon-57x57.png') ?>">
+    <link rel="apple-touch-icon" sizes="60x60" href="<?= base_url('assets/images/site-identity/apple-icon-60x60.png') ?>">
+    <link rel="apple-touch-icon" sizes="72x72" href="<?= base_url('assets/images/site-identity/apple-icon-72x72.png') ?>">
+    <link rel="apple-touch-icon" sizes="76x76" href="<?= base_url('assets/images/site-identity/apple-icon-76x76.png') ?>">
+    <link rel="apple-touch-icon" sizes="114x114" href="<?= base_url('assets/images/site-identity/apple-icon-114x114.png') ?>">
+    <link rel="apple-touch-icon" sizes="120x120" href="<?= base_url('assets/images/site-identity/apple-icon-120x120.png') ?>">
+    <link rel="apple-touch-icon" sizes="144x144" href="<?= base_url('assets/images/site-identity/apple-icon-144x144.png') ?>">
+    <link rel="apple-touch-icon" sizes="152x152" href="<?= base_url('assets/images/site-identity/apple-icon-152x152.png') ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= base_url('assets/images/site-identity/apple-icon-180x180.png') ?>">
     <link rel="icon" type="image/png" sizes="192x192"
-        href="<?= base_url('assets/site-identity/android-icon-192x192.png') ?>">
-    <link rel="icon" type="image/png" sizes="32x32" href="<?= base_url('assets/site-identity/favicon-32x32.png') ?>">
-    <link rel="icon" type="image/png" sizes="96x96" href="<?= base_url('assets/site-identity/favicon-96x96.png') ?>">
-    <link rel="icon" type="image/png" sizes="16x16" href="<?= base_url('assets/site-identity/favicon-16x16.png') ?>">
-    <link rel="manifest" href="<?= base_url('assets/site-identity/manifest.json') ?>">
+        href="<?= base_url('assets/images/site-identity/android-icon-192x192.png') ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= base_url('assets/images/site-identity/favicon-32x32.png') ?>">
+    <link rel="icon" type="image/png" sizes="96x96" href="<?= base_url('assets/images/site-identity/favicon-96x96.png') ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= base_url('assets/images/site-identity/favicon-16x16.png') ?>">
+    <link rel="manifest" href="<?= base_url('assets/images/site-identity/manifest.json') ?>">
     <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-TileImage" content="<?= base_url('assets/site-identity/ms-icon-144x144.png') ?>">
+    <meta name="msapplication-TileImage" content="<?= base_url('assets/images/site-identity/ms-icon-144x144.png') ?>">
     <meta name="theme-color" content="#ffffff">
 
     <title><?= esc($title ?? ($siteSettings['site_name'] ?? 'B2B Trade Services')) ?></title>

@@ -14,6 +14,15 @@ Entry format:
 
 ---
 
+## 2026-09-27 — Fixed: site-identity favicons/manifest 404 site-wide (pre-existing, since 2026-08-02)
+**Files:** `app/Views/layouts/auth.php`, `app/Views/layouts/dashboard.php`, `app/Views/layouts/inner-pkg.php`, `app/Views/layouts/inner.php`, `app/Views/layouts/main.php`, `app/Views/layouts/supplier-profile.php`, `public/assets/images/site-identity/manifest.json`
+**Why:** owner reported `assets/site-identity/apple-icon-57x57.png` 404ing on production and initially attributed it to the recent `.htaccess`/security update. **First hypothesis was wrong and said so**: tested locally with the exact same `.htaccess` and it also 404s there -- ruled out the security change entirely. `git log -S` on the actual href traced it to commit 7223f73 (2026-08-02, an unrelated SEO/branding change), so this has been broken for almost two months, just never noticed because a missing favicon/apple-touch-icon fails silently in every browser.
+- Root cause: all six layout files link to `assets/site-identity/...`, but the real folder is `assets/images/site-identity/...` -- missing the `images/` segment. Confirmed by listing the actual folder on disk and reproducing the exact 404 locally on the broken path (200 on the corrected one).
+- Fixed all 15 occurrences in each of the 6 layout files (90 total) to the correct `assets/images/site-identity/...` path.
+- Also fixed `manifest.json` itself (a static file, not templated) -- its `icons[].src` entries were root-relative (`/android-icon-36x36.png`, i.e. pointing at the site's actual document root, not this folder), same underlying mistake in a different place. Corrected to `/assets/images/site-identity/android-icon-*.png`. Verified still valid JSON after editing.
+- **Verified live**: every `site-identity` link on the homepage (`main.php`) and the login page (`auth.php`) now returns `200`, fetched directly in-browser rather than assumed from the file edit alone.
+- Not a security-related issue and not caused by anything from this month's work -- flagging clearly since the owner's initial report attributed it there.
+
 ## 2026-09-27 — `supplier-country/*` H1 was generic and identical on every country page
 **Files:** `app/Views/pages/supplier-country.php`
 **Why:** owner noticed the page's SEO `<title>`/meta description are already unique per country (`Suppliers in {Country}`, set in `Supplier::country()`), but the visible H1 was the generic "Find Suppliers By Country/Region" on every single country page -- an SEO/accessibility mismatch (duplicate H1 across hundreds of country pages).
