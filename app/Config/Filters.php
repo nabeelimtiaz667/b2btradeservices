@@ -14,6 +14,7 @@ use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
 use App\Filters\AuthFilter;
 use App\Filters\CsrfTokenHeader;
+use App\Filters\LowercaseUrlFilter;
 use App\Filters\RateLimitFilter;
 use App\Filters\RoleFilter;
 use App\Filters\SiteSettingsFilter;
@@ -44,6 +45,7 @@ class Filters extends BaseFilters
         'sitesettings'  => SiteSettingsFilter::class,
         'ratelimit'     => RateLimitFilter::class,
         'csrftoken'     => CsrfTokenHeader::class,
+        'lowercaseurl'  => LowercaseUrlFilter::class,
     ];
 
     /**
@@ -84,6 +86,14 @@ class Filters extends BaseFilters
         'before' => [
             'sitesettings',
             'csrf', // See BLOCKERS #7 -- enabled 2026-09-09, every form audited for csrf_field()
+            // Redirects a mixed-case dynamic URL segment (country code, search
+            // keyword, slug) to its lowercase canonical form -- e.g.
+            // /supplier-country/AD -> /supplier-country/ad. 'except'-ed from
+            // dashboard/admin/leads: those are behind login (not indexed), and
+            // leads/detail/{uid} intentionally uses uppercase UIDs like
+            // S-002028. Same bare-'dashboard'-vs-'dashboard/*' split as the
+            // 'auth' filter below, for the same pseudo-regex reason.
+            'lowercaseurl' => ['except' => ['dashboard', 'dashboard/*', 'admin/*', 'leads/*']],
             // 'honeypot',
             // 'invalidchars',
         ],
