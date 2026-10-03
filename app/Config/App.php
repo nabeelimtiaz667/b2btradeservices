@@ -101,7 +101,13 @@ class App extends BaseConfig
     | DO NOT CHANGE THIS UNLESS YOU FULLY UNDERSTAND THE REPERCUSSIONS!!
     |
     */
-    public string $permittedURIChars = 'a-z 0-9~%.:_\-';
+    // Widened from CI4's ASCII-only default (a-z 0-9): slugs and search
+    // keywords are built with url_title(), which keeps Unicode letters
+    // (\pL) and combining marks (\pM), so an ASCII-only whitelist 400'd the
+    // site's own generated URLs (/supplier/search/güneş, accented inquiry
+    // slugs). Still a whitelist -- symbols, control chars and invalid UTF-8
+    // remain rejected.
+    public string $permittedURIChars = '\p{L}\p{M}0-9 ~%.:_\-';
 
     /**
      * --------------------------------------------------------------------------
