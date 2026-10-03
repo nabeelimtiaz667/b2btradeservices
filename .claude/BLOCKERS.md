@@ -151,6 +151,162 @@ SMTP's better deliverability/reputation over plain `mail()`.
 
 ---
 
+## #34 — Deploy hazard: widened URL whitelist + the old lowercase filter = infinite redirect loop on non-ASCII URLs
+
+**Severity:** HIGH until deployed · **Raised:** 2026-10-03 · **Open -- deploy-order risk; the fix itself is ready in the tree**
+
+The local tree (staged, uncommitted) holds two linked changes. (1) `App.php`
+`permittedURIChars` widened to `\p{L}\p{M}0-9 ~%.:_\-`. CI4's default whitelist is
+ASCII-only, but `search_slug_encode()`/`inquiry_slugify()` go through `url_title()`,
+which keeps Unicode letters -- so the site generated URLs (the search box
+redirecting to `/search/güneş`, inquiry slugs like `home-décor-collection`) that its
+own router rejected with `BadRequestException: ... disallowed characters` (a 400).
+The production log shows exactly this for `décor`/`café`/Cyrillic from 2026-09-15,
+i.e. before any lowercase filter existed. (2) `LowercaseUrlFilter` deleted and its
+registration removed from `Filters.php`.
+
+**Production may still be running the 2026-09-29 filter** (not verified -- assume
+yes). That version compared the raw path to `strtolower()` of itself. Percent-encoded
+hex (`%C3`) is made of uppercase letters, and `SiteURI` re-normalizes hex to
+uppercase on output, so once the widened whitelist lets a non-ASCII URL reach the
+filter it 301s to itself forever (curl gave up at 50 hops). Today that is masked only
+because those URLs 400 at the router first.
+
+**Ship `App.php` + `Filters.php` + delete `app/Filters/LowercaseUrlFilter.php`
+together; never `App.php` alone.** Remove this entry once deployed.
+
+Not done, related: production logs are flooded with these 400s logged as CRITICAL,
+burying real errors. `Config\Exceptions::$ignoreCodes` is `[404]`; adding `400` (and a
+friendly error page) was proposed, not built or tested.
+
+---
+
+## #35 — Multi-language text handling gaps: byte-based truncation, no NFC normalization
+
+**Severity:** MEDIUM · **Raised:** 2026-10-03 · **Open -- fix was built, tested and then reverted by the owner (too many files at once); not scheduled**
+
+Tested on non-Latin text; the URL/DB/escaping layers are fine (all `utf8mb4`, a 4-byte
+CJK letter works, pages return 200). Two real gaps in the helpers:
+
+1. **Cutting by bytes.** `truncate_for_meta()` (`seo_helper.php` ~191) and
+   `inquiry_meta_description()` (`inquiry_helper.php` 83-91) measure and cut at 160
+   *bytes*. Scripts written without spaces (Chinese, Japanese, Thai) are sliced
+   mid-character: confirmed on a real supplier profile -- description ends `…钢材供�...`
+   and carries ~54 characters instead of 160. No crash: `esc()` here is Laminas
+   `escapeHtml`, which substitutes bad bytes (an `attr`-context escape *would* throw;
+   none found on those pages, not audited site-wide). `inquiry_slugify()`
+   (`inquiry_helper.php` 32-37) caps the slug at 200 bytes with `substr()`, so any
+   title over ~66 Chinese characters yields an invalid-UTF-8 slug. The pre-insert
+   `uniqueSlug()` SELECT ran fine with it; **the INSERT itself was not tested**, and
+   its outcome depends on `sql_mode`: local MySQL is non-strict (would silently
+   truncate), MySQL's default since 5.7.5 is strict (rejects with error 1366, i.e. the
+   RFQ submission fails). **Production's `sql_mode` is unknown -- run
+   `SELECT @@sql_mode;` there.**
+2. **No NFC normalization.** The same visible word can arrive decomposed (`ü` as `u` +
+   U+0308, which macOS commonly produces). `utf8mb4_general_ci` treats that as a
+   different string, so a decomposed URL 404s on supplier profiles and inquiry pages,
+   and a decomposed search keyword misses. Zero non-NFC slugs locally; production
+   unchecked.
+
+**Fix as built (then reverted):** `mb_strlen/mb_substr/mb_strrpos` in the two meta
+functions (budget becomes 160 characters); `mb_strcut($slug, 0, 200, 'UTF-8')` for the
+slug (keeps the byte cap that bounds URL length, never splits a character -- identical to
+`substr()` for ASCII); `normalize_nfc()` (returns input untouched if `ext-intl` is
+missing or the string is invalid UTF-8, since it runs in always-loaded helpers) and
+`slug_candidates()` (raw, NFC, NFD) used in a `whereIn('slug', ...)` in
+`Supplier::profile()` and `BuyerInquiryModel::getInquiryBySlug()`; NFC applied inside
+`inquiry_slugify`, `search_slug_encode` and `search_slug_decode`. Deliberately **not** a
+redirect-to-NFC: that would 404 any legacy slug saved decomposed. Needs `ext-intl` on
+production (CI4 itself requires it). Verified before reverting: output byte-identical to
+the old code on 400 random ASCII strings for both helpers (many past the caps); Chinese
+description valid and exactly 160 chars (old: invalid, 54); long Chinese slug valid at
+198 bytes (old: invalid); NFD requests 200 against both NFC- and NFD-stored slugs (NFD was
+404).
+
+Related, **from reading the code, not run**: `check_restricted_keywords()`
+(`moderation_helper.php`) uses a `\b` word-boundary match, which cannot match a word
+inside Chinese/Japanese/Thai text (every character is a word character), and the built-in
+profanity list is English-only -- so non-English content largely bypasses moderation
+without any error. LOW; a product decision more than a bug.
+
+---
+
+## #36 — Suppliers with no slug: how they arise, what breaks, how they heal
+
+**Severity:** MEDIUM · **Raised:** 2026-10-03 · **Open -- partly fixed in a reverted change; not scheduled**
+
+Currently such suppliers are fetched only by numeric ID (`/supplier/profile/{id}`:
+`Supplier::profile()` renders it directly, no redirect, canonical = the ID URL) and
+appear in every listing -- no list query filters on slug. Verified locally: supplier 438
+(`广州泓怿国际供应链有限公司`, 8 active products) and supplier 73.
+
+**Two causes**, both in `UserModel::generateSlug()` (140-143): (a) it strips everything
+except `a-z0-9`, so an all-non-Latin name gives an empty slug and none is stored (and
+`Müller GmbH` becomes `m-ller-gmbh`); (b) `$data['company_name'] ?? $data['name']` --
+`??` only falls through on null, so an empty-string `company_name` shadows a perfectly
+valid `name` (supplier 73: `company_name=''`, `name='new'`, no slug, **blank page
+title** because the profile view does the same `company_name ?? name`).
+
+**Consequences:** excluded from the sitemap (`Sitemap::suppliers()` requires a slug --
+and its comment's reasoning, "the numeric id 301s", is wrong for them: with no slug
+there is no redirect and the ID URL *is* the canonical page); three views build a bare
+`/supplier/profile/` for them (`product.php:59`, `supplier-category.php:111`,
+`layouts/dashboard.php` 935 and 1177 -- no fallback), and the ~12 sites using
+`($s['slug'] ?? $s['id'])` only cover NULL, not `''`.
+
+**Only healing path:** admin `Dashboard::editSupplier()` (1106-1125) rebuilds the slug on
+every save from company name (fallback name) with `url_title()`, which keeps Unicode --
+that would give 438 a Chinese slug and 73 `new`; the ID URL then 301s to it and the
+sitemap picks it up. Read from the code, **not run**. Same code also means *renaming a
+company changes its URL with no redirect from the old one* (untested). A supplier editing
+their own profile does not touch the slug; registration/`addSupplier`/import all go
+through the model's ASCII-only generator.
+
+**Fix as built (then reverted):** `supplier_url(array $supplier)` helper in `seo_helper.php`
+(sibling of the existing `inquiry_url()`; falls back to the numeric ID for NULL/`''`/missing
+slug) and all 20 link-building sites switched to it. Verified with a real supplier at
+NULL and `''` slug: profile 200 without redirect, links on the product list/page all
+`/supplier/profile/{id}` and load; admin `dashboard/suppliers`, `leads/*` and the supplier
+dashboard layout 200. Not built: including slugless suppliers in the sitemap via their ID
+URL; fixing the two generator causes.
+
+---
+
+## #37 — Mixed-case dynamic URLs serve as duplicates (`/supplier-country/AD` and `/ad` are both 200)
+
+**Severity:** LOW-MEDIUM (SEO) · **Raised:** 2026-10-03 · **Open -- redirect built and tested twice, then removed/reverted by the owner; not wanted right now**
+
+Google treats `/APPLE` and `/apple` as different URLs. Country codes are stored
+uppercase; links the site generates are lowercase (fixed 2026-09-26/27), but a hand-typed
+or externally linked uppercase URL renders a second copy. Static route words in capitals
+(`/About-Us`) already 404 -- CI4 matches them case-sensitively -- so the duplicate problem
+is limited to dynamic segments (country code, search keyword, category slug).
+
+**`.htaccess` is not a reliable route** (lowercasing needs `RewriteMap int:tolower`, a
+server/vhost-level directive most shared cPanel hosts do not allow in `.htaccess`).
+Design that worked: a global CI4 `before` filter, GET-only, 301 to the lowercase path,
+query string kept, with an `except` list for the dynamic pages (`supplier/profile/*`,
+`buyer-inquiry/*`, `product/detail/*`) and the login-gated areas (`dashboard`,
+`dashboard/*`, `admin/*`, `leads/*` -- `leads/detail/{uid}` uses uppercase UIDs like
+`S-002028`). **Pitfalls found the hard way, all of which broke an earlier draft:**
+`getUri()` is a `SiteURI` whose `setPath()` takes a *route* path and re-prefixes the base
+path (feed it `getRoutePath()`, not `getPath()`); judge case on the *decoded* segment
+(percent-hex `%C3` looks like uppercase and loops forever); `mb_strtolower`, not
+`strtolower`; `redirect()->to()` re-prefixes anything not starting with `http`.
+Verified before removal: 441 internal links crawled from 14 pages triggered 0 case
+redirects; Greek final sigma, Turkish dotted/dotless I, capital sharp S, Georgian
+Mtavruli, titlecase `Dž`, fullwidth capitals all settle in one hop; POST never redirected,
+CSRF intact.
+
+**Known limit, no fix attempted:** capitalised *static* words still 404 because CI4
+rejects them before any filter runs; redirecting those needs a pre-routing hook or a
+router 404 override -- the override sits in front of *every* 404, including the deliberate
+hard 404s for removed inquiries (`Buyer::legacyRedirect`), so it was judged too invasive.
+Also unexamined: of those 441 crawled links, 23 return a 301 that is *not* case-related
+(so not from this filter) -- what they are was not looked into.
+
+---
+
 ## #25 — `public/assets/images/` is gitignored -- deploy lists built from `git status` silently omit any change there
 
 **Severity:** HIGH · **Raised:** 2026-08-23 · **Open — process risk, not a code bug**

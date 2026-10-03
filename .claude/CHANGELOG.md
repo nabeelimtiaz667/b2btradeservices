@@ -14,6 +14,14 @@ Entry format:
 
 ---
 
+## 2026-10-03 — Multi-language URL hardening and a scoped lowercase redirect: built, tested, then reverted by owner; logged only
+**Files:** none changed by this entry -- documentation only (`BLOCKERS.md` #34-#37, `TASKS.md` backlog)
+**Why:** after discussing how URLs mixing several languages are handled (checked online against Google, W3C and sitemaps.org guidance; decided to keep slugs rather than move to integer IDs) a set of fixes was built and tested, plus a second lowercase-redirect filter scoped to everything except supplier/buyer/product pages. The owner reverted all of it from the working tree ("there are so many") and does not want it right now, asking for it to be logged instead. Verified with `git status` and by grepping for each marker before writing this.
+- **Reverted -- not in the tree, and their changelog entries were removed too:** meta-description truncation by characters (`seo_helper.php`, `inquiry_helper.php`); `mb_strcut` slug cap in `inquiry_slugify`; `normalize_nfc()` / `slug_candidates()` and the NFC-tolerant slug lookups in `Supplier::profile()` and `BuyerInquiryModel`; NFC in `search_slug_encode/decode`; the `supplier_url()` helper and its ~20 view call sites; and the re-created `LowercaseUrlFilter` with its `Filters.php` registration. The code was never committed or saved as a patch.
+- **Still in the tree (staged, uncommitted)** -- covered by the two entries directly below: `App.php` `permittedURIChars` widened for non-ASCII URLs, and the 2026-09-29 `LowercaseUrlFilter` removed (file deleted, registration taken out of `Filters.php`). Everything earlier (country-list search box, supplier-country H1, favicon paths, sitemap-locations fix, `PER_PAGE` constants, etc.) is untouched.
+- **Where the design now lives:** BLOCKERS **#35** (byte-based truncation, no NFC normalization, English-only moderation), **#36** (slugless suppliers: causes, consequences, healing path), **#37** (mixed-case duplicate URLs and the redirect design with the pitfalls hit), each with the fix as built and what was verified. TASKS.md backlog suggests re-shipping it in four independent phases instead of one batch.
+- **Consequence to remember:** with the hardening reverted, every gap it addressed is open again, and **BLOCKERS #34** applies to what remains -- `App.php` must be deployed together with the filter removal, because production may still be running the 09-29 filter, which loops on non-ASCII URLs once the whitelist is widened.
+
 ## 2026-10-03 — Removed the global lowercase-URL redirect filter (reverses 2026-09-29)
 **Files:** `app/Config/Filters.php`, `app/Filters/LowercaseUrlFilter.php` (deleted)
 **Why:** owner decided the automatic case converter shouldn't exist. Existing site URLs stay lowercase, but dynamic buyer / product / supplier URLs depend on a slug or title that may legitimately contain uppercase letters, so they shouldn't be force-redirected.

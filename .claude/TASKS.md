@@ -42,6 +42,13 @@ Unscheduled, no commitment yet.
 - Review the 138 routes for any that assume the production domain.
 - Consider a `b2b.local` Apache vhost to remove the subfolder special-casing.
 - Establish how local schema changes get back to production (migrations vs. manual).
+- Multi-language URL hardening + lowercase-URL redirect: designed, built and tested on
+  2026-10-03, then reverted by the owner (too many files in one go) -- not scheduled. Detail
+  in BLOCKERS #35 (byte-based truncation, NFC), #36 (slugless suppliers), #37 (mixed-case
+  duplicates); BLOCKERS #34 covers the deploy-order hazard for the two pieces that *are* in
+  the tree. If picked up again, ship in phases that each stand alone: (1) meta/slug
+  truncation by characters -- two helpers, no view changes; (2) NFC-tolerant slug lookups;
+  (3) `supplier_url()` + its ~20 view call sites; (4) the lowercase redirect filter.
 
 ---
 
