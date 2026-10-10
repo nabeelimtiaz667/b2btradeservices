@@ -16,7 +16,6 @@
 
     var CAPTURE_URL = form.dataset.action;
     var SESSION_DONE_KEY = 'leadPopupDone';
-    var fired = {};
     var bsModal = null;
 
     function getModal() {
@@ -88,53 +87,67 @@
         if (modal) modal.show();
     }
 
-    function fire(trigger) {
-        if (fired[trigger.key]) return;
-        fired[trigger.key] = true;
-        openPopup(trigger);
+    // --- Timed popups (admin-controlled: Popup Leads > Trigger Settings) ----
+    // Case 1: a freshly loaded page shows the popup after firstDelaySeconds.
+    // Case 2: a visitor who stays gets it again repeatIntervalSeconds after the
+    // previous popup was closed (a countdown from the close, not a fixed clock,
+    // so an ignored popup never stacks and a dismissed one never re-opens
+    // instantly). 0 switches a case off. Nothing repeats once the visitor has
+    // submitted the form this session -- openPopup() refuses and no further
+    // countdown is armed.
+
+    var timing = window.LEAD_POPUP_TIMING || config.timing || {};
+    var firstDelayMs = secondsToMs(timing.firstDelaySeconds);
+    var repeatMs = secondsToMs(timing.repeatIntervalSeconds);
+    var repeatTimer = null;
+
+    function secondsToMs(value) {
+        var n = parseInt(value, 10);
+        return n > 0 ? n * 1000 : 0;
     }
 
-    // --- Trigger listeners -------------------------------------------------
+    function timedTrigger(kind) {
+        return { key: 'timed_' + kind, text: (config.timedText || {})[kind] || (config.timedText || {}).first };
+    }
 
-    var isCoarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-
-    (config.triggers || []).forEach(function (trigger) {
-        switch (trigger.type) {
-            case 'exit_intent':
-                if (isCoarsePointer) break; // no mouse to leave the viewport on touch
-                document.addEventListener('mouseout', function (e) {
-                    if (e.clientY <= 0 && !e.relatedTarget) fire(trigger);
-                });
-                break;
-
-            case 'scroll_percent':
-                document.addEventListener('scroll', function () {
-                    var scrollable = document.documentElement.scrollHeight - window.innerHeight;
-                    if (scrollable <= 0) return;
-                    var pct = (window.scrollY / scrollable) * 100;
-                    if (pct >= trigger.value) fire(trigger);
-                }, { passive: true });
-                break;
-
-            case 'time':
-                setTimeout(function () { fire(trigger); }, trigger.value);
-                break;
-
-            case 'section_visible':
-                var targets = document.querySelectorAll(trigger.selector);
-                if (!targets.length || !window.IntersectionObserver) break;
-                var observer = new IntersectionObserver(function (entries) {
-                    entries.forEach(function (entry) {
-                        if (entry.isIntersecting) {
-                            fire(trigger);
-                            observer.disconnect();
-                        }
-                    });
-                }, { threshold: 0.4 });
-                targets.forEach(function (el) { observer.observe(el); });
-                break;
+    // A background tab can't see a popup, so hold it until the tab is visible
+    // again instead of opening it unseen.
+    function whenVisible(fn) {
+        if (!document.hidden) {
+            fn();
+            return;
         }
-    });
+        var onVisible = function () {
+            if (document.hidden) return;
+            document.removeEventListener('visibilitychange', onVisible);
+            fn();
+        };
+        document.addEventListener('visibilitychange', onVisible);
+    }
+
+    function scheduleRepeat() {
+        if (!repeatMs || alreadyHandledThisSession()) return;
+        clearTimeout(repeatTimer);
+        repeatTimer = setTimeout(function () {
+            whenVisible(function () {
+                // If something else opened the popup meanwhile, its own close
+                // re-arms the countdown (see the hidden.bs.modal listener).
+                if (!modalEl.classList.contains('show')) openPopup(timedTrigger('repeat'));
+            });
+        }, repeatMs);
+    }
+
+    if (firstDelayMs) {
+        setTimeout(function () {
+            whenVisible(function () { openPopup(timedTrigger('first')); });
+        }, firstDelayMs);
+    }
+
+    // Any popup closing (whatever opened it) starts the repeat countdown.
+    modalEl.addEventListener('hidden.bs.modal', scheduleRepeat);
+
+    // With no case-1 popup there's no close to count from, so start at page load.
+    if (!firstDelayMs) scheduleRepeat();
 
     // --- Manual open (e.g. content-gate "Register" button) -----------------
     // Bypasses the auto-triggers' once-per-session suppression -- a visitor

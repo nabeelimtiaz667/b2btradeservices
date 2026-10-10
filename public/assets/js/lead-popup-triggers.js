@@ -1,8 +1,10 @@
 /**
- * Lead-capture popup: triggers, copy, and buyer/supplier defaulting rules.
- * Pure config -- edit thresholds/copy/selectors here freely. The engine that
- * reads this (fires triggers, opens the modal, submits the form) lives in
- * lead-popup.js and shouldn't need touching for day-to-day tuning.
+ * Lead-capture popup: timing fallbacks, copy, and buyer/supplier defaulting
+ * rules. The popup is shown only by the two timers below (first delay, repeat
+ * interval) -- there are no scroll, exit-intent or other event triggers.
+ * Pure config -- edit copy/fallbacks here freely. The engine that reads this
+ * (runs the timers, opens the modal, submits the form) lives in lead-popup.js
+ * and shouldn't need touching for day-to-day tuning.
  *
  * See .claude/plans/T-29-lead-capture.md for the full design.
  */
@@ -32,51 +34,30 @@ window.LeadPopupConfig = {
     defaultType: 'buyer',
 
     /**
-     * Each trigger fires at most once per page load. No cooldown between
-     * DIFFERENT triggers -- dismissing the popup from one trigger doesn't
-     * suppress the others, so keep thresholds spaced out here rather than
-     * relying on the engine to throttle for you.
+     * Timed popups -- the two cases an admin controls under Popup Leads >
+     * Trigger Settings. The admin's values arrive as window.LEAD_POPUP_TIMING
+     * (printed by partials/lead-popup-modal.php); the numbers below are only
+     * the fallback if that is missing. 0 switches a case off.
      *
-     * type: 'exit_intent'      -- mouse leaves the top of the viewport (desktop only)
-     * type: 'scroll_percent'   -- page scrolled past `value` percent
-     * type: 'time'             -- `value` milliseconds spent on the page
-     * type: 'section_visible'  -- any element matching `selector` scrolls into view
+     *   firstDelaySeconds     -- case 1: a freshly loaded page shows the popup
+     *                            after this many seconds.
+     *   repeatIntervalSeconds -- case 2: a visitor who stays on the page gets
+     *                            the popup again this many seconds after the
+     *                            previous one was closed.
      */
-    triggers: [
-        {
-            key: 'exit_intent',
-            type: 'exit_intent',
-            text: {
-                heading: 'Before you go...',
-                subtext: "Get matched with verified trade partners — leave your details and we'll do the rest.",
-            },
+    timing: {
+        firstDelaySeconds: 25,
+        repeatIntervalSeconds: 0,
+    },
+
+    timedText: {
+        first: {
+            heading: "Don't miss out",
+            subtext: 'Join B2B Trade Services free and get discovered by global trade partners.',
         },
-        {
-            key: 'scroll_60',
-            type: 'scroll_percent',
-            value: 60,
-            text: {
-                heading: 'Still browsing?',
-                subtext: 'Create a free profile and start connecting with buyers and suppliers today.',
-            },
+        repeat: {
+            heading: 'Still browsing?',
+            subtext: 'Create a free profile and start connecting with buyers and suppliers today.',
         },
-        {
-            key: 'time_25s',
-            type: 'time',
-            value: 25000,
-            text: {
-                heading: "Don't miss out",
-                subtext: 'Join B2B Trade Services free and get discovered by global trade partners.',
-            },
-        },
-        {
-            key: 'results_visible',
-            type: 'section_visible',
-            selector: '.supplier-product-list-box, .top-products-box',
-            text: {
-                heading: 'Like what you see?',
-                subtext: 'Sign up free to contact suppliers and buyers directly.',
-            },
-        },
-    ],
+    },
 };

@@ -201,6 +201,73 @@ class LeadManagement extends BaseController
     }
 
     /**
+     * "Trigger Settings" tab of Popup Leads: when the lead-capture popup
+     * appears. Two values, in seconds (0 = off), read by the popup engine via
+     * partials/lead-popup-modal.php:
+     *   popup_first_delay      -- a newly loaded page shows the popup after this long
+     *   popup_repeat_interval  -- a visitor who stays gets it again this long
+     *                             after the previous one was closed
+     * Admin only -- agents can work the leads list but not change when the
+     * popup fires for every visitor.
+     */
+    public function popupTriggers()
+    {
+        $redirect = $this->checkAccess();
+        if ($redirect) return $redirect;
+
+        if ($this->session->get('user_type') !== 'admin') {
+            $this->session->setFlashdata('error', 'Only an admin can change the popup trigger settings.');
+            return redirect()->to('/leads/popup');
+        }
+
+        $settingModel = new \App\Models\SiteSettingModel();
+        $errors = [];
+
+        $values = [
+            'popup_first_delay'     => (string) $settingModel->getSetting('popup_first_delay', '25'),
+            'popup_repeat_interval' => (string) $settingModel->getSetting('popup_repeat_interval', '0'),
+        ];
+
+        if ($this->request->getMethod() === 'POST') {
+            $labels = [
+                'popup_first_delay'     => 'Time before the popup first appears',
+                'popup_repeat_interval' => 'Time between repeat popups',
+            ];
+
+            foreach ($labels as $key => $label) {
+                $posted = $this->request->getPost($key);
+                // An array (popup_first_delay[]=1) can't be cast to string without a warning/500.
+                $raw = is_scalar($posted) ? trim((string) $posted) : '';
+                $values[$key] = $raw;
+
+                // 0 switches the case off. Anything else must be a whole number
+                // of seconds, at least 5 (a 1-second repeat would be a popup
+                // the visitor can't escape) and at most a day.
+                if (! ctype_digit($raw)) {
+                    $errors[$key] = $label . ' must be a whole number of seconds (0 to turn it off).';
+                } elseif ((int) $raw !== 0 && ((int) $raw < 5 || (int) $raw > 86400)) {
+                    $errors[$key] = $label . ' must be 0 (off) or between 5 and 86400 seconds.';
+                }
+            }
+
+            if (! $errors) {
+                foreach ($values as $key => $value) {
+                    $settingModel->setSetting($key, (string) (int) $value, 'popup');
+                }
+                $this->session->setFlashdata('success', 'Popup trigger settings saved.');
+                return redirect()->to('/leads/popup/triggers');
+            }
+        }
+
+        return view('dashboard/admin/popup-triggers', [
+            'title'  => 'Popup Leads',
+            'user'   => $this->userModel->find($this->session->get('user_id')),
+            'values' => $values,
+            'errors' => $errors,
+        ]);
+    }
+
+    /**
      * AJAX note-add for a popup lead, mirroring LeadManagement::ajaxAddNote()
      * but against PopupLeadNoteModel/`leads` instead of LeadNoteModel/`users`.
      */

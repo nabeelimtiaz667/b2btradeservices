@@ -82,6 +82,13 @@ foreach (($agents ?? []) as $a) {
     <span class="badge bg-dark" style="font-size: 14px; padding: 8px 16px;">Total: <?= $pagination['total'] ?? 0 ?> Leads</span>
 </div>
 
+<?php if (session()->get('user_type') === 'admin'): ?>
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item"><a class="nav-link active" href="<?= base_url('leads/popup') ?>">Leads</a></li>
+    <li class="nav-item"><a class="nav-link" href="<?= base_url('leads/popup/triggers') ?>">Trigger Settings</a></li>
+</ul>
+<?php endif; ?>
+
 <p class="text-muted" style="margin-top:-8px; margin-bottom:16px; font-size:13px;">
     Prospects captured by the site's popup CTA — separate from the leads above, which
     are existing accounts (<code>users</code>) being tracked through the sales pipeline.

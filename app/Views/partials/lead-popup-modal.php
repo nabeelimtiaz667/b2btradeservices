@@ -147,6 +147,17 @@
 // strip whatever base path CI4 is actually running under before matching --
 // otherwise every pattern silently fails to match under a subfolder deploy.
 window.LEAD_POPUP_BASE_PATH = '<?= rtrim(parse_url(base_url(), PHP_URL_PATH) ?? '', '/') ?>';
+// Admin-set popup timing (Popup Leads > Trigger Settings), in seconds, 0 = off.
+// Defaults match LeadPopupConfig.timing in lead-popup-triggers.js.
+window.LEAD_POPUP_TIMING = {
+    firstDelaySeconds: <?= max(0, (int) ($siteSettings['popup_first_delay'] ?? 25)) ?>,
+    repeatIntervalSeconds: <?= max(0, (int) ($siteSettings['popup_repeat_interval'] ?? 0)) ?>
+};
 </script>
-<script src="<?= base_url('assets/js/lead-popup-triggers.js') ?>"></script>
-<script src="<?= base_url('assets/js/lead-popup.js') ?>"></script>
+<?php
+// ?v=<file mtime>: these two scripts (and the inline timing above) must agree, so
+// a returning visitor's cached copy of one can't be paired with the new other.
+$popupJsVersion = static fn (string $file): int => (int) @filemtime(FCPATH . 'assets/js/' . $file);
+?>
+<script src="<?= base_url('assets/js/lead-popup-triggers.js') ?>?v=<?= $popupJsVersion('lead-popup-triggers.js') ?>"></script>
+<script src="<?= base_url('assets/js/lead-popup.js') ?>?v=<?= $popupJsVersion('lead-popup.js') ?>"></script>

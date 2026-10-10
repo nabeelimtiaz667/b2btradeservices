@@ -200,6 +200,8 @@ $routes->get('leads/all', 'LeadManagement::allLeads');
 $routes->get('leads/buyer', 'LeadManagement::buyerLeads');
 $routes->get('leads/supplier', 'LeadManagement::supplierLeads');
 $routes->get('leads/popup', 'LeadManagement::popupLeads');
+$routes->get('leads/popup/triggers', 'LeadManagement::popupTriggers');
+$routes->post('leads/popup/triggers', 'LeadManagement::popupTriggers');
 $routes->get('leads/popup/edit/(:num)', 'LeadManagement::editPopupLead/$1');
 $routes->post('leads/popup/edit/(:num)', 'LeadManagement::editPopupLead/$1');
 $routes->post('leads/popup/delete/(:num)', 'LeadManagement::deletePopupLead/$1');
